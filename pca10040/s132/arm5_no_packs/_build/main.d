@@ -2,18 +2,18 @@
 .\_build\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
 .\_build\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\string.h
 .\_build\main.o: ..\..\..\..\..\..\components\libraries\util\nordic_common.h
-.\_build\main.o: C:\Users\Jona Cappelle\AppData\Local\Arm\Packs\NordicSemiconductor\nRF_DeviceFamilyPack\8.35.0\Device\Include\nrf.h
-.\_build\main.o: C:\Users\Jona Cappelle\AppData\Local\Arm\Packs\NordicSemiconductor\nRF_DeviceFamilyPack\8.35.0\Device\Include\nrf52.h
-.\_build\main.o: C:\Users\Jona Cappelle\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include\core_cm4.h
-.\_build\main.o: C:\Users\Jona Cappelle\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include\cmsis_version.h
-.\_build\main.o: C:\Users\Jona Cappelle\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include\cmsis_compiler.h
-.\_build\main.o: C:\Users\Jona Cappelle\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include\cmsis_armcc.h
-.\_build\main.o: C:\Users\Jona Cappelle\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include\mpu_armv7.h
-.\_build\main.o: C:\Users\Jona Cappelle\AppData\Local\Arm\Packs\NordicSemiconductor\nRF_DeviceFamilyPack\8.35.0\Device\Include\system_nrf52.h
-.\_build\main.o: C:\Users\Jona Cappelle\AppData\Local\Arm\Packs\NordicSemiconductor\nRF_DeviceFamilyPack\8.35.0\Device\Include\nrf52_bitfields.h
-.\_build\main.o: C:\Users\Jona Cappelle\AppData\Local\Arm\Packs\NordicSemiconductor\nRF_DeviceFamilyPack\8.35.0\Device\Include\nrf51_to_nrf52.h
-.\_build\main.o: C:\Users\Jona Cappelle\AppData\Local\Arm\Packs\NordicSemiconductor\nRF_DeviceFamilyPack\8.35.0\Device\Include\nrf52_name_change.h
-.\_build\main.o: C:\Users\Jona Cappelle\AppData\Local\Arm\Packs\NordicSemiconductor\nRF_DeviceFamilyPack\8.35.0\Device\Include\compiler_abstraction.h
+.\_build\main.o: C:\Users\u0139004\AppData\Local\Arm\Packs\NordicSemiconductor\nRF_DeviceFamilyPack\8.35.0\Device\Include\nrf.h
+.\_build\main.o: C:\Users\u0139004\AppData\Local\Arm\Packs\NordicSemiconductor\nRF_DeviceFamilyPack\8.35.0\Device\Include\nrf52.h
+.\_build\main.o: C:\Users\u0139004\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include\core_cm4.h
+.\_build\main.o: C:\Users\u0139004\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include\cmsis_version.h
+.\_build\main.o: C:\Users\u0139004\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include\cmsis_compiler.h
+.\_build\main.o: C:\Users\u0139004\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include\cmsis_armcc.h
+.\_build\main.o: C:\Users\u0139004\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include\mpu_armv7.h
+.\_build\main.o: C:\Users\u0139004\AppData\Local\Arm\Packs\NordicSemiconductor\nRF_DeviceFamilyPack\8.35.0\Device\Include\system_nrf52.h
+.\_build\main.o: C:\Users\u0139004\AppData\Local\Arm\Packs\NordicSemiconductor\nRF_DeviceFamilyPack\8.35.0\Device\Include\nrf52_bitfields.h
+.\_build\main.o: C:\Users\u0139004\AppData\Local\Arm\Packs\NordicSemiconductor\nRF_DeviceFamilyPack\8.35.0\Device\Include\nrf51_to_nrf52.h
+.\_build\main.o: C:\Users\u0139004\AppData\Local\Arm\Packs\NordicSemiconductor\nRF_DeviceFamilyPack\8.35.0\Device\Include\nrf52_name_change.h
+.\_build\main.o: C:\Users\u0139004\AppData\Local\Arm\Packs\NordicSemiconductor\nRF_DeviceFamilyPack\8.35.0\Device\Include\compiler_abstraction.h
 .\_build\main.o: ..\..\..\..\..\..\components\softdevice\s132\headers\ble_hci.h
 .\_build\main.o: ..\..\..\..\..\..\components\ble\common\ble_advdata.h
 .\_build\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdbool.h
@@ -70,8 +70,8 @@
 .\_build\main.o: ..\..\..\..\..\..\modules\nrfx\nrfx.h
 .\_build\main.o: ..\..\..\..\..\..\integration\nrfx\nrfx_config.h
 .\_build\main.o: ..\..\..\..\..\..\modules\nrfx\drivers/nrfx_common.h
-.\_build\main.o: C:\Users\Jona Cappelle\AppData\Local\Arm\Packs\NordicSemiconductor\nRF_DeviceFamilyPack\8.35.0\Device\Include\nrf_peripherals.h
-.\_build\main.o: C:\Users\Jona Cappelle\AppData\Local\Arm\Packs\NordicSemiconductor\nRF_DeviceFamilyPack\8.35.0\Device\Include\nrf52832_peripherals.h
+.\_build\main.o: C:\Users\u0139004\AppData\Local\Arm\Packs\NordicSemiconductor\nRF_DeviceFamilyPack\8.35.0\Device\Include\nrf_peripherals.h
+.\_build\main.o: C:\Users\u0139004\AppData\Local\Arm\Packs\NordicSemiconductor\nRF_DeviceFamilyPack\8.35.0\Device\Include\nrf52832_peripherals.h
 .\_build\main.o: ..\..\..\..\..\..\integration\nrfx\nrfx_glue.h
 .\_build\main.o: ..\..\..\..\..\..\integration\nrfx\legacy/apply_old_config.h
 .\_build\main.o: ..\..\..\..\..\..\modules\nrfx\soc/nrfx_irqs.h
@@ -98,3 +98,48 @@
 .\_build\main.o: ..\..\..\..\..\..\components\libraries\balloc\nrf_balloc.h
 .\_build\main.o: ..\..\..\..\..\..\components\libraries\log\nrf_log_default_backends.h
 .\_build\main.o: ..\..\..\..\..\..\components\libraries\delay\nrf_delay.h
+.\_build\main.o: ..\..\..\..\..\..\integration\nrfx\legacy\nrf_drv_twi.h
+.\_build\main.o: ..\..\..\..\..\..\modules\nrfx\drivers\include\nrfx_twim.h
+.\_build\main.o: ..\..\..\..\..\..\modules\nrfx\drivers\include\nrfx_twi_twim.h
+.\_build\main.o: ..\..\..\..\..\..\modules\nrfx\hal/nrf_twim.h
+.\_build\main.o: ..\..\..\..\..\..\modules\nrfx\drivers\include\nrfx_twi.h
+.\_build\main.o: ..\..\..\..\..\..\modules\nrfx\hal/nrf_twi.h
+.\_build\main.o: ..\Invn/Devices/SerifHal.h
+.\_build\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\assert.h
+.\_build\main.o: ..\Invn/InvError.h
+.\_build\main.o: ..\Invn/Devices/DeviceIcm20948.h
+.\_build\main.o: ..\Invn/InvExport.h
+.\_build\main.o: ..\Invn/Devices/Device.h
+.\_build\main.o: ..\Invn/InvBool.h
+.\_build\main.o: ..\Invn/Devices/SensorTypes.h
+.\_build\main.o: ..\Invn/Devices/SensorConfig.h
+.\_build\main.o: ..\Invn/Devices/HostSerif.h
+.\_build\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\assert.h
+.\_build\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\assert.h
+.\_build\main.o: ..\Invn/Devices/Drivers/Icm20948/Icm20948.h
+.\_build\main.o: ..\Invn/Devices/Drivers/Icm20948/Icm20948Setup.h
+.\_build\main.o: ..\Invn/Devices/Drivers/Icm20948/Icm20948Serif.h
+.\_build\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\assert.h
+.\_build\main.o: ..\Invn/Devices/Drivers/Icm20948/Icm20948Transport.h
+.\_build\main.o: ..\Invn/Devices/Drivers/Icm20948/Icm20948DataConverter.h
+.\_build\main.o: ..\Invn/Devices/Drivers/Icm20948/Icm20948AuxCompassAkm.h
+.\_build\main.o: ..\Invn/Devices/Drivers/Icm20948/Icm20948SelfTest.h
+.\_build\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\assert.h
+.\_build\main.o: ..\Invn/DynamicProtocol/DynProtocol.h
+.\_build\main.o: ..\Invn/VSensor/VSensorConfig.h
+.\_build\main.o: ..\Invn/VSensor/VSensorData.h
+.\_build\main.o: ..\Invn/DynamicProtocol/DynProtocolTransportUart.h
+.\_build\main.o: ..\Invn/DynamicProtocol/DynProtocolTransport.h
+.\_build\main.o: ..\Invn/EmbUtils/Message.h
+.\_build\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdarg.h
+.\_build\main.o: ..\arm5_no_packs\imu.h
+.\_build\main.o: ..\arm5_no_packs\usr_twi.h
+.\_build\main.o: ..\arm5_no_packs\usr_tmr.h
+.\_build\main.o: ..\..\..\..\..\..\integration\nrfx\legacy\nrf_drv_timer.h
+.\_build\main.o: ..\..\..\..\..\..\modules\nrfx\drivers\include\nrfx_timer.h
+.\_build\main.o: ..\..\..\..\..\..\modules\nrfx\hal/nrf_timer.h
+.\_build\main.o: ..\arm5_no_packs\usr_gpio.h
+.\_build\main.o: ..\..\..\..\..\..\integration\nrfx\legacy\nrf_drv_gpiote.h
+.\_build\main.o: ..\..\..\..\..\..\modules\nrfx\drivers\include\nrfx_gpiote.h
+.\_build\main.o: ..\..\..\..\..\..\modules\nrfx\hal/nrf_gpiote.h
+.\_build\main.o: ..\Invn/Images/icm20948_img.dmp3a.h
