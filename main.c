@@ -856,18 +856,18 @@ int main(void)
 		/*
 		 * Setup message facility to see internal traces from IDD
 		 */
-//		INV_MSG_SETUP(MSG_LEVEL, msg_printer);
+		INV_MSG_SETUP(MSG_LEVEL, msg_printer);
 
-//		INV_MSG(INV_MSG_LEVEL_INFO, "###################################");
-//		INV_MSG(INV_MSG_LEVEL_INFO, "#          20948 example          #");
-//		INV_MSG(INV_MSG_LEVEL_INFO, "###################################");
-//		NRF_LOG_FLUSH();
+		INV_MSG(INV_MSG_LEVEL_INFO, "###################################");
+		INV_MSG(INV_MSG_LEVEL_INFO, "#          20948 example          #");
+		INV_MSG(INV_MSG_LEVEL_INFO, "###################################");
+		NRF_LOG_FLUSH();
 
 		/* Initialize GPIO pins */
-//		gpio_init();
+		gpio_init();
 		
 		/* Initialize us timer */
-//		timer_init();
+		timer_init();
 
 		/* To keep track of errors */
 		int rc = 0;
@@ -969,12 +969,15 @@ int main(void)
 		////////////////////////////////////////////////////////////////		
 		while(1)
 		{
-			NRF_LOG_FLUSH();
 			if(interrupt)
 			{
 				inv_device_poll(device);
 				interrupt = false;
 			}
+			NRF_LOG_FLUSH();
+			
+			/* Enter low power mode when idle */
+			idle_state_handle();
 		}
 		////////////////////////////////////////////////////////////////
 }

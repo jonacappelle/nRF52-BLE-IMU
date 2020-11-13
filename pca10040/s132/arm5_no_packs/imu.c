@@ -106,9 +106,15 @@ extern const nrf_drv_timer_t TIMER_MICROS;
  */
 uint64_t inv_icm20948_get_time_us(void)
 {	
+	
+		//temp 
+//	return 0;
+	
+	
 				uint32_t time_us = nrf_drv_timer_capture(&TIMER_MICROS, NRF_TIMER_CC_CHANNEL0);
 //				NRF_LOG_INFO("Timer value requested: %d", time_us);
 				return time_us;
+	
 }
 
 /* 

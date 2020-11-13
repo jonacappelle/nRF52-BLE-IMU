@@ -2,7 +2,10 @@
 
 
 /* Timer instance for us timer (TIMER 0)*/
-const nrf_drv_timer_t TIMER_MICROS = NRF_DRV_TIMER_INSTANCE(0);
+//const nrf_drv_timer_t TIMER_MICROS = NRF_DRV_TIMER_INSTANCE(0);
+// temp
+const nrf_drv_timer_t TIMER_MICROS = NRF_DRV_TIMER_INSTANCE(4);
+
 
 
 void timer_init (void)
