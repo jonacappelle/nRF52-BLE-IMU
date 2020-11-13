@@ -931,24 +931,24 @@ int main(void)
 
 
 		// Start 9DoF quaternion output
-//		NRF_LOG_INFO("Start sensors");
-//		NRF_LOG_INFO("Ping sensor");
-//		rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_ROTATION_VECTOR);
-//		check_rc(rc);
-//		rc += inv_device_set_sensor_period_us(device, INV_SENSOR_TYPE_ROTATION_VECTOR, 50000); // 200 Hz
-//		check_rc(rc);
-//		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_ROTATION_VECTOR);
-//		check_rc(rc);
-		
-		// Start 9DoF euler angles output
 		NRF_LOG_INFO("Start sensors");
 		NRF_LOG_INFO("Ping sensor");
-		rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_ORIENTATION);
+		rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_ROTATION_VECTOR);
 		check_rc(rc);
-		rc += inv_device_set_sensor_period_us(device, INV_SENSOR_TYPE_ORIENTATION, 50000); // 200 Hz
+		rc += inv_device_set_sensor_period_us(device, INV_SENSOR_TYPE_ROTATION_VECTOR, 50000); // 20 Hz
 		check_rc(rc);
-		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_ORIENTATION);
+		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_ROTATION_VECTOR);
 		check_rc(rc);
+		
+		// Start 9DoF euler angles output
+//		NRF_LOG_INFO("Start sensors");
+//		NRF_LOG_INFO("Ping sensor");
+//		rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_ORIENTATION);
+//		check_rc(rc);
+//		rc += inv_device_set_sensor_period_us(device, INV_SENSOR_TYPE_ORIENTATION, 50000); // 20 Hz
+//		check_rc(rc);
+//		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_ORIENTATION);
+//		check_rc(rc);
 		
 		nrf_delay_ms(2000);
 		

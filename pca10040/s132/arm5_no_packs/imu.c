@@ -189,6 +189,29 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 				//NRF_LOG_INFO("Sensor event!");
 				//NRF_LOG_FLUSH();
 	
+//	nus_printf_custom("Test");
+
+	
+//	nus_printf_custom("%d, %d, %d \n", (int)(event->data.orientation.x), (int)(event->data.orientation.y), (int)(event->data.orientation.z));
+	
+	
+	/* Send data from IMU to central */
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	char stringsend[20];
+	
+//	sprintf(stringsend, "Node 1: %d, %d, %d\n", (int)(event->data.orientation.x), (int)(event->data.orientation.y), (int)(event->data.orientation.z));
+	
+	
+	sprintf(stringsend, "w%fwa%fab%fbc%fc\n",
+					(event->data.quaternion.quat[0]),
+					(event->data.quaternion.quat[1]),
+					(event->data.quaternion.quat[2]),
+					(event->data.quaternion.quat[3]));
+	nus_printf_custom(stringsend);
+					
+	
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	
 	
 	if(event->status == INV_SENSOR_STATUS_DATA_UPDATED) {
 
