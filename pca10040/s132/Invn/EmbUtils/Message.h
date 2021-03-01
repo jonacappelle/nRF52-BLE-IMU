@@ -37,6 +37,7 @@
  *  @{
  */
 
+
 #ifndef _INV_MESSAGE_H_
 #define _INV_MESSAGE_H_
 

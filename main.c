@@ -120,7 +120,6 @@
 /* Define msg level */
 #define MSG_LEVEL INV_MSG_LEVEL_DEBUG
 
-
 /* Static variable to keep track if an interrupt has occurred in main loop */
 static bool interrupt = false;
 
@@ -128,7 +127,9 @@ static bool interrupt = false;
 const char * activityName(int act);
 
 /* Declared in imu.c */
-extern void msg_printer(int level, const char * str, va_list ap);
+//extern void msg_printer(int level, const char * str, va_list ap);
+
+
 
 /*
  * States for icm20948 device object
@@ -175,8 +176,8 @@ void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 
 #define APP_ADV_DURATION                18000                                       /**< The advertising duration (180 seconds) in units of 10 milliseconds. */
 
-#define MIN_CONN_INTERVAL               MSEC_TO_UNITS(20, UNIT_1_25_MS)             /**< Minimum acceptable connection interval (20 ms), Connection interval uses 1.25 ms units. */
-#define MAX_CONN_INTERVAL               MSEC_TO_UNITS(75, UNIT_1_25_MS)             /**< Maximum acceptable connection interval (75 ms), Connection interval uses 1.25 ms units. */
+#define MIN_CONN_INTERVAL               MSEC_TO_UNITS(8, UNIT_1_25_MS)             /**< Minimum acceptable connection interval (20 ms), Connection interval uses 1.25 ms units. */
+#define MAX_CONN_INTERVAL               MSEC_TO_UNITS(20, UNIT_1_25_MS)             /**< Maximum acceptable connection interval (75 ms), Connection interval uses 1.25 ms units. */
 #define SLAVE_LATENCY                   0                                           /**< Slave latency. */
 #define CONN_SUP_TIMEOUT                MSEC_TO_UNITS(4000, UNIT_10_MS)             /**< Connection supervisory timeout (4 seconds), Supervision Timeout uses 10 ms units. */
 #define FIRST_CONN_PARAMS_UPDATE_DELAY  APP_TIMER_TICKS(5000)                       /**< Time from initiating event (connect or start of notification) to first time sd_ble_gap_conn_param_update is called (5 seconds). */
@@ -195,7 +196,8 @@ NRF_BLE_QWR_DEF(m_qwr);                                                         
 BLE_ADVERTISING_DEF(m_advertising);                                                 /**< Advertising module instance. */
 
 static uint16_t   m_conn_handle          = BLE_CONN_HANDLE_INVALID;                 /**< Handle of the current connection. */
-static uint16_t   m_ble_nus_max_data_len = BLE_GATT_ATT_MTU_DEFAULT - 3;            /**< Maximum length of data (in bytes) that can be transmitted to the peer by the Nordic UART service module. */
+//static uint16_t   m_ble_nus_max_data_len = BLE_GATT_ATT_MTU_DEFAULT - 3;            /**< Maximum length of data (in bytes) that can be transmitted to the peer by the Nordic UART service module. */
+static uint16_t   m_ble_nus_max_data_len = 247 - 3;            /**< Maximum length of data (in bytes) that can be transmitted to the peer by the Nordic UART service module. */
 static ble_uuid_t m_adv_uuids[]          =                                          /**< Universally unique service identifier. */
 {
     {BLE_UUID_NUS_SERVICE, NUS_SERVICE_UUID_TYPE}
@@ -801,6 +803,18 @@ uint32_t nus_printf_custom(char* p_char)
 }
 
 
+/*
+ * Printer function for IDD message facility
+ */
+void msg_printer(int level, const char * str, va_list ap)
+{
+	NRF_LOG_INFO(str);
+//	NRF_LOG_INFO("Message printe ENABLED!!");
+	NRF_LOG_FLUSH();
+//	char str_length[100];
+//	sprintf(str_length, "%s", str);
+}
+
 
 /**@brief Application main function.
  */
@@ -856,12 +870,14 @@ int main(void)
 		/*
 		 * Setup message facility to see internal traces from IDD
 		 */
+		 __NOP();
 		INV_MSG_SETUP(MSG_LEVEL, msg_printer);
 
 		INV_MSG(INV_MSG_LEVEL_INFO, "###################################");
 		INV_MSG(INV_MSG_LEVEL_INFO, "#          20948 example          #");
 		INV_MSG(INV_MSG_LEVEL_INFO, "###################################");
 		NRF_LOG_FLUSH();
+		__NOP();
 
 		/* Initialize GPIO pins */
 		gpio_init();
@@ -933,11 +949,11 @@ int main(void)
 		// Start 9DoF quaternion output
 		NRF_LOG_INFO("Start sensors");
 		NRF_LOG_INFO("Ping sensor");
-		rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_ROTATION_VECTOR);
+		rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_GAME_ROTATION_VECTOR);
 		check_rc(rc);
-		rc += inv_device_set_sensor_period_us(device, INV_SENSOR_TYPE_ROTATION_VECTOR, 50000); // 20 Hz
+		rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_GAME_ROTATION_VECTOR, 5); // 200 Hz
 		check_rc(rc);
-		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_ROTATION_VECTOR);
+		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_GAME_ROTATION_VECTOR);
 		check_rc(rc);
 		
 		// Start 9DoF euler angles output
