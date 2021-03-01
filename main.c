@@ -113,6 +113,13 @@
 #include "usr_tmr.h"
 #include "usr_gpio.h"
 
+// TimeSync
+#include "time_sync.h"
+#include "nrf_gpiote.h"
+#include "nrf_ppi.h"
+#include "nrf_timer.h"
+
+
 ////////////////
 //  DEFINES   //
 ////////////////
@@ -167,7 +174,7 @@ void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 
 #define APP_BLE_CONN_CFG_TAG            1                                           /**< A tag identifying the SoftDevice BLE configuration. */
 
-#define DEVICE_NAME                     "nRF52_Jona"                               /**< Name of device. Will be included in the advertising data. */
+#define DEVICE_NAME                     "Nordic_UART"                               /**< Name of device. Will be included in the advertising data. */
 #define NUS_SERVICE_UUID_TYPE           BLE_UUID_TYPE_VENDOR_BEGIN                  /**< UUID type for the Nordic UART Service (vendor specific). */
 
 #define APP_BLE_OBSERVER_PRIO           3                                           /**< Application's BLE observer priority. You shouldn't need to modify this value. */
@@ -176,8 +183,8 @@ void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 
 #define APP_ADV_DURATION                18000                                       /**< The advertising duration (180 seconds) in units of 10 milliseconds. */
 
-#define MIN_CONN_INTERVAL               MSEC_TO_UNITS(8, UNIT_1_25_MS)             /**< Minimum acceptable connection interval (20 ms), Connection interval uses 1.25 ms units. */
-#define MAX_CONN_INTERVAL               MSEC_TO_UNITS(20, UNIT_1_25_MS)             /**< Maximum acceptable connection interval (75 ms), Connection interval uses 1.25 ms units. */
+#define MIN_CONN_INTERVAL               MSEC_TO_UNITS(20, UNIT_1_25_MS)             /**< Minimum acceptable connection interval (20 ms), Connection interval uses 1.25 ms units. */
+#define MAX_CONN_INTERVAL               MSEC_TO_UNITS(75, UNIT_1_25_MS)             /**< Maximum acceptable connection interval (75 ms), Connection interval uses 1.25 ms units. */
 #define SLAVE_LATENCY                   0                                           /**< Slave latency. */
 #define CONN_SUP_TIMEOUT                MSEC_TO_UNITS(4000, UNIT_10_MS)             /**< Connection supervisory timeout (4 seconds), Supervision Timeout uses 10 ms units. */
 #define FIRST_CONN_PARAMS_UPDATE_DELAY  APP_TIMER_TICKS(5000)                       /**< Time from initiating event (connect or start of notification) to first time sd_ble_gap_conn_param_update is called (5 seconds). */
@@ -568,6 +575,40 @@ void bsp_event_handler(bsp_event_t event)
     uint32_t err_code;
     switch (event)
     {
+			// TimeSync begin
+				case BSP_EVENT_KEY_0:
+        case BSP_EVENT_KEY_1:
+        case BSP_EVENT_KEY_2:
+        case BSP_EVENT_KEY_3:
+            {
+                static bool m_send_sync_pkt = false;
+                
+                if (m_send_sync_pkt)
+                {
+                    m_send_sync_pkt = false;
+                    
+                    bsp_board_leds_off();
+                    
+                    err_code = ts_tx_stop();
+                    APP_ERROR_CHECK(err_code);
+                    
+                    NRF_LOG_INFO("Stopping sync beacon transmission!\r\n");
+                }
+                else
+                {
+                    m_send_sync_pkt = true;
+                    
+                    bsp_board_leds_on();
+                    
+                    err_code = ts_tx_start(1);
+                    APP_ERROR_CHECK(err_code);
+                    
+                    NRF_LOG_INFO("Starting sync beacon transmission!\r\n");
+                }
+            }
+            break;
+				// TimeSync end
+						
         case BSP_EVENT_SLEEP:
             sleep_mode_enter();
             break;
@@ -816,6 +857,56 @@ void msg_printer(int level, const char * str, va_list ap)
 }
 
 
+// TimeSync
+static void sync_timer_button_init(void)
+{
+    uint32_t       err_code;
+    uint8_t        rf_address[5] = {0xDE, 0xAD, 0xBE, 0xEF, 0x19};
+    ts_params_t    ts_params;
+    
+    // Debug pin: 
+    // nRF52-DK (PCA10040) Toggle P0.24 from sync timer to allow pin measurement
+    // nRF52840-DK (PCA10056) Toggle P1.14 from sync timer to allow pin measurement
+#if defined(BOARD_PCA10040)
+    nrf_gpiote_task_configure(3, NRF_GPIO_PIN_MAP(0, 24), NRF_GPIOTE_POLARITY_TOGGLE, NRF_GPIOTE_INITIAL_VALUE_LOW);
+    nrf_gpiote_task_enable(3);
+#elif defined(BOARD_PCA10056)
+    nrf_gpiote_task_configure(3, NRF_GPIO_PIN_MAP(1, 14), NRF_GPIOTE_POLARITY_TOGGLE, NRF_GPIOTE_INITIAL_VALUE_LOW);
+    nrf_gpiote_task_enable(3);
+#else
+#warning Debug pin not set
+#endif
+    
+    nrf_ppi_channel_endpoint_setup(
+        NRF_PPI_CHANNEL0, 
+        (uint32_t) nrf_timer_event_address_get(NRF_TIMER3, NRF_TIMER_EVENT_COMPARE4),
+        nrf_gpiote_task_addr_get(NRF_GPIOTE_TASKS_OUT_3));
+    nrf_ppi_channel_enable(NRF_PPI_CHANNEL0);
+    
+    ts_params.high_freq_timer[0] = NRF_TIMER3;
+    ts_params.high_freq_timer[1] = NRF_TIMER2;
+    ts_params.rtc             = NRF_RTC1;
+    ts_params.egu             = NRF_EGU3;
+    ts_params.egu_irq_type    = SWI3_EGU3_IRQn;
+    ts_params.ppi_chg         = 0;
+    ts_params.ppi_chns[0]     = 1;
+    ts_params.ppi_chns[1]     = 2;
+    ts_params.ppi_chns[2]     = 3;
+    ts_params.ppi_chns[3]     = 4;
+    ts_params.rf_chn          = 125; /* For testing purposes */
+    memcpy(ts_params.rf_addr, rf_address, sizeof(rf_address));
+    
+    err_code = ts_init(&ts_params);
+    APP_ERROR_CHECK(err_code);
+    
+    err_code = ts_enable();
+    APP_ERROR_CHECK(err_code);
+    
+    NRF_LOG_INFO("Started listening for beacons.\r\n");
+    NRF_LOG_INFO("Press Button 1 to start sending sync beacons\r\n");
+}
+
+
 /**@brief Application main function.
  */
 int main(void)
@@ -834,6 +925,9 @@ int main(void)
     services_init();
     advertising_init();
     conn_params_init();
+	
+		// TimeSync
+		sync_timer_button_init();
 
     // Start execution.
     printf("\r\nUART started.\r\n");
