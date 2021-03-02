@@ -134,8 +134,7 @@ static bool interrupt = false;
 const char * activityName(int act);
 
 /* Declared in imu.c */
-//extern void msg_printer(int level, const char * str, va_list ap);
-
+extern void msg_printer(int level, const char * str, va_list ap);
 
 
 /*
@@ -169,8 +168,10 @@ void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 
 
 ///////////////////////////////////////////////
+#define SYNC_FREQ	2 // Hz
 
 
+///////////////////////////////////////////////
 
 #define APP_BLE_CONN_CFG_TAG            1                                           /**< A tag identifying the SoftDevice BLE configuration. */
 
@@ -600,7 +601,7 @@ void bsp_event_handler(bsp_event_t event)
                     
                     bsp_board_leds_on();
                     
-                    err_code = ts_tx_start(1);
+                    err_code = ts_tx_start(SYNC_FREQ); // Frequency of synchronization packets
                     APP_ERROR_CHECK(err_code);
                     
                     NRF_LOG_INFO("Starting sync beacon transmission!\r\n");
@@ -844,17 +845,6 @@ uint32_t nus_printf_custom(char* p_char)
 }
 
 
-/*
- * Printer function for IDD message facility
- */
-void msg_printer(int level, const char * str, va_list ap)
-{
-	NRF_LOG_INFO(str);
-//	NRF_LOG_INFO("Message printe ENABLED!!");
-	NRF_LOG_FLUSH();
-//	char str_length[100];
-//	sprintf(str_length, "%s", str);
-}
 
 
 // TimeSync
@@ -933,28 +923,9 @@ int main(void)
     printf("\r\nUART started.\r\n");
     NRF_LOG_INFO("Debug logging for UART over RTT started.");
     advertising_start();
-	
-	
-//    // Enter main loop.
-//    for (;;)
-//    {
-//        idle_state_handle();
-//			
-//				// SEND TEST PACKET OVER BLE using NUS
-//		/*		uint32_t error_codee = nus_printf_custom(&test_packet1[0]);
-//				error_codee = nus_printf_custom(&test_packet2[0]);
-//				error_codee = nus_printf_custom(&test_packet3[0]);
-//				error_codee = nus_printf_custom(&test_packet4[0]);
-//				error_codee = nus_printf_custom(&test_packet5[0]);
-//			
-//				nrf_delay_ms(1000);*/
-//			
-//				//uint32_t error_codee = nus_printf_custom(&test_packet[0]);
-//			
-//			/*	nrf_delay_ms(1000);*/
-//    }
 		
-		
+
+	
 //		APP_ERROR_CHECK(NRF_LOG_INIT(NULL));
 //    NRF_LOG_DEFAULT_BACKENDS_INIT();
 
@@ -1026,12 +997,6 @@ int main(void)
 		check_rc(rc);
 		NRF_LOG_FLUSH();
 		
-		
-		
-//		rc += inv_device_set_sensor_period_us(device, INV_SENSOR_TYPE_RAW_GYROSCOPE, 50000);
-//		check_rc(rc);
-//		NRF_LOG_FLUSH();
-		
 //		rc += inv_device_set_sensor_period_us(device, INV_SENSOR_TYPE_GYROSCOPE, 50000); // 20 Hz
 //		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_GYROSCOPE);
 //		rc += inv_device_set_sensor_period_us(device, INV_SENSOR_TYPE_ACCELEROMETER, 50000); // 20 Hz
@@ -1081,6 +1046,8 @@ int main(void)
 		{
 			if(interrupt)
 			{
+//				uint32_t timer_test = ts_timestamp_get_ticks_u32(NRF_PPI_CHANNEL0);
+//				NRF_LOG_INFO("Local time: %d", timer_test/16000000);
 				inv_device_poll(device);
 				interrupt = false;
 			}

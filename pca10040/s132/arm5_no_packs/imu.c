@@ -269,15 +269,15 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 		case INV_SENSOR_TYPE_GAME_ROTATION_VECTOR:
 		case INV_SENSOR_TYPE_ROTATION_VECTOR:
 		case INV_SENSOR_TYPE_GEOMAG_ROTATION_VECTOR:
-			NRF_LOG_INFO("RV: Accuracy: %d %d %d %d", //inv_sensor_str(event->sensor),
-//					(int)(event->data.quaternion.quat[0]*1000),
-//					(int)(event->data.quaternion.quat[1]*1000),
-//					(int)(event->data.quaternion.quat[2]*1000),
-//					(int)(event->data.quaternion.quat[3]*1000),
-					(int)(event->data.gyr.accuracy_flag),
-					(int)(event->data.acc.accuracy_flag),	
-					(int)(event->data.mag.accuracy_flag), // 0 - 3: not calibrated - fully calibrated
-					(int)(event->data.quaternion.accuracy_flag));
+//			NRF_LOG_INFO("RV: Accuracy: %d %d %d %d", //inv_sensor_str(event->sensor),
+////					(int)(event->data.quaternion.quat[0]*1000),
+////					(int)(event->data.quaternion.quat[1]*1000),
+////					(int)(event->data.quaternion.quat[2]*1000),
+////					(int)(event->data.quaternion.quat[3]*1000),
+//					(int)(event->data.gyr.accuracy_flag),
+//					(int)(event->data.acc.accuracy_flag),	
+//					(int)(event->data.mag.accuracy_flag), // 0 - 3: not calibrated - fully calibrated
+//					(int)(event->data.quaternion.accuracy_flag));
 			break;
 		case INV_SENSOR_TYPE_ORIENTATION:
 //			NRF_LOG_INFO("data event %s (e-3):, %d, %d, %d, Accuracy: %d ", inv_sensor_str(event->sensor),
@@ -325,17 +325,22 @@ inv_sensor_listener_t sensor_listener = {
 };
 
 
-///*
-// * Printer function for IDD message facility
-// */
-//void msg_printer(int level, const char * str, va_list ap)
-//{
-////	NRF_LOG_INFO(str);
-////	NRF_LOG_INFO("Message printe ENABLED!!");
-////	NRF_LOG_FLUSH();
+/*
+ * Printer function for IDD message facility
+ */
+void msg_printer(int level, const char * str, va_list ap)
+{
+	NRF_LOG_INFO(str);
+//	NRF_LOG_INFO("Message printe ENABLED!!");
+	NRF_LOG_FLUSH();
 //	char str_length[100];
 //	sprintf(str_length, "%s", str);
-//}
+}
+
+
+
+
+
 
 
 
