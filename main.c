@@ -159,13 +159,23 @@ static void check_rc(int rc)
 	}
 }
 
+/*
+ * Last time at which 20948 IRQ was fired
+ */
+static volatile uint32_t last_irq_time = 0;
+
 /* Interrupt pin handeler callback function */
 void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 {
     //NRF_LOG_INFO("Interrupt Occured!");
+		last_irq_time = inv_icm20948_get_time_us();
 		interrupt = true;
 }
 
+uint64_t inv_icm20948_get_dataready_interrupt_time_us(void)
+{
+	return last_irq_time;
+}
 
 ///////////////////////////////////////////////
 #define SYNC_FREQ	2 // Hz
@@ -847,6 +857,8 @@ uint32_t nus_printf_custom(char* p_char)
 
 
 
+
+
 // TimeSync
 static void sync_timer_button_init(void)
 {
@@ -895,6 +907,11 @@ static void sync_timer_button_init(void)
     NRF_LOG_INFO("Started listening for beacons.\r\n");
     NRF_LOG_INFO("Press Button 1 to start sending sync beacons\r\n");
 }
+
+
+
+
+
 
 
 /**@brief Application main function.
@@ -1063,3 +1080,64 @@ int main(void)
 /**
  * @}
  */
+
+
+//void apply_stored_offsets(void)
+//{
+//	uint8_t sensor_bias[84];
+//	int32_t acc_bias_q16[6] = {0}, gyro_bias_q16[6] = {0};
+//	uint8_t i, idx = 0;
+//	int rc;
+//	
+//	
+//	// TODO own implementation needed
+//	/* Retrieve Sel-test offsets stored in NV memory */
+////	if(flash_manager_readData(sensor_bias) != 0) {
+////		INV_MSG(INV_MSG_LEVEL_WARNING, "No bias values retrieved from NV memory !");
+////		return;
+////	}
+//	
+//	for(i = 0; i < 6; i++)
+//		gyro_bias_q16[i] = inv_dc_little8_to_int32((const uint8_t *)(&sensor_bias[i * sizeof(uint32_t)]));
+//	idx += sizeof(gyro_bias_q16);
+//	rc = inv_device_set_sensor_config(device, INV_SENSOR_TYPE_GYROSCOPE,
+//		VSENSOR_CONFIG_TYPE_OFFSET, gyro_bias_q16, sizeof(gyro_bias_q16));
+//	check_rc(rc);
+//	
+//	for(i = 0; i < 6; i++)
+//		acc_bias_q16[i] = inv_dc_little8_to_int32((const uint8_t *)(&sensor_bias[idx + i * sizeof(uint32_t)]));
+//	idx += sizeof(acc_bias_q16);
+//	rc = inv_device_set_sensor_config(device, INV_SENSOR_TYPE_ACCELEROMETER,
+//		VSENSOR_CONFIG_TYPE_OFFSET, acc_bias_q16, sizeof(acc_bias_q16));
+
+//}
+
+
+
+//void store_offsets(void)
+//{
+//	int rc = 0;
+//	uint8_t i, idx = 0;
+//	int gyro_bias_q16[6] = {0}, acc_bias_q16[6] = {0};
+
+//	uint8_t sensor_bias[84] = {0};
+//	
+//	/* Strore Self-test bias in NV memory */
+//	rc = inv_device_get_sensor_config(device, INV_SENSOR_TYPE_GYROSCOPE,
+//			VSENSOR_CONFIG_TYPE_OFFSET, gyro_bias_q16, sizeof(gyro_bias_q16));
+//	check_rc(rc);
+//	for(i = 0; i < 6; i++)
+//		inv_dc_int32_to_little8(gyro_bias_q16[i], &sensor_bias[i * sizeof(uint32_t)]);
+//	idx += sizeof(gyro_bias_q16);
+//	
+//	rc = inv_device_get_sensor_config(device, INV_SENSOR_TYPE_ACCELEROMETER,
+//			VSENSOR_CONFIG_TYPE_OFFSET, acc_bias_q16, sizeof(acc_bias_q16));
+//	check_rc(rc);
+//	for(i = 0; i < 6; i++)
+//		inv_dc_int32_to_little8(acc_bias_q16[i], &sensor_bias[idx + i * sizeof(uint32_t)]);
+//	idx += sizeof(acc_bias_q16);
+
+//	// TODO own implementation needed to store sensor_bias in non volatile memory
+//	// flash_manager_writeData(sensor_bias);
+//}
+

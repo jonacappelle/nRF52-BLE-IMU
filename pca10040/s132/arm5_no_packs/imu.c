@@ -27,6 +27,12 @@
 // #include "MyTarget/SPI.h"
 #include "nrf_drv_twi.h"
 
+#include "nrf_log.h"
+#include "nrf_log_ctrl.h"
+#include "nrf_log_default_backends.h"
+
+#include "DataConverter.h"
+
 extern const nrf_drv_twi_t m_twi;
 
 extern ret_code_t i2c_read_bytes(const nrf_drv_twi_t *twi_handle, uint8_t address, uint8_t sub_address, uint8_t * dest, uint8_t dest_count);
@@ -92,6 +98,9 @@ int my_serif_open_write_reg(void * context, uint8_t reg, const uint8_t * wbuffer
 // Timer
 #include <stdbool.h>
 #include <stdint.h>
+
+#include <stdio.h>
+
 #include "nrf.h"
 #include "nrf_drv_timer.h"
 #include "bsp.h"
@@ -100,22 +109,21 @@ int my_serif_open_write_reg(void * context, uint8_t reg, const uint8_t * wbuffer
 #include "nrf_delay.h"
 
 extern const nrf_drv_timer_t TIMER_MICROS;
+extern uint64_t inv_icm20948_get_dataready_interrupt_time_us(void);
 
 /*
  * Time implementation for Icm20948.
  */
 uint64_t inv_icm20948_get_time_us(void)
 {	
-	
-		//temp 
-//	return 0;
-	
-	
 				uint32_t time_us = nrf_drv_timer_capture(&TIMER_MICROS, NRF_TIMER_CC_CHANNEL0);
 //				NRF_LOG_INFO("Timer value requested: %d", time_us);
 				return time_us;
-	
 }
+
+
+
+
 
 /* 
  * High resolution sleep implementation for Icm20948.
@@ -151,6 +159,7 @@ void inv_icm20948_sleep_us(int us)
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
 
+extern uint32_t nus_printf_custom(char* p_char);
 
 /*
  * Function to return activity name in printable char
@@ -189,27 +198,26 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 				//NRF_LOG_INFO("Sensor event!");
 				//NRF_LOG_FLUSH();
 	
-//	nus_printf_custom("Test");
-
-	
-//	nus_printf_custom("%d, %d, %d \n", (int)(event->data.orientation.x), (int)(event->data.orientation.y), (int)(event->data.orientation.z));
-	
 	
 	/* Send data from IMU to central */
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	char stringsend[20];
-	
-//	sprintf(stringsend, "Node 1: %d, %d, %d\n", (int)(event->data.orientation.x), (int)(event->data.orientation.y), (int)(event->data.orientation.z));
+	char stringsend[247];
 	
 	
-	sprintf(stringsend, "w%fwa%fab%fbc%fc\n",
+	// Convert data to string over ble nus
+	sprintf(stringsend, "%s	%llu	w%fwa%fab%fbc%fc	%d	%f\n",
+					(inv_sensor_str(event->sensor)),
+//					inv_icm20948_get_dataready_interrupt_time_us(),
+					(event->timestamp),
 					(event->data.quaternion.quat[0]),
 					(event->data.quaternion.quat[1]),
 					(event->data.quaternion.quat[2]),
-					(event->data.quaternion.quat[3]));
+					(event->data.quaternion.quat[3]),
+					(event->data.quaternion.accuracy_flag),
+					(event->data.quaternion.accuracy));
 	nus_printf_custom(stringsend);
-					
-	
+
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	
 	
@@ -218,11 +226,12 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 		switch(INV_SENSOR_ID_TO_TYPE(event->sensor)) {
 		case INV_SENSOR_TYPE_RAW_ACCELEROMETER:
 		case INV_SENSOR_TYPE_RAW_GYROSCOPE:
-			NRF_LOG_INFO("data event %s (lsb): %llu %d %d %d", inv_sensor_str(event->sensor),
-					(int)event->timestamp,
-					(int)event->data.raw3d.vect[0],
-					(int)event->data.raw3d.vect[1],
-					(int)event->data.raw3d.vect[2]);
+//			NRF_LOG_INFO("data event: %d %d %d %d", //inv_sensor_str(event->sensor),
+//					(int)event->timestamp,
+//					(int)event->data.raw3d.vect[0],
+//					(int)event->data.raw3d.vect[1],
+//					(int)event->data.raw3d.vect[2]);
+				NRF_LOG_INFO("Data");
 //					NRF_LOG_INFO("%d	%d	%d", event->data.raw3d.vect[0], event->data.raw3d.vect[1], event->data.raw3d.vect[2]);
 			break;
 		case INV_SENSOR_TYPE_ACCELEROMETER:
@@ -336,8 +345,6 @@ void msg_printer(int level, const char * str, va_list ap)
 //	char str_length[100];
 //	sprintf(str_length, "%s", str);
 }
-
-
 
 
 
