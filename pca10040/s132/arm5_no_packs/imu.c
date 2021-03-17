@@ -183,6 +183,16 @@ const char * activityName(int act)
 	}
 }
 
+int counterr = 0;
+char stringsend[247];
+
+
+
+uint8_t test_troughput_array[132];
+
+
+
+
 /*
  * Callback called upon sensor event reception
  * This function is called in the same function than inv_device_poll()
@@ -201,27 +211,67 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 	
 	/* Send data from IMU to central */
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	char stringsend[247];
+
 	
 	
-	// Convert data to string over ble nus
-	sprintf(stringsend, "%s	%llu	w%fwa%fab%fbc%fc	%d	%f\n",
-					(inv_sensor_str(event->sensor)),
-//					inv_icm20948_get_dataready_interrupt_time_us(),
-					(event->timestamp),
-					(event->data.quaternion.quat[0]),
-					(event->data.quaternion.quat[1]),
-					(event->data.quaternion.quat[2]),
-					(event->data.quaternion.quat[3]),
-					(event->data.quaternion.accuracy_flag),
-					(event->data.quaternion.accuracy));
-	nus_printf_custom(stringsend);
 
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	
 	
 	if(event->status == INV_SENSOR_STATUS_DATA_UPDATED) {
+		
+		counterr++;
+		
+		float dummy_data = 1.001;
+		
+			// Convert data to string over ble nus
+		sprintf(stringsend, "%d	- %f	%f	%f	%f - %f	%f	%f - %f	%f	%f - %f	%f	%f \n",
+//					(inv_sensor_str(event->sensor)),
+//					inv_icm20948_get_dataready_interrupt_time_us(),
+//					(event->timestamp),
+					(counterr),
+//					(ts_timestamp_get_ticks_u64(0)),
+//					NRF_RTC1->COUNTER,
+					(event->data.quaternion.quat[0]),
+					(event->data.quaternion.quat[1]),
+					(event->data.quaternion.quat[2]),
+					(event->data.quaternion.quat[3]),
+//					(event->data.quaternion.accuracy_flag),
+//					(event->data.quaternion.accuracy),
+					
+					(event->data.gyr.vect[0]),
+					(event->data.gyr.vect[1]),
+					(event->data.gyr.vect[2]),
+					
+					(event->data.acc.vect[0]),
+					(event->data.acc.vect[1]),
+					(event->data.acc.vect[2]),
+					
+					(event->data.mag.vect[0]),
+					(event->data.mag.vect[1]),
+					(event->data.mag.vect[2])
+					
+//					(dummy_data),(dummy_data),(dummy_data),(dummy_data),(dummy_data),(dummy_data),(dummy_data),(dummy_data),(dummy_data),
+//					(dummy_data),(dummy_data),(dummy_data),(dummy_data),(dummy_data),(dummy_data),(dummy_data),(dummy_data),(dummy_data)
+//					
+					);
+					
+					
+					
+	nus_printf_custom(stringsend);
+
+	
+//	for(int i=0; i<132; i++)
+//	{
+//	test_troughput_array[i] = i;
+//	}
+//	nus_send(&test_troughput_array, 132);
+	
+	NRF_LOG_INFO("Counter: %d", counterr);
+	
+	
+	
 
 		switch(INV_SENSOR_ID_TO_TYPE(event->sensor)) {
 		case INV_SENSOR_TYPE_RAW_ACCELEROMETER:

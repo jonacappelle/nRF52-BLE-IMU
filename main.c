@@ -561,6 +561,17 @@ void gatt_evt_handler(nrf_ble_gatt_t * p_gatt, nrf_ble_gatt_evt_t const * p_evt)
     NRF_LOG_DEBUG("ATT MTU exchange completed. central 0x%x peripheral 0x%x",
                   p_gatt->att_mtu_desired_central,
                   p_gatt->att_mtu_desired_periph);
+		
+		// Added//
+		if ((m_conn_handle == p_evt->conn_handle) && (p_evt->evt_id == NRF_BLE_GATT_EVT_ATT_MTU_UPDATED))
+    {
+        NRF_LOG_INFO("MTU size is set to 0x%X(%d)", p_evt->params.att_mtu_effective, p_evt->params.att_mtu_effective);
+    }
+
+    if ((m_conn_handle == p_evt->conn_handle) && (p_evt->evt_id == NRF_BLE_GATT_EVT_DATA_LENGTH_UPDATED))
+    {
+         NRF_LOG_INFO("LL packet size is set to %d", p_gatt->data_length);
+    }
 }
 
 
@@ -829,7 +840,7 @@ static void advertising_start(void)
     APP_ERROR_CHECK(err_code);
 }
 
-
+int countrrr = 0;
 
 // CUSTOM
 uint32_t nus_printf_custom(char* p_char)
@@ -842,19 +853,54 @@ uint32_t nus_printf_custom(char* p_char)
           index++;
           p_char++;
           }
-		do {
-				//err_code = ble_nus_string_send(&m_nus, data_array, &index);
-				err_code = ble_nus_data_send(&m_nus, data_array, &index, m_conn_handle);
-				if ( (err_code != NRF_ERROR_INVALID_STATE) && (err_code != NRF_ERROR_BUSY) )
-				{
-					break;
-				}
-		} while (err_code == NRF_ERROR_BUSY);
+//		do {
+//				//err_code = ble_nus_string_send(&m_nus, data_array, &index);
+//				err_code = ble_nus_data_send(&m_nus, data_array, &index, m_conn_handle);
+//				if ( (err_code != NRF_ERROR_INVALID_STATE) && (err_code != NRF_ERROR_BUSY) )
+//				{
+//					break;
+//				}
+//		} while (err_code == NRF_ERROR_BUSY);
+//			do
+//			{
+//					err_code = ble_nus_data_send(&m_nus, data_array, &index, m_conn_handle);
+////					if (err_code == NRF_SUCCESS)
+////					{
+////							sent_bytes += nus_len;
+////					}
+//			}while (err_code == NRF_SUCCESS);
+			
+			do
+			{
+					err_code = ble_nus_data_send(&m_nus, data_array, &index, m_conn_handle);
+					if ((err_code != NRF_ERROR_INVALID_STATE) &&
+							(err_code != NRF_ERROR_RESOURCES) &&
+							(err_code != NRF_ERROR_NOT_FOUND))
+					{
+							APP_ERROR_CHECK(err_code);
+					}
+			} while (err_code == NRF_ERROR_RESOURCES);
+		
+			NRF_LOG_INFO("C:	%d", countrrr);
+	countrrr++;
 		index = 0;
 	return err_code;
 }
 
-
+uint32_t nus_send(uint8_t* data, uint16_t len)
+{
+		uint32_t err_code;
+		do {
+			//err_code = ble_nus_string_send(&m_nus, data_array, &index);
+			err_code = ble_nus_data_send(&m_nus, data, &len, m_conn_handle);
+			if ( (err_code != NRF_ERROR_INVALID_STATE) && (err_code != NRF_ERROR_BUSY) )
+			{
+				break;
+			}
+		} while (err_code == NRF_ERROR_BUSY);
+		
+		return err_code;
+}
 
 
 
@@ -1014,11 +1060,11 @@ int main(void)
 		check_rc(rc);
 		NRF_LOG_FLUSH();
 		
-//		rc += inv_device_set_sensor_period_us(device, INV_SENSOR_TYPE_GYROSCOPE, 50000); // 20 Hz
+//		rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_GYROSCOPE, 10); // 100 Hz
 //		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_GYROSCOPE);
-//		rc += inv_device_set_sensor_period_us(device, INV_SENSOR_TYPE_ACCELEROMETER, 50000); // 20 Hz
+//		rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_ACCELEROMETER, 10); // 100 Hz
 //		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_ACCELEROMETER);
-//		rc += inv_device_set_sensor_period_us(device, INV_SENSOR_TYPE_MAGNETOMETER, 50000); // 20 Hz
+//		rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_MAGNETOMETER, 10); // 100 Hz
 //		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_MAGNETOMETER);
 
 
@@ -1027,7 +1073,7 @@ int main(void)
 		NRF_LOG_INFO("Ping sensor");
 		rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_GAME_ROTATION_VECTOR);
 		check_rc(rc);
-		rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_GAME_ROTATION_VECTOR, 5); // 200 Hz
+		rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_GAME_ROTATION_VECTOR, 5); // 100 Hz
 		check_rc(rc);
 		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_GAME_ROTATION_VECTOR);
 		check_rc(rc);

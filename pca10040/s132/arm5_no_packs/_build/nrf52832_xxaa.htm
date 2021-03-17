@@ -3,7 +3,7 @@
 <title>Static Call Graph - [.\_build\nrf52832_xxaa.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image .\_build\nrf52832_xxaa.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060750: Last Updated: Wed Mar 03 15:51:29 2021
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060750: Last Updated: Wed Mar 17 10:32:13 2021
 <BR><P>
 <H3>Maximum Stack Usage =        776 bytes + Unknown(Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -401,8 +401,8 @@ Global Symbols
 <LI><a href="#[80]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_llsr
 </UL>
 <BR>[Called By]<UL><LI><a href="#[11d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;bsp_led_indication
-<LI><a href="#[1a6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_gyro_sf
 <LI><a href="#[1f9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_updateTs
+<LI><a href="#[1a6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_gyro_sf
 <LI><a href="#[a8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_printf_core
 <LI><a href="#[b3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_fp_digits
 </UL>
@@ -491,7 +491,9 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[f6]"></a>__aeabi_memclr4</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, memseta.o(.text))
-<BR><BR>[Called By]<UL><LI><a href="#[186]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_device_icm20948_init2
+<BR><BR>[Called By]<UL><LI><a href="#[1ee]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_initialize_lower_driver
+<LI><a href="#[1f9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_updateTs
+<LI><a href="#[186]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_device_icm20948_init2
 <LI><a href="#[72]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ble_nus_on_ble_evt
 <LI><a href="#[109]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ble_nus_init
 <LI><a href="#[f3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ble_advertising_start
@@ -505,8 +507,6 @@ Global Symbols
 <LI><a href="#[21e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_setup_compass_akm
 <LI><a href="#[195]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_init_matrix
 <LI><a href="#[129]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;build_sensor_event
-<LI><a href="#[1ee]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_initialize_lower_driver
-<LI><a href="#[1f9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_updateTs
 </UL>
 
 <P><STRONG><a name="[2d9]"></a>__aeabi_memclr8</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, memseta.o(.text), UNUSED)
@@ -735,7 +735,7 @@ Global Symbols
 
 <P><STRONG><a name="[2e3]"></a>__1sprintf</STRONG> (Thumb, 0 bytes, Stack size 24 bytes, printfa.o(i.__0sprintf), UNUSED)
 
-<P><STRONG><a name="[2ac]"></a>__2sprintf</STRONG> (Thumb, 0 bytes, Stack size 24 bytes, printfa.o(i.__0sprintf))
+<P><STRONG><a name="[2ab]"></a>__2sprintf</STRONG> (Thumb, 0 bytes, Stack size 24 bytes, printfa.o(i.__0sprintf))
 <BR><BR>[Stack]<UL><LI>Max Depth = 24<LI>Call Chain = __2sprintf
 </UL>
 <BR>[Called By]<UL><LI><a href="#[1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sensor_event_cb
@@ -861,6 +861,7 @@ Global Symbols
 <LI><a href="#[170]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_init
 <LI><a href="#[d5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;app_uart_get
 <LI><a href="#[41]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uart_event_handle
+<LI><a href="#[29b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;nus_printf_custom
 <LI><a href="#[31]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 <LI><a href="#[16b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gatt_init
 <LI><a href="#[42]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;bsp_event_handler
@@ -1417,8 +1418,8 @@ Global Symbols
 <BR>[Calls]<UL><LI><a href="#[144]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_mems
 <LI><a href="#[148]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_convert_int16_to_big8
 </UL>
-<BR>[Called By]<UL><LI><a href="#[1a3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_set_hw_smplrt_dmp_odrs
-<LI><a href="#[1ee]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_initialize_lower_driver
+<BR>[Called By]<UL><LI><a href="#[1ee]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_initialize_lower_driver
+<LI><a href="#[1a3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_set_hw_smplrt_dmp_odrs
 </UL>
 
 <P><STRONG><a name="[14e]"></a>dmp_icm20948_set_bac_rate</STRONG> (Thumb, 82 bytes, Stack size 16 bytes, icm20948dmp3driver.o(i.dmp_icm20948_set_bac_rate))
@@ -1427,8 +1428,8 @@ Global Symbols
 <BR>[Calls]<UL><LI><a href="#[144]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_mems
 <LI><a href="#[148]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_convert_int16_to_big8
 </UL>
-<BR>[Called By]<UL><LI><a href="#[1a3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_set_hw_smplrt_dmp_odrs
-<LI><a href="#[1ee]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_initialize_lower_driver
+<BR>[Called By]<UL><LI><a href="#[1ee]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_initialize_lower_driver
+<LI><a href="#[1a3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_set_hw_smplrt_dmp_odrs
 </UL>
 
 <P><STRONG><a name="[14f]"></a>dmp_icm20948_set_batchmode_params</STRONG> (Thumb, 84 bytes, Stack size 32 bytes, icm20948dmp3driver.o(i.dmp_icm20948_set_batchmode_params))
@@ -1641,10 +1642,11 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[175]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;i2c_write_byte
 </UL>
 
-<P><STRONG><a name="[3e]"></a>gatt_evt_handler</STRONG> (Thumb, 52 bytes, Stack size 0 bytes, main.o(i.gatt_evt_handler))
-<BR><BR>[Stack]<UL><LI>Max Depth = 188<LI>Call Chain = gatt_evt_handler &rArr; nrf_log_frontend_std_2 &rArr; std_n &rArr; nrf_log_frontend_dequeue &rArr;  nrf_log_frontend_std_0 (Cycle)
+<P><STRONG><a name="[3e]"></a>gatt_evt_handler</STRONG> (Thumb, 124 bytes, Stack size 24 bytes, main.o(i.gatt_evt_handler))
+<BR><BR>[Stack]<UL><LI>Max Depth = 212<LI>Call Chain = gatt_evt_handler &rArr; nrf_log_frontend_std_2 &rArr; std_n &rArr; nrf_log_frontend_dequeue &rArr;  nrf_log_frontend_std_0 (Cycle)
 </UL>
 <BR>[Calls]<UL><LI><a href="#[135]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;nrf_log_frontend_std_2
+<LI><a href="#[12e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;nrf_log_frontend_std_1
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> main.o(i.gatt_init)
 </UL>
@@ -1878,9 +1880,9 @@ Global Symbols
 </UL>
 <BR>[Calls]<UL><LI><a href="#[1aa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_chip_power_state
 </UL>
-<BR>[Called By]<UL><LI><a href="#[21c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_odr
+<BR>[Called By]<UL><LI><a href="#[1ef]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_slave_compass_id
+<LI><a href="#[21c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_odr
 <LI><a href="#[1c4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_ctrl_enable_sensor
-<LI><a href="#[1ef]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_slave_compass_id
 </UL>
 
 <P><STRONG><a name="[1f5]"></a>inv_icm20948_apply_raw_compass_matrix</STRONG> (Thumb, 62 bytes, Stack size 20 bytes, icm20948auxcompassakm.o(i.inv_icm20948_apply_raw_compass_matrix))
@@ -1963,8 +1965,8 @@ Global Symbols
 <BR>[Calls]<UL><LI><a href="#[1b9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_convert_mult_q30_fxp
 <LI><a href="#[153]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_compass_matrix
 </UL>
-<BR>[Called By]<UL><LI><a href="#[192]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_matrix
-<LI><a href="#[1ef]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_slave_compass_id
+<BR>[Called By]<UL><LI><a href="#[1ef]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_slave_compass_id
+<LI><a href="#[192]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_matrix
 </UL>
 
 <P><STRONG><a name="[18b]"></a>inv_icm20948_compass_isconnected</STRONG> (Thumb, 16 bytes, Stack size 0 bytes, icm20948auxcompassakm.o(i.inv_icm20948_compass_isconnected))
@@ -1983,9 +1985,9 @@ Global Symbols
 <BR>[Calls]<UL><LI><a href="#[1b9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_convert_mult_q30_fxp
 <LI><a href="#[1b2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_convert_fast_sqrt_fxp
 </UL>
-<BR>[Called By]<UL><LI><a href="#[1af]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_augmented_sensors_get_orientation
+<BR>[Called By]<UL><LI><a href="#[1c0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_convert_rotation_vector
+<LI><a href="#[1af]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_augmented_sensors_get_orientation
 <LI><a href="#[1ab]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_augmented_sensors_get_gravity
-<LI><a href="#[1c0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_convert_rotation_vector
 </UL>
 
 <P><STRONG><a name="[1ba]"></a>inv_icm20948_convert_dmp3_to_body</STRONG> (Thumb, 78 bytes, Stack size 32 bytes, icm20948dataconverter.o(i.inv_icm20948_convert_dmp3_to_body))
@@ -1999,8 +2001,8 @@ Global Symbols
 <P><STRONG><a name="[1b2]"></a>inv_icm20948_convert_fast_sqrt_fxp</STRONG> (Thumb, 192 bytes, Stack size 32 bytes, icm20948dataconverter.o(i.inv_icm20948_convert_fast_sqrt_fxp))
 <BR><BR>[Stack]<UL><LI>Max Depth = 68<LI>Call Chain = inv_icm20948_convert_fast_sqrt_fxp &rArr; inv_icm20948_convert_test_limits_and_scale_fxp
 </UL>
-<BR>[Calls]<UL><LI><a href="#[1b9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_convert_mult_q30_fxp
-<LI><a href="#[1bc]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_convert_test_limits_and_scale_fxp
+<BR>[Calls]<UL><LI><a href="#[1bc]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_convert_test_limits_and_scale_fxp
+<LI><a href="#[1b9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_convert_mult_q30_fxp
 </UL>
 <BR>[Called By]<UL><LI><a href="#[1ac]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_convert_compute_scalar_part_fxp
 <LI><a href="#[1af]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_augmented_sensors_get_orientation
@@ -2011,18 +2013,22 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[148]"></a>inv_icm20948_convert_int16_to_big8</STRONG> (Thumb, 10 bytes, Stack size 0 bytes, icm20948dataconverter.o(i.inv_icm20948_convert_int16_to_big8))
-<BR><BR>[Called By]<UL><LI><a href="#[90]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_sensor_rate
+<BR><BR>[Called By]<UL><LI><a href="#[147]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_FIFO_watermark
+<LI><a href="#[90]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_sensor_rate
 <LI><a href="#[157]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_data_rdy_status
 <LI><a href="#[154]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_data_interrupt_control
 <LI><a href="#[14f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_batchmode_params
 <LI><a href="#[14e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_bac_rate
 <LI><a href="#[14d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_b2s_rate
 <LI><a href="#[149]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_accel_cal_params
-<LI><a href="#[147]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_FIFO_watermark
 </UL>
 
 <P><STRONG><a name="[146]"></a>inv_icm20948_convert_int32_to_big8</STRONG> (Thumb, 18 bytes, Stack size 0 bytes, icm20948dataconverter.o(i.inv_icm20948_convert_int32_to_big8))
-<BR><BR>[Called By]<UL><LI><a href="#[15a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_ped_y_ratio
+<BR><BR>[Called By]<UL><LI><a href="#[145]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_B2S_matrix
+<LI><a href="#[158]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_gyro_sf
+<LI><a href="#[14c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_accel_scale2
+<LI><a href="#[14b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_accel_fsr
+<LI><a href="#[15a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_ped_y_ratio
 <LI><a href="#[152]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_bias_gyr
 <LI><a href="#[151]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_bias_cmp
 <LI><a href="#[150]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_bias_acc
@@ -2030,10 +2036,6 @@ Global Symbols
 <LI><a href="#[14a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_accel_feedback_gain
 <LI><a href="#[149]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_accel_cal_params
 <LI><a href="#[153]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_compass_matrix
-<LI><a href="#[145]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_B2S_matrix
-<LI><a href="#[158]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_gyro_sf
-<LI><a href="#[14c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_accel_scale2
-<LI><a href="#[14b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_accel_fsr
 </UL>
 
 <P><STRONG><a name="[1bd]"></a>inv_icm20948_convert_matrix_to_quat_flt</STRONG> (Thumb, 524 bytes, Stack size 32 bytes, icm20948dataconverter.o(i.inv_icm20948_convert_matrix_to_quat_flt))
@@ -2045,11 +2047,11 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[1b9]"></a>inv_icm20948_convert_mult_q30_fxp</STRONG> (Thumb, 12 bytes, Stack size 0 bytes, icm20948dataconverter.o(i.inv_icm20948_convert_mult_q30_fxp))
-<BR><BR>[Called By]<UL><LI><a href="#[1b8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_compass_dmp_cal
+<BR><BR>[Called By]<UL><LI><a href="#[1be]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;invn_convert_quat_mult_fxp
+<LI><a href="#[1b8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_compass_dmp_cal
 <LI><a href="#[1ad]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_q_mult_q_qi
 <LI><a href="#[1b2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_convert_fast_sqrt_fxp
 <LI><a href="#[1ac]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_convert_compute_scalar_part_fxp
-<LI><a href="#[1be]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;invn_convert_quat_mult_fxp
 </UL>
 
 <P><STRONG><a name="[1ae]"></a>inv_icm20948_convert_mult_qfix_fxp</STRONG> (Thumb, 12 bytes, Stack size 8 bytes, icm20948dataconverter.o(i.inv_icm20948_convert_mult_qfix_fxp))
@@ -2066,8 +2068,8 @@ Global Symbols
 </UL>
 <BR>[Calls]<UL><LI><a href="#[1be]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;invn_convert_quat_mult_fxp
 </UL>
-<BR>[Called By]<UL><LI><a href="#[18c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_poll_sensor
-<LI><a href="#[1ba]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_convert_dmp3_to_body
+<BR>[Called By]<UL><LI><a href="#[1ba]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_convert_dmp3_to_body
+<LI><a href="#[18c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_poll_sensor
 </UL>
 
 <P><STRONG><a name="[1b0]"></a>inv_icm20948_convert_quat_to_col_major_matrix_fxp</STRONG> (Thumb, 218 bytes, Stack size 16 bytes, icm20948dataconverter.o(i.inv_icm20948_convert_quat_to_col_major_matrix_fxp))
@@ -2302,8 +2304,8 @@ Global Symbols
 <P><STRONG><a name="[182]"></a>inv_icm20948_enable_sensor</STRONG> (Thumb, 48 bytes, Stack size 16 bytes, icm20948setup.o(i.inv_icm20948_enable_sensor))
 <BR><BR>[Stack]<UL><LI>Max Depth = 488<LI>Call Chain = inv_icm20948_enable_sensor &rArr; inv_icm20948_ctrl_enable_sensor &rArr; inv_enable_sensor_internal &rArr; inv_set_hw_smplrt_dmp_odrs &rArr; inv_icm20948_ctrl_set_accel_cal_params &rArr; dmp_icm20948_set_accel_cal_params &rArr; inv_icm20948_write_mems &rArr; inv_icm20948_set_chip_power_state &rArr; inv_icm20948_write_single_mems_reg_core &rArr; inv_set_bank &rArr; inv_icm20948_write_reg
 </UL>
-<BR>[Calls]<UL><LI><a href="#[1c4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_ctrl_enable_sensor
-<LI><a href="#[1d7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sensor_type_2_android_sensor
+<BR>[Calls]<UL><LI><a href="#[1d7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sensor_type_2_android_sensor
+<LI><a href="#[1c4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_ctrl_enable_sensor
 </UL>
 <BR>[Called By]<UL><LI><a href="#[63]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_device_icm20948_enable_sensor
 </UL>
@@ -2379,8 +2381,8 @@ Global Symbols
 <LI><a href="#[13e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_read_mems
 <LI><a href="#[1e4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;memcmp
 </UL>
-<BR>[Called By]<UL><LI><a href="#[18a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_load
-<LI><a href="#[1f0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_load_firmware
+<BR>[Called By]<UL><LI><a href="#[1f0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_load_firmware
+<LI><a href="#[18a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_load
 </UL>
 
 <P><STRONG><a name="[200]"></a>inv_icm20948_get_accel_accuracy</STRONG> (Thumb, 8 bytes, Stack size 0 bytes, icm20948mpufifocontrol.o(i.inv_icm20948_get_accel_accuracy))
@@ -2409,11 +2411,11 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[20e]"></a>inv_icm20948_get_chip_power_state</STRONG> (Thumb, 4 bytes, Stack size 0 bytes, icm20948databasedriver.o(i.inv_icm20948_get_chip_power_state))
-<BR><BR>[Called By]<UL><LI><a href="#[1d4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_mems_reg
+<BR><BR>[Called By]<UL><LI><a href="#[144]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_mems
+<LI><a href="#[13e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_read_mems
+<LI><a href="#[1d4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_mems_reg
 <LI><a href="#[15b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_single_mems_reg
 <LI><a href="#[13c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_read_mems_reg
-<LI><a href="#[144]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_mems
-<LI><a href="#[13e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_read_mems
 </UL>
 
 <P><STRONG><a name="[1c6]"></a>inv_icm20948_get_compass_availability</STRONG> (Thumb, 6 bytes, Stack size 0 bytes, icm20948databasedriver.o(i.inv_icm20948_get_compass_availability))
@@ -2428,8 +2430,8 @@ Global Symbols
 <P><STRONG><a name="[183]"></a>inv_icm20948_get_fsr</STRONG> (Thumb, 120 bytes, Stack size 16 bytes, icm20948setup.o(i.inv_icm20948_get_fsr))
 <BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = inv_icm20948_get_fsr
 </UL>
-<BR>[Calls]<UL><LI><a href="#[1a4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_get_gyro_fullscale
-<LI><a href="#[1e5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_get_accel_fullscale
+<BR>[Calls]<UL><LI><a href="#[1e5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_get_accel_fullscale
+<LI><a href="#[1a4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_get_gyro_fullscale
 </UL>
 <BR>[Called By]<UL><LI><a href="#[68]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_device_icm20948_get_sensor_config
 </UL>
@@ -2527,10 +2529,10 @@ Global Symbols
 <P><STRONG><a name="[187]"></a>inv_icm20948_init_structure</STRONG> (Thumb, 58 bytes, Stack size 8 bytes, icm20948setup.o(i.inv_icm20948_init_structure))
 <BR><BR>[Stack]<UL><LI>Max Depth = 32<LI>Call Chain = inv_icm20948_init_structure &rArr; inv_icm20948_base_control_init
 </UL>
-<BR>[Calls]<UL><LI><a href="#[19f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_sensor_android_2_sensor_type
+<BR>[Calls]<UL><LI><a href="#[1ec]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_transport_init
+<LI><a href="#[19f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_sensor_android_2_sensor_type
 <LI><a href="#[1b4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_base_control_init
 <LI><a href="#[1ed]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_augmented_init
-<LI><a href="#[1ec]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_transport_init
 </UL>
 <BR>[Called By]<UL><LI><a href="#[186]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_device_icm20948_init2
 <LI><a href="#[5d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_device_icm20948_setup
@@ -2555,7 +2557,12 @@ Global Symbols
 <P><STRONG><a name="[1ee]"></a>inv_icm20948_initialize_lower_driver</STRONG> (Thumb, 446 bytes, Stack size 40 bytes, icm20948databasedriver.o(i.inv_icm20948_initialize_lower_driver))
 <BR><BR>[Stack]<UL><LI>Max Depth = 256<LI>Call Chain = inv_icm20948_initialize_lower_driver &rArr; inv_icm20948_load_firmware &rArr; inv_icm20948_firmware_load &rArr; inv_icm20948_read_mems &rArr; inv_icm20948_set_chip_power_state &rArr; inv_icm20948_write_single_mems_reg_core &rArr; inv_set_bank &rArr; inv_icm20948_write_reg
 </UL>
-<BR>[Calls]<UL><LI><a href="#[1c8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_wakeup_mems
+<BR>[Calls]<UL><LI><a href="#[1f0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_load_firmware
+<LI><a href="#[147]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_FIFO_watermark
+<LI><a href="#[143]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_reset_control_registers
+<LI><a href="#[1f1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_dmp_address
+<LI><a href="#[1aa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_chip_power_state
+<LI><a href="#[1c8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_wakeup_mems
 <LI><a href="#[1a7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_sleep_mems
 <LI><a href="#[1f2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_gyro_divider
 <LI><a href="#[1f3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_accel_divider
@@ -2565,11 +2572,6 @@ Global Symbols
 <LI><a href="#[15b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_single_mems_reg
 <LI><a href="#[13c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_read_mems_reg
 <LI><a href="#[191]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_lowpower_or_highperformance
-<LI><a href="#[1f0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_load_firmware
-<LI><a href="#[147]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_FIFO_watermark
-<LI><a href="#[143]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_reset_control_registers
-<LI><a href="#[1f1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_dmp_address
-<LI><a href="#[1aa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_chip_power_state
 <LI><a href="#[f6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memclr4
 </UL>
 <BR>[Called By]<UL><LI><a href="#[196]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_initialize
@@ -2578,9 +2580,9 @@ Global Symbols
 <P><STRONG><a name="[1e0]"></a>inv_icm20948_inv_decode_one_ivory_fifo_packet</STRONG> (Thumb, 392 bytes, Stack size 24 bytes, icm20948mpufifocontrol.o(i.inv_icm20948_inv_decode_one_ivory_fifo_packet))
 <BR><BR>[Stack]<UL><LI>Max Depth = 44<LI>Call Chain = inv_icm20948_inv_decode_one_ivory_fifo_packet &rArr; inv_icm20948_apply_raw_compass_matrix
 </UL>
-<BR>[Calls]<UL><LI><a href="#[1f5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_apply_raw_compass_matrix
-<LI><a href="#[1f6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_decode_3_32bit_elements
+<BR>[Calls]<UL><LI><a href="#[1f6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_decode_3_32bit_elements
 <LI><a href="#[1f4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_decode_3_16bit_elements
+<LI><a href="#[1f5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_apply_raw_compass_matrix
 </UL>
 <BR>[Called By]<UL><LI><a href="#[1df]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_fifo_pop
 </UL>
@@ -2622,17 +2624,7 @@ Global Symbols
 <P><STRONG><a name="[18c]"></a>inv_icm20948_poll_sensor</STRONG> (Thumb, 2358 bytes, Stack size 360 bytes, icm20948setup.o(i.inv_icm20948_poll_sensor))
 <BR><BR>[Stack]<UL><LI>Max Depth = 776<LI>Call Chain = inv_icm20948_poll_sensor &rArr; inv_icm20948_updateTs &rArr; inv_icm20948_fifo_swmirror &rArr; extract_sample_cnt &rArr; dmp_reset_fifo &rArr; inv_icm20948_mpu_set_FIFO_RST_Diamond &rArr; inv_icm20948_read_mems_reg &rArr; inv_icm20948_set_chip_power_state &rArr; inv_icm20948_write_single_mems_reg_core &rArr; inv_set_bank &rArr; inv_icm20948_write_reg
 </UL>
-<BR>[Calls]<UL><LI><a href="#[179]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_get_time_us
-<LI><a href="#[1a7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_sleep_mems
-<LI><a href="#[1a4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_get_gyro_fullscale
-<LI><a href="#[142]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_get_pedometer_num_of_steps
-<LI><a href="#[1cb]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_ctrl_get_mag_bias
-<LI><a href="#[20c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_ctrl_get_activitiy_classifier_on_flag
-<LI><a href="#[96]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_ctrl_androidSensor_enabled
-<LI><a href="#[1af]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_augmented_sensors_get_orientation
-<LI><a href="#[205]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_augmented_sensors_get_linearacceleration
-<LI><a href="#[1ab]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_augmented_sensors_get_gravity
-<LI><a href="#[1e7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_identify_interrupt
+<BR>[Calls]<UL><LI><a href="#[1e7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_identify_interrupt
 <LI><a href="#[207]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_get_rv_accuracy
 <LI><a href="#[202]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_get_mag_accuracy
 <LI><a href="#[1fd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_get_gyro_accuracy
@@ -2657,6 +2649,16 @@ Global Symbols
 <LI><a href="#[1e5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_get_accel_fullscale
 <LI><a href="#[1fb]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;skip_sensor
 <LI><a href="#[1f9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_updateTs
+<LI><a href="#[179]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_get_time_us
+<LI><a href="#[1a7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_sleep_mems
+<LI><a href="#[1a4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_get_gyro_fullscale
+<LI><a href="#[142]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_get_pedometer_num_of_steps
+<LI><a href="#[1cb]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_ctrl_get_mag_bias
+<LI><a href="#[20c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_ctrl_get_activitiy_classifier_on_flag
+<LI><a href="#[96]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_ctrl_androidSensor_enabled
+<LI><a href="#[1af]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_augmented_sensors_get_orientation
+<LI><a href="#[205]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_augmented_sensors_get_linearacceleration
+<LI><a href="#[1ab]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_augmented_sensors_get_gravity
 </UL>
 <BR>[Called By]<UL><LI><a href="#[60]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_device_icm20948_poll
 </UL>
@@ -2671,40 +2673,37 @@ Global Symbols
 </UL>
 <BR>[Calls]<UL><LI><a href="#[1b9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_convert_mult_q30_fxp
 </UL>
-<BR>[Called By]<UL><LI><a href="#[1ab]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_augmented_sensors_get_gravity
-<LI><a href="#[1c0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_convert_rotation_vector
+<BR>[Called By]<UL><LI><a href="#[1c0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_convert_rotation_vector
+<LI><a href="#[1ab]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_augmented_sensors_get_gravity
 </UL>
 
 <P><STRONG><a name="[13e]"></a>inv_icm20948_read_mems</STRONG> (Thumb, 280 bytes, Stack size 64 bytes, icm20948transport.o(i.inv_icm20948_read_mems))
 <BR><BR>[Stack]<UL><LI>Max Depth = 144<LI>Call Chain = inv_icm20948_read_mems &rArr; inv_icm20948_set_chip_power_state &rArr; inv_icm20948_write_single_mems_reg_core &rArr; inv_set_bank &rArr; inv_icm20948_write_reg
 </UL>
-<BR>[Calls]<UL><LI><a href="#[19a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_reg
-<LI><a href="#[18d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_read_reg
-<LI><a href="#[1aa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_chip_power_state
+<BR>[Calls]<UL><LI><a href="#[1aa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_chip_power_state
 <LI><a href="#[20e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_get_chip_power_state
 <LI><a href="#[20f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_set_bank
 <LI><a href="#[12f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;check_reg_access_lp_disable
+<LI><a href="#[19a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_reg
+<LI><a href="#[18d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_read_reg
 </UL>
-<BR>[Called By]<UL><LI><a href="#[142]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_get_pedometer_num_of_steps
+<BR>[Called By]<UL><LI><a href="#[1e3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_firmware_load
+<LI><a href="#[142]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_get_pedometer_num_of_steps
 <LI><a href="#[141]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_get_bias_gyr
 <LI><a href="#[140]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_get_bias_cmp
 <LI><a href="#[13d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_get_bias_acc
-<LI><a href="#[1e3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_firmware_load
 </UL>
 
 <P><STRONG><a name="[13c]"></a>inv_icm20948_read_mems_reg</STRONG> (Thumb, 202 bytes, Stack size 72 bytes, icm20948transport.o(i.inv_icm20948_read_mems_reg))
 <BR><BR>[Stack]<UL><LI>Max Depth = 152<LI>Call Chain = inv_icm20948_read_mems_reg &rArr; inv_icm20948_set_chip_power_state &rArr; inv_icm20948_write_single_mems_reg_core &rArr; inv_set_bank &rArr; inv_icm20948_write_reg
 </UL>
-<BR>[Calls]<UL><LI><a href="#[18d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_read_reg
-<LI><a href="#[1aa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_chip_power_state
+<BR>[Calls]<UL><LI><a href="#[1aa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_chip_power_state
 <LI><a href="#[20e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_get_chip_power_state
 <LI><a href="#[20f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_set_bank
 <LI><a href="#[12f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;check_reg_access_lp_disable
+<LI><a href="#[18d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_read_reg
 </UL>
-<BR>[Called By]<UL><LI><a href="#[1a6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_gyro_sf
-<LI><a href="#[1b7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_execute_read_secondary
-<LI><a href="#[1b5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_check_akm_self_test
-<LI><a href="#[210]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_setup_selftest
+<BR>[Called By]<UL><LI><a href="#[210]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_setup_selftest
 <LI><a href="#[19c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_selftest_read_samples
 <LI><a href="#[220]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_save_setting
 <LI><a href="#[15c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_mpu_set_FIFO_RST_Diamond
@@ -2714,16 +2713,19 @@ Global Symbols
 <LI><a href="#[21a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_icm20948_gyro_fullscale
 <LI><a href="#[215]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_icm20948_accel_fullscale
 <LI><a href="#[1ee]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_initialize_lower_driver
+<LI><a href="#[1a6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_gyro_sf
+<LI><a href="#[1b7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_execute_read_secondary
+<LI><a href="#[1b5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_check_akm_self_test
 </UL>
 
 <P><STRONG><a name="[18d]"></a>inv_icm20948_read_reg</STRONG> (Thumb, 38 bytes, Stack size 16 bytes, icm20948transport.o(i.inv_icm20948_read_reg))
 <BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = inv_icm20948_read_reg
 </UL>
-<BR>[Called By]<UL><LI><a href="#[13c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_read_mems_reg
+<BR>[Called By]<UL><LI><a href="#[13e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_read_mems
+<LI><a href="#[20f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_set_bank
+<LI><a href="#[13c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_read_mems_reg
 <LI><a href="#[199]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_get_whoami
 <LI><a href="#[6a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_device_icm20948_read_mems_register
-<LI><a href="#[13e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_read_mems
-<LI><a href="#[20f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_set_bank
 </UL>
 
 <P><STRONG><a name="[1da]"></a>inv_icm20948_read_secondary</STRONG> (Thumb, 84 bytes, Stack size 32 bytes, icm20948auxtransport.o(i.inv_icm20948_read_secondary))
@@ -2752,11 +2754,11 @@ Global Symbols
 <P><STRONG><a name="[18e]"></a>inv_icm20948_run_selftest</STRONG> (Thumb, 150 bytes, Stack size 88 bytes, icm20948selftest.o(i.inv_icm20948_run_selftest))
 <BR><BR>[Stack]<UL><LI>Max Depth = 344<LI>Call Chain = inv_icm20948_run_selftest &rArr; inv_icm20948_check_akm_self_test &rArr; inv_icm20948_execute_read_secondary &rArr; inv_icm20948_read_secondary &rArr; inv_icm20948_write_mems_reg &rArr; inv_icm20948_set_chip_power_state &rArr; inv_icm20948_write_single_mems_reg_core &rArr; inv_set_bank &rArr; inv_icm20948_write_reg
 </UL>
-<BR>[Calls]<UL><LI><a href="#[1b5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_check_akm_self_test
-<LI><a href="#[210]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_setup_selftest
+<BR>[Calls]<UL><LI><a href="#[210]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_setup_selftest
 <LI><a href="#[212]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_recover_setting
 <LI><a href="#[19b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_do_test_accelgyro
 <LI><a href="#[211]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_check_accelgyro_self_test
+<LI><a href="#[1b5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_check_akm_self_test
 </UL>
 <BR>[Called By]<UL><LI><a href="#[61]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_device_icm20948_self_test
 </UL>
@@ -2801,10 +2803,10 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[19f]"></a>inv_icm20948_sensor_android_2_sensor_type</STRONG> (Thumb, 156 bytes, Stack size 0 bytes, icm20948setup.o(i.inv_icm20948_sensor_android_2_sensor_type))
-<BR><BR>[Called By]<UL><LI><a href="#[19e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_enable_sensor_internal
-<LI><a href="#[187]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_init_structure
-<LI><a href="#[1fb]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;skip_sensor
+<BR><BR>[Called By]<UL><LI><a href="#[1fb]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;skip_sensor
 <LI><a href="#[1f9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_updateTs
+<LI><a href="#[19e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_enable_sensor_internal
+<LI><a href="#[187]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_init_structure
 </UL>
 
 <P><STRONG><a name="[1f3]"></a>inv_icm20948_set_accel_divider</STRONG> (Thumb, 32 bytes, Stack size 8 bytes, icm20948databasedriver.o(i.inv_icm20948_set_accel_divider))
@@ -2812,8 +2814,8 @@ Global Symbols
 </UL>
 <BR>[Calls]<UL><LI><a href="#[1d4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_mems_reg
 </UL>
-<BR>[Called By]<UL><LI><a href="#[1a3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_set_hw_smplrt_dmp_odrs
-<LI><a href="#[1ee]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_initialize_lower_driver
+<BR>[Called By]<UL><LI><a href="#[1ee]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_initialize_lower_driver
+<LI><a href="#[1a3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_set_hw_smplrt_dmp_odrs
 </UL>
 
 <P><STRONG><a name="[1e9]"></a>inv_icm20948_set_accel_fullscale</STRONG> (Thumb, 50 bytes, Stack size 24 bytes, icm20948databasedriver.o(i.inv_icm20948_set_accel_fullscale))
@@ -2844,15 +2846,15 @@ Global Symbols
 <BR>[Calls]<UL><LI><a href="#[216]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_single_mems_reg_core
 <LI><a href="#[217]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_sleep_100us
 </UL>
-<BR>[Called By]<UL><LI><a href="#[1c8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_wakeup_mems
+<BR>[Called By]<UL><LI><a href="#[144]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_mems
+<LI><a href="#[13e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_read_mems
+<LI><a href="#[1ee]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_initialize_lower_driver
+<LI><a href="#[1c8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_wakeup_mems
 <LI><a href="#[1a7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_sleep_mems
 <LI><a href="#[1a9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_allow_lpen_control
 <LI><a href="#[1d4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_mems_reg
 <LI><a href="#[15b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_single_mems_reg
 <LI><a href="#[13c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_read_mems_reg
-<LI><a href="#[144]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_mems
-<LI><a href="#[13e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_read_mems
-<LI><a href="#[1ee]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_initialize_lower_driver
 </UL>
 
 <P><STRONG><a name="[218]"></a>inv_icm20948_set_chip_to_body</STRONG> (Thumb, 12 bytes, Stack size 8 bytes, icm20948dataconverter.o(i.inv_icm20948_set_chip_to_body))
@@ -2877,8 +2879,8 @@ Global Symbols
 <P><STRONG><a name="[1f1]"></a>inv_icm20948_set_dmp_address</STRONG> (Thumb, 46 bytes, Stack size 16 bytes, icm20948databasedriver.o(i.inv_icm20948_set_dmp_address))
 <BR><BR>[Stack]<UL><LI>Max Depth = 136<LI>Call Chain = inv_icm20948_set_dmp_address &rArr; inv_icm20948_write_mems_reg &rArr; inv_icm20948_set_chip_power_state &rArr; inv_icm20948_write_single_mems_reg_core &rArr; inv_set_bank &rArr; inv_icm20948_write_reg
 </UL>
-<BR>[Calls]<UL><LI><a href="#[1d4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_mems_reg
-<LI><a href="#[219]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_get_dmp_start_address
+<BR>[Calls]<UL><LI><a href="#[219]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_get_dmp_start_address
+<LI><a href="#[1d4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_mems_reg
 </UL>
 <BR>[Called By]<UL><LI><a href="#[212]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_recover_setting
 <LI><a href="#[1ee]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_initialize_lower_driver
@@ -2898,15 +2900,15 @@ Global Symbols
 </UL>
 <BR>[Calls]<UL><LI><a href="#[1d4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_mems_reg
 </UL>
-<BR>[Called By]<UL><LI><a href="#[1a3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_set_hw_smplrt_dmp_odrs
-<LI><a href="#[1ee]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_initialize_lower_driver
+<BR>[Called By]<UL><LI><a href="#[1ee]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_initialize_lower_driver
+<LI><a href="#[1a3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_set_hw_smplrt_dmp_odrs
 </UL>
 
 <P><STRONG><a name="[1ea]"></a>inv_icm20948_set_gyro_fullscale</STRONG> (Thumb, 30 bytes, Stack size 16 bytes, icm20948databasedriver.o(i.inv_icm20948_set_gyro_fullscale))
-<BR><BR>[Stack]<UL><LI>Max Depth = 200<LI>Call Chain = inv_icm20948_set_gyro_fullscale &rArr; inv_icm20948_set_gyro_sf &rArr; inv_icm20948_read_mems_reg &rArr; inv_icm20948_set_chip_power_state &rArr; inv_icm20948_write_single_mems_reg_core &rArr; inv_set_bank &rArr; inv_icm20948_write_reg
+<BR><BR>[Stack]<UL><LI>Max Depth = 200<LI>Call Chain = inv_icm20948_set_gyro_fullscale &rArr; inv_icm20948_set_icm20948_gyro_fullscale &rArr; inv_icm20948_read_mems_reg &rArr; inv_icm20948_set_chip_power_state &rArr; inv_icm20948_write_single_mems_reg_core &rArr; inv_set_bank &rArr; inv_icm20948_write_reg
 </UL>
-<BR>[Calls]<UL><LI><a href="#[1a6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_gyro_sf
-<LI><a href="#[21a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_icm20948_gyro_fullscale
+<BR>[Calls]<UL><LI><a href="#[21a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_icm20948_gyro_fullscale
+<LI><a href="#[1a6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_gyro_sf
 </UL>
 <BR>[Called By]<UL><LI><a href="#[18f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_fsr
 <LI><a href="#[198]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_init_scale
@@ -2915,14 +2917,14 @@ Global Symbols
 <P><STRONG><a name="[1a6]"></a>inv_icm20948_set_gyro_sf</STRONG> (Thumb, 156 bytes, Stack size 32 bytes, icm20948databasedriver.o(i.inv_icm20948_set_gyro_sf))
 <BR><BR>[Stack]<UL><LI>Max Depth = 184<LI>Call Chain = inv_icm20948_set_gyro_sf &rArr; inv_icm20948_read_mems_reg &rArr; inv_icm20948_set_chip_power_state &rArr; inv_icm20948_write_single_mems_reg_core &rArr; inv_set_bank &rArr; inv_icm20948_write_reg
 </UL>
-<BR>[Calls]<UL><LI><a href="#[13c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_read_mems_reg
-<LI><a href="#[158]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_gyro_sf
+<BR>[Calls]<UL><LI><a href="#[158]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_gyro_sf
+<LI><a href="#[13c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_read_mems_reg
 <LI><a href="#[81]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_llsl
 <LI><a href="#[7f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_uldivmod
 </UL>
-<BR>[Called By]<UL><LI><a href="#[21c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_odr
+<BR>[Called By]<UL><LI><a href="#[1ea]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_gyro_fullscale
+<LI><a href="#[21c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_odr
 <LI><a href="#[19e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_enable_sensor_internal
-<LI><a href="#[1ea]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_gyro_fullscale
 </UL>
 
 <P><STRONG><a name="[215]"></a>inv_icm20948_set_icm20948_accel_fullscale</STRONG> (Thumb, 158 bytes, Stack size 32 bytes, icm20948databasedriver.o(i.inv_icm20948_set_icm20948_accel_fullscale))
@@ -2950,17 +2952,17 @@ Global Symbols
 <BR>[Calls]<UL><LI><a href="#[1d9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_enter_low_noise_mode
 <LI><a href="#[1d8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_enter_duty_cycle_mode
 </UL>
-<BR>[Called By]<UL><LI><a href="#[67]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_device_icm20948_set_sensor_config
-<LI><a href="#[1ee]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_initialize_lower_driver
+<BR>[Called By]<UL><LI><a href="#[1ee]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_initialize_lower_driver
+<LI><a href="#[67]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_device_icm20948_set_sensor_config
 </UL>
 
 <P><STRONG><a name="[192]"></a>inv_icm20948_set_matrix</STRONG> (Thumb, 174 bytes, Stack size 96 bytes, icm20948setup.o(i.inv_icm20948_set_matrix))
 <BR><BR>[Stack]<UL><LI>Max Depth = 376<LI>Call Chain = inv_icm20948_set_matrix &rArr; inv_icm20948_compass_dmp_cal &rArr; dmp_icm20948_set_compass_matrix &rArr; inv_icm20948_write_mems &rArr; inv_icm20948_set_chip_power_state &rArr; inv_icm20948_write_single_mems_reg_core &rArr; inv_set_bank &rArr; inv_icm20948_write_reg
 </UL>
-<BR>[Calls]<UL><LI><a href="#[1b8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_compass_dmp_cal
-<LI><a href="#[145]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_B2S_matrix
+<BR>[Calls]<UL><LI><a href="#[145]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_B2S_matrix
 <LI><a href="#[1e8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_chip_to_body_axis_quaternion
 <LI><a href="#[21b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;DmpDriver_convertion
+<LI><a href="#[1b8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_compass_dmp_cal
 </UL>
 <BR>[Called By]<UL><LI><a href="#[66]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_device_icm20948_set_sensor_mounting_matrix
 </UL>
@@ -3002,8 +3004,8 @@ Global Symbols
 <P><STRONG><a name="[193]"></a>inv_icm20948_set_sensor_period</STRONG> (Thumb, 60 bytes, Stack size 16 bytes, icm20948setup.o(i.inv_icm20948_set_sensor_period))
 <BR><BR>[Stack]<UL><LI>Max Depth = 328<LI>Call Chain = inv_icm20948_set_sensor_period &rArr; inv_icm20948_set_odr &rArr; inv_set_hw_smplrt_dmp_odrs &rArr; inv_icm20948_ctrl_set_accel_cal_params &rArr; dmp_icm20948_set_accel_cal_params &rArr; inv_icm20948_write_mems &rArr; inv_icm20948_set_chip_power_state &rArr; inv_icm20948_write_single_mems_reg_core &rArr; inv_set_bank &rArr; inv_icm20948_write_reg
 </UL>
-<BR>[Calls]<UL><LI><a href="#[21c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_odr
-<LI><a href="#[1d7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sensor_type_2_android_sensor
+<BR>[Calls]<UL><LI><a href="#[1d7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sensor_type_2_android_sensor
+<LI><a href="#[21c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_odr
 </UL>
 <BR>[Called By]<UL><LI><a href="#[64]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_device_icm20948_set_sensor_period_us
 </UL>
@@ -3011,11 +3013,11 @@ Global Symbols
 <P><STRONG><a name="[1ef]"></a>inv_icm20948_set_slave_compass_id</STRONG> (Thumb, 74 bytes, Stack size 24 bytes, icm20948databasedriver.o(i.inv_icm20948_set_slave_compass_id))
 <BR><BR>[Stack]<UL><LI>Max Depth = 304<LI>Call Chain = inv_icm20948_set_slave_compass_id &rArr; inv_icm20948_compass_dmp_cal &rArr; dmp_icm20948_set_compass_matrix &rArr; inv_icm20948_write_mems &rArr; inv_icm20948_set_chip_power_state &rArr; inv_icm20948_write_single_mems_reg_core &rArr; inv_set_bank &rArr; inv_icm20948_write_reg
 </UL>
-<BR>[Calls]<UL><LI><a href="#[1a9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_allow_lpen_control
+<BR>[Calls]<UL><LI><a href="#[21d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_secondary
+<LI><a href="#[1a9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_allow_lpen_control
 <LI><a href="#[1eb]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_init_secondary
 <LI><a href="#[21e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_setup_compass_akm
 <LI><a href="#[1b8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_compass_dmp_cal
-<LI><a href="#[21d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_secondary
 </UL>
 <BR>[Called By]<UL><LI><a href="#[197]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_initialize_auxiliary
 </UL>
@@ -3041,25 +3043,25 @@ Global Symbols
 <P><STRONG><a name="[1a7]"></a>inv_icm20948_sleep_mems</STRONG> (Thumb, 38 bytes, Stack size 16 bytes, icm20948databasedriver.o(i.inv_icm20948_sleep_mems))
 <BR><BR>[Stack]<UL><LI>Max Depth = 136<LI>Call Chain = inv_icm20948_sleep_mems &rArr; inv_icm20948_write_mems_reg &rArr; inv_icm20948_set_chip_power_state &rArr; inv_icm20948_write_single_mems_reg_core &rArr; inv_set_bank &rArr; inv_icm20948_write_reg
 </UL>
-<BR>[Calls]<UL><LI><a href="#[1d4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_mems_reg
-<LI><a href="#[1aa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_chip_power_state
+<BR>[Calls]<UL><LI><a href="#[1aa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_chip_power_state
+<LI><a href="#[1d4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_mems_reg
 </UL>
-<BR>[Called By]<UL><LI><a href="#[19e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_enable_sensor_internal
-<LI><a href="#[18c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_poll_sensor
-<LI><a href="#[212]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_recover_setting
+<BR>[Called By]<UL><LI><a href="#[212]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_recover_setting
 <LI><a href="#[1ee]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_initialize_lower_driver
+<LI><a href="#[19e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_enable_sensor_internal
+<LI><a href="#[18c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_poll_sensor
 </UL>
 
 <P><STRONG><a name="[19d]"></a>inv_icm20948_sleep_us</STRONG> (Thumb, 12 bytes, Stack size 0 bytes, imu.o(i.inv_icm20948_sleep_us))
-<BR><BR>[Called By]<UL><LI><a href="#[1b6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_execute_write_secondary
-<LI><a href="#[1b7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_execute_read_secondary
-<LI><a href="#[1b5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_check_akm_self_test
-<LI><a href="#[180]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_soft_reset
-<LI><a href="#[210]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_setup_selftest
+<BR><BR>[Called By]<UL><LI><a href="#[210]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_setup_selftest
 <LI><a href="#[19c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_selftest_read_samples
 <LI><a href="#[212]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_recover_setting
 <LI><a href="#[19b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_do_test_accelgyro
 <LI><a href="#[217]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_sleep_100us
+<LI><a href="#[1b6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_execute_write_secondary
+<LI><a href="#[1b7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_execute_read_secondary
+<LI><a href="#[1b5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_check_akm_self_test
+<LI><a href="#[180]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_soft_reset
 </UL>
 
 <P><STRONG><a name="[180]"></a>inv_icm20948_soft_reset</STRONG> (Thumb, 22 bytes, Stack size 8 bytes, icm20948setup.o(i.inv_icm20948_soft_reset))
@@ -3088,23 +3090,30 @@ Global Symbols
 <P><STRONG><a name="[1c8]"></a>inv_icm20948_wakeup_mems</STRONG> (Thumb, 100 bytes, Stack size 24 bytes, icm20948databasedriver.o(i.inv_icm20948_wakeup_mems))
 <BR><BR>[Stack]<UL><LI>Max Depth = 144<LI>Call Chain = inv_icm20948_wakeup_mems &rArr; inv_icm20948_write_mems_reg &rArr; inv_icm20948_set_chip_power_state &rArr; inv_icm20948_write_single_mems_reg_core &rArr; inv_set_bank &rArr; inv_icm20948_write_reg
 </UL>
-<BR>[Calls]<UL><LI><a href="#[1d4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_mems_reg
+<BR>[Calls]<UL><LI><a href="#[1aa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_chip_power_state
+<LI><a href="#[1d4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_mems_reg
 <LI><a href="#[15b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_single_mems_reg
-<LI><a href="#[1aa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_chip_power_state
 </UL>
-<BR>[Called By]<UL><LI><a href="#[1c4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_ctrl_enable_sensor
-<LI><a href="#[1ee]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_initialize_lower_driver
+<BR>[Called By]<UL><LI><a href="#[1ee]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_initialize_lower_driver
+<LI><a href="#[1c4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_ctrl_enable_sensor
 </UL>
 
 <P><STRONG><a name="[144]"></a>inv_icm20948_write_mems</STRONG> (Thumb, 192 bytes, Stack size 40 bytes, icm20948transport.o(i.inv_icm20948_write_mems))
 <BR><BR>[Stack]<UL><LI>Max Depth = 120<LI>Call Chain = inv_icm20948_write_mems &rArr; inv_icm20948_set_chip_power_state &rArr; inv_icm20948_write_single_mems_reg_core &rArr; inv_set_bank &rArr; inv_icm20948_write_reg
 </UL>
-<BR>[Calls]<UL><LI><a href="#[19a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_reg
-<LI><a href="#[1aa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_chip_power_state
+<BR>[Calls]<UL><LI><a href="#[1aa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_chip_power_state
 <LI><a href="#[20e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_get_chip_power_state
 <LI><a href="#[20f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_set_bank
+<LI><a href="#[19a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_reg
 </UL>
-<BR>[Called By]<UL><LI><a href="#[90]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_sensor_rate
+<BR>[Called By]<UL><LI><a href="#[1e3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_firmware_load
+<LI><a href="#[145]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_B2S_matrix
+<LI><a href="#[158]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_gyro_sf
+<LI><a href="#[14c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_accel_scale2
+<LI><a href="#[14b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_accel_fsr
+<LI><a href="#[147]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_FIFO_watermark
+<LI><a href="#[143]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_reset_control_registers
+<LI><a href="#[90]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_sensor_rate
 <LI><a href="#[15a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_ped_y_ratio
 <LI><a href="#[159]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_motion_event_control
 <LI><a href="#[157]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_data_rdy_status
@@ -3120,25 +3129,22 @@ Global Symbols
 <LI><a href="#[14a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_accel_feedback_gain
 <LI><a href="#[149]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_accel_cal_params
 <LI><a href="#[153]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_compass_matrix
-<LI><a href="#[1e3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_firmware_load
-<LI><a href="#[145]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_B2S_matrix
-<LI><a href="#[158]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_gyro_sf
-<LI><a href="#[14c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_accel_scale2
-<LI><a href="#[14b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_accel_fsr
-<LI><a href="#[147]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_set_FIFO_watermark
-<LI><a href="#[143]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_icm20948_reset_control_registers
 </UL>
 
 <P><STRONG><a name="[1d4]"></a>inv_icm20948_write_mems_reg</STRONG> (Thumb, 144 bytes, Stack size 40 bytes, icm20948transport.o(i.inv_icm20948_write_mems_reg))
 <BR><BR>[Stack]<UL><LI>Max Depth = 120<LI>Call Chain = inv_icm20948_write_mems_reg &rArr; inv_icm20948_set_chip_power_state &rArr; inv_icm20948_write_single_mems_reg_core &rArr; inv_set_bank &rArr; inv_icm20948_write_reg
 </UL>
-<BR>[Calls]<UL><LI><a href="#[19a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_reg
-<LI><a href="#[1aa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_chip_power_state
+<BR>[Calls]<UL><LI><a href="#[1aa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_chip_power_state
 <LI><a href="#[20e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_get_chip_power_state
 <LI><a href="#[20f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_set_bank
 <LI><a href="#[12f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;check_reg_access_lp_disable
+<LI><a href="#[19a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_reg
 </UL>
-<BR>[Called By]<UL><LI><a href="#[1c8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_wakeup_mems
+<BR>[Called By]<UL><LI><a href="#[15c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_mpu_set_FIFO_RST_Diamond
+<LI><a href="#[21a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_icm20948_gyro_fullscale
+<LI><a href="#[1f1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_dmp_address
+<LI><a href="#[1ee]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_initialize_lower_driver
+<LI><a href="#[1c8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_wakeup_mems
 <LI><a href="#[1a7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_sleep_mems
 <LI><a href="#[1f2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_gyro_divider
 <LI><a href="#[1f3]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_accel_divider
@@ -3147,22 +3153,18 @@ Global Symbols
 <LI><a href="#[1a8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_enable_hw_sensors
 <LI><a href="#[1de]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_secondary
 <LI><a href="#[1da]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_read_secondary
-<LI><a href="#[15c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_mpu_set_FIFO_RST_Diamond
-<LI><a href="#[21a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_icm20948_gyro_fullscale
-<LI><a href="#[1f1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_dmp_address
-<LI><a href="#[1ee]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_initialize_lower_driver
 </UL>
 
 <P><STRONG><a name="[19a]"></a>inv_icm20948_write_reg</STRONG> (Thumb, 38 bytes, Stack size 16 bytes, icm20948transport.o(i.inv_icm20948_write_reg))
 <BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = inv_icm20948_write_reg
 </UL>
-<BR>[Called By]<UL><LI><a href="#[1d4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_mems_reg
-<LI><a href="#[15b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_single_mems_reg
-<LI><a href="#[69]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_device_icm20948_write_mems_register
-<LI><a href="#[144]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_mems
+<BR>[Called By]<UL><LI><a href="#[144]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_mems
 <LI><a href="#[13e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_read_mems
 <LI><a href="#[216]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_single_mems_reg_core
 <LI><a href="#[20f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_set_bank
+<LI><a href="#[1d4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_mems_reg
+<LI><a href="#[15b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_single_mems_reg
+<LI><a href="#[69]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_device_icm20948_write_mems_register
 </UL>
 
 <P><STRONG><a name="[1de]"></a>inv_icm20948_write_secondary</STRONG> (Thumb, 96 bytes, Stack size 32 bytes, icm20948auxtransport.o(i.inv_icm20948_write_secondary))
@@ -3177,20 +3179,13 @@ Global Symbols
 <P><STRONG><a name="[15b]"></a>inv_icm20948_write_single_mems_reg</STRONG> (Thumb, 108 bytes, Stack size 32 bytes, icm20948transport.o(i.inv_icm20948_write_single_mems_reg))
 <BR><BR>[Stack]<UL><LI>Max Depth = 112<LI>Call Chain = inv_icm20948_write_single_mems_reg &rArr; inv_icm20948_set_chip_power_state &rArr; inv_icm20948_write_single_mems_reg_core &rArr; inv_set_bank &rArr; inv_icm20948_write_reg
 </UL>
-<BR>[Calls]<UL><LI><a href="#[19a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_reg
-<LI><a href="#[1aa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_chip_power_state
+<BR>[Calls]<UL><LI><a href="#[1aa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_chip_power_state
 <LI><a href="#[20e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_get_chip_power_state
 <LI><a href="#[20f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_set_bank
 <LI><a href="#[12f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;check_reg_access_lp_disable
+<LI><a href="#[19a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_reg
 </UL>
-<BR>[Called By]<UL><LI><a href="#[1c8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_wakeup_mems
-<LI><a href="#[214]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_secondary_divider
-<LI><a href="#[1dd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_secondary_stop_channel
-<LI><a href="#[1db]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_secondary_enable_i2c
-<LI><a href="#[1dc]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_secondary_disable_i2c
-<LI><a href="#[1b5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_check_akm_self_test
-<LI><a href="#[180]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_soft_reset
-<LI><a href="#[210]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_setup_selftest
+<BR>[Called By]<UL><LI><a href="#[210]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_setup_selftest
 <LI><a href="#[212]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_recover_setting
 <LI><a href="#[19b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_do_test_accelgyro
 <LI><a href="#[13b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_reset_fifo
@@ -3198,13 +3193,20 @@ Global Symbols
 <LI><a href="#[21a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_icm20948_gyro_fullscale
 <LI><a href="#[215]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_icm20948_accel_fullscale
 <LI><a href="#[1ee]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_initialize_lower_driver
+<LI><a href="#[1c8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_wakeup_mems
+<LI><a href="#[214]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_secondary_divider
+<LI><a href="#[1dd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_secondary_stop_channel
+<LI><a href="#[1db]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_secondary_enable_i2c
+<LI><a href="#[1dc]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_secondary_disable_i2c
+<LI><a href="#[1b5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_check_akm_self_test
+<LI><a href="#[180]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_soft_reset
 </UL>
 
 <P><STRONG><a name="[216]"></a>inv_icm20948_write_single_mems_reg_core</STRONG> (Thumb, 34 bytes, Stack size 32 bytes, icm20948transport.o(i.inv_icm20948_write_single_mems_reg_core))
 <BR><BR>[Stack]<UL><LI>Max Depth = 64<LI>Call Chain = inv_icm20948_write_single_mems_reg_core &rArr; inv_set_bank &rArr; inv_icm20948_write_reg
 </UL>
-<BR>[Calls]<UL><LI><a href="#[19a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_reg
-<LI><a href="#[20f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_set_bank
+<BR>[Calls]<UL><LI><a href="#[20f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_set_bank
+<LI><a href="#[19a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_reg
 </UL>
 <BR>[Called By]<UL><LI><a href="#[1aa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_chip_power_state
 </UL>
@@ -3224,7 +3226,7 @@ Global Symbols
 <BR><BR>[Called By]<UL><LI><a href="#[31]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[2ab]"></a>inv_sensor_str</STRONG> (Thumb, 34 bytes, Stack size 8 bytes, sensor.o(i.inv_sensor_str))
+<P><STRONG><a name="[2ac]"></a>inv_sensor_str</STRONG> (Thumb, 34 bytes, Stack size 8 bytes, sensor.o(i.inv_sensor_str))
 <BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = inv_sensor_str
 </UL>
 <BR>[Called By]<UL><LI><a href="#[1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sensor_event_cb
@@ -3656,12 +3658,15 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[22e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;nrf_sdh_ble_enable
 <LI><a href="#[22d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;nrf_sdh_ble_default_cfg_set
 <LI><a href="#[6e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;nrf_ble_gatt_on_ble_evt
+<LI><a href="#[29b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;nus_printf_custom
 <LI><a href="#[31]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
+<LI><a href="#[3e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gatt_evt_handler
 <LI><a href="#[44]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;nus_data_handler
 <LI><a href="#[12d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;check_rc
 <LI><a href="#[24b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;on_exchange_mtu_request_evt
 <LI><a href="#[24a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;on_connected_evt
 <LI><a href="#[133]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;data_length_update
+<LI><a href="#[1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sensor_event_cb
 <LI><a href="#[76]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ts_on_sys_evt
 </UL>
 
@@ -3836,7 +3841,7 @@ Global Symbols
 <BR><BR>[Called By]<UL><LI><a href="#[22d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;nrf_sdh_ble_default_cfg_set
 </UL>
 
-<P><STRONG><a name="[22d]"></a>nrf_sdh_ble_default_cfg_set</STRONG> (Thumb, 272 bytes, Stack size 40 bytes, nrf_sdh_ble.o(i.nrf_sdh_ble_default_cfg_set))
+<P><STRONG><a name="[22d]"></a>nrf_sdh_ble_default_cfg_set</STRONG> (Thumb, 274 bytes, Stack size 40 bytes, nrf_sdh_ble.o(i.nrf_sdh_ble_default_cfg_set))
 <BR><BR>[Stack]<UL><LI>Max Depth = 220<LI>Call Chain = nrf_sdh_ble_default_cfg_set &rArr; nrf_log_frontend_std_1 &rArr; std_n &rArr; nrf_log_frontend_dequeue &rArr;  nrf_log_frontend_std_0 (Cycle)
 </UL>
 <BR>[Calls]<UL><LI><a href="#[12e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;nrf_log_frontend_std_1
@@ -4166,10 +4171,12 @@ Global Symbols
 <LI><a href="#[25c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;nrfx_uarte_tx
 </UL>
 
-<P><STRONG><a name="[29b]"></a>nus_printf_custom</STRONG> (Thumb, 52 bytes, Stack size 8 bytes, main.o(i.nus_printf_custom))
-<BR><BR>[Stack]<UL><LI>Max Depth = 72<LI>Call Chain = nus_printf_custom &rArr; ble_nus_data_send &rArr; blcm_link_ctx_get &rArr; ble_conn_state_conn_idx
+<P><STRONG><a name="[29b]"></a>nus_printf_custom</STRONG> (Thumb, 94 bytes, Stack size 16 bytes, main.o(i.nus_printf_custom))
+<BR><BR>[Stack]<UL><LI>Max Depth = 204<LI>Call Chain = nus_printf_custom &rArr; app_error_handler_bare &rArr; app_error_fault_handler &rArr; nrf_log_frontend_std_0 &rArr; std_n &rArr; nrf_log_frontend_dequeue &rArr;  nrf_log_frontend_std_0 (Cycle)
 </UL>
-<BR>[Calls]<UL><LI><a href="#[108]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ble_nus_data_send
+<BR>[Calls]<UL><LI><a href="#[12e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;nrf_log_frontend_std_1
+<LI><a href="#[108]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;ble_nus_data_send
+<LI><a href="#[c5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;app_error_handler_bare
 </UL>
 <BR>[Called By]<UL><LI><a href="#[1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sensor_event_cb
 </UL>
@@ -5510,20 +5517,21 @@ Local Symbols
 <LI><a href="#[175]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;i2c_write_byte
 </UL>
 
-<P><STRONG><a name="[1]"></a>sensor_event_cb</STRONG> (Thumb, 766 bytes, Stack size 344 bytes, imu.o(i.sensor_event_cb))
-<BR><BR>[Stack]<UL><LI>Max Depth = 564<LI>Call Chain = sensor_event_cb &rArr; nrf_log_frontend_std_6 &rArr; std_n &rArr; nrf_log_frontend_dequeue &rArr;  nrf_log_frontend_std_0 (Cycle)
+<P><STRONG><a name="[1]"></a>sensor_event_cb</STRONG> (Thumb, 948 bytes, Stack size 152 bytes, imu.o(i.sensor_event_cb))
+<BR><BR>[Stack]<UL><LI>Max Depth = 372<LI>Call Chain = sensor_event_cb &rArr; nrf_log_frontend_std_6 &rArr; std_n &rArr; nrf_log_frontend_dequeue &rArr;  nrf_log_frontend_std_0 (Cycle)
 </UL>
 <BR>[Calls]<UL><LI><a href="#[135]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;nrf_log_frontend_std_2
+<LI><a href="#[12e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;nrf_log_frontend_std_1
 <LI><a href="#[c4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;nrf_log_frontend_std_0
 <LI><a href="#[12b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_msg
 <LI><a href="#[29b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;nus_printf_custom
 <LI><a href="#[271]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;nrf_log_frontend_std_6
 <LI><a href="#[270]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;nrf_log_frontend_std_5
 <LI><a href="#[26f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;nrf_log_frontend_std_3
-<LI><a href="#[2ab]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_sensor_str
+<LI><a href="#[2ac]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_sensor_str
 <LI><a href="#[2aa]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_f2d
 <LI><a href="#[2ad]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;activityName
-<LI><a href="#[2ac]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__2sprintf
+<LI><a href="#[2ab]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__2sprintf
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> imu.o(.data)
 </UL>
@@ -5710,9 +5718,9 @@ Local Symbols
 </UL>
 
 <P><STRONG><a name="[1f8]"></a>invn_convert_mult_q15_fxp</STRONG> (Thumb, 12 bytes, Stack size 0 bytes, icm20948dataconverter.o(i.invn_convert_mult_q15_fxp))
-<BR><BR>[Called By]<UL><LI><a href="#[1b1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_math_atan2_q15_fxp
-<LI><a href="#[1f7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;invn_convert_inverse_q15_fxp
+<BR><BR>[Called By]<UL><LI><a href="#[1f7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;invn_convert_inverse_q15_fxp
 <LI><a href="#[223]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;invn_convert_inv_sqrt_q15_fxp
+<LI><a href="#[1b1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_math_atan2_q15_fxp
 </UL>
 
 <P><STRONG><a name="[1bf]"></a>invn_convert_mult_q29_fxp</STRONG> (Thumb, 12 bytes, Stack size 0 bytes, icm20948dataconverter.o(i.invn_convert_mult_q29_fxp))
@@ -5735,9 +5743,9 @@ Local Symbols
 <P><STRONG><a name="[139]"></a>dmp_get_fifo_all</STRONG> (Thumb, 134 bytes, Stack size 40 bytes, icm20948mpufifocontrol.o(i.dmp_get_fifo_all))
 <BR><BR>[Stack]<UL><LI>Max Depth = 240<LI>Call Chain = dmp_get_fifo_all &rArr; dmp_reset_fifo &rArr; inv_icm20948_mpu_set_FIFO_RST_Diamond &rArr; inv_icm20948_read_mems_reg &rArr; inv_icm20948_set_chip_power_state &rArr; inv_icm20948_write_single_mems_reg_core &rArr; inv_set_bank &rArr; inv_icm20948_write_reg
 </UL>
-<BR>[Calls]<UL><LI><a href="#[13c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_read_mems_reg
-<LI><a href="#[13b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_reset_fifo
+<BR>[Calls]<UL><LI><a href="#[13b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_reset_fifo
 <LI><a href="#[13a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_get_fifo_length
+<LI><a href="#[13c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_read_mems_reg
 </UL>
 <BR>[Called By]<UL><LI><a href="#[1e2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_fifo_swmirror
 </UL>
@@ -5754,9 +5762,9 @@ Local Symbols
 <P><STRONG><a name="[13b]"></a>dmp_reset_fifo</STRONG> (Thumb, 102 bytes, Stack size 24 bytes, icm20948mpufifocontrol.o(i.dmp_reset_fifo))
 <BR><BR>[Stack]<UL><LI>Max Depth = 200<LI>Call Chain = dmp_reset_fifo &rArr; inv_icm20948_mpu_set_FIFO_RST_Diamond &rArr; inv_icm20948_read_mems_reg &rArr; inv_icm20948_set_chip_power_state &rArr; inv_icm20948_write_single_mems_reg_core &rArr; inv_set_bank &rArr; inv_icm20948_write_reg
 </UL>
-<BR>[Calls]<UL><LI><a href="#[15b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_single_mems_reg
-<LI><a href="#[15c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_mpu_set_FIFO_RST_Diamond
+<BR>[Calls]<UL><LI><a href="#[15c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_mpu_set_FIFO_RST_Diamond
 <LI><a href="#[13a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_get_fifo_length
+<LI><a href="#[15b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_single_mems_reg
 </UL>
 <BR>[Called By]<UL><LI><a href="#[168]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;extract_sample_cnt
 <LI><a href="#[139]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;dmp_get_fifo_all
@@ -5796,9 +5804,9 @@ Local Symbols
 <P><STRONG><a name="[19b]"></a>inv_do_test_accelgyro</STRONG> (Thumb, 144 bytes, Stack size 32 bytes, icm20948selftest.o(i.inv_do_test_accelgyro))
 <BR><BR>[Stack]<UL><LI>Max Depth = 232<LI>Call Chain = inv_do_test_accelgyro &rArr; inv_selftest_read_samples &rArr; inv_icm20948_read_mems_reg &rArr; inv_icm20948_set_chip_power_state &rArr; inv_icm20948_write_single_mems_reg_core &rArr; inv_set_bank &rArr; inv_icm20948_write_reg
 </UL>
-<BR>[Calls]<UL><LI><a href="#[19d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_sleep_us
+<BR>[Calls]<UL><LI><a href="#[19c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_selftest_read_samples
+<LI><a href="#[19d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_sleep_us
 <LI><a href="#[15b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_single_mems_reg
-<LI><a href="#[19c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_selftest_read_samples
 </UL>
 <BR>[Called By]<UL><LI><a href="#[18e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_run_selftest
 </UL>
@@ -5806,12 +5814,12 @@ Local Symbols
 <P><STRONG><a name="[212]"></a>inv_recover_setting</STRONG> (Thumb, 314 bytes, Stack size 24 bytes, icm20948selftest.o(i.inv_recover_setting))
 <BR><BR>[Stack]<UL><LI>Max Depth = 240<LI>Call Chain = inv_recover_setting &rArr; inv_icm20948_setup_compass_akm &rArr; inv_icm20948_execute_read_secondary &rArr; inv_icm20948_read_secondary &rArr; inv_icm20948_write_mems_reg &rArr; inv_icm20948_set_chip_power_state &rArr; inv_icm20948_write_single_mems_reg_core &rArr; inv_set_bank &rArr; inv_icm20948_write_reg
 </UL>
-<BR>[Calls]<UL><LI><a href="#[19d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_sleep_us
+<BR>[Calls]<UL><LI><a href="#[21d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_secondary
+<LI><a href="#[1f1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_dmp_address
+<LI><a href="#[19d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_sleep_us
 <LI><a href="#[1a7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_sleep_mems
 <LI><a href="#[15b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_single_mems_reg
 <LI><a href="#[21e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_setup_compass_akm
-<LI><a href="#[21d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_secondary
-<LI><a href="#[1f1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_set_dmp_address
 </UL>
 <BR>[Called By]<UL><LI><a href="#[18e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_run_selftest
 </UL>
@@ -5836,10 +5844,10 @@ Local Symbols
 <P><STRONG><a name="[210]"></a>inv_setup_selftest</STRONG> (Thumb, 342 bytes, Stack size 24 bytes, icm20948selftest.o(i.inv_setup_selftest))
 <BR><BR>[Stack]<UL><LI>Max Depth = 200<LI>Call Chain = inv_setup_selftest &rArr; inv_save_setting &rArr; inv_icm20948_read_mems_reg &rArr; inv_icm20948_set_chip_power_state &rArr; inv_icm20948_write_single_mems_reg_core &rArr; inv_set_bank &rArr; inv_icm20948_write_reg
 </UL>
-<BR>[Calls]<UL><LI><a href="#[19d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_sleep_us
+<BR>[Calls]<UL><LI><a href="#[220]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_save_setting
+<LI><a href="#[19d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_sleep_us
 <LI><a href="#[15b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_single_mems_reg
 <LI><a href="#[13c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_read_mems_reg
-<LI><a href="#[220]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_save_setting
 </UL>
 <BR>[Called By]<UL><LI><a href="#[18e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_run_selftest
 </UL>
@@ -5855,9 +5863,9 @@ Local Symbols
 <P><STRONG><a name="[1f9]"></a>inv_icm20948_updateTs</STRONG> (Thumb, 422 bytes, Stack size 144 bytes, icm20948setup.o(i.inv_icm20948_updateTs))
 <BR><BR>[Stack]<UL><LI>Max Depth = 416<LI>Call Chain = inv_icm20948_updateTs &rArr; inv_icm20948_fifo_swmirror &rArr; extract_sample_cnt &rArr; dmp_reset_fifo &rArr; inv_icm20948_mpu_set_FIFO_RST_Diamond &rArr; inv_icm20948_read_mems_reg &rArr; inv_icm20948_set_chip_power_state &rArr; inv_icm20948_write_single_mems_reg_core &rArr; inv_set_bank &rArr; inv_icm20948_write_reg
 </UL>
-<BR>[Calls]<UL><LI><a href="#[19f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_sensor_android_2_sensor_type
-<LI><a href="#[1e2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_fifo_swmirror
+<BR>[Calls]<UL><LI><a href="#[1e2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_fifo_swmirror
 <LI><a href="#[21f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_is_streamed_sensor
+<LI><a href="#[19f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_sensor_android_2_sensor_type
 <LI><a href="#[f6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memclr4
 <LI><a href="#[7f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_uldivmod
 </UL>
@@ -5880,10 +5888,10 @@ Local Symbols
 <P><STRONG><a name="[12f]"></a>check_reg_access_lp_disable</STRONG> (Thumb, 76 bytes, Stack size 0 bytes, icm20948transport.o(i.check_reg_access_lp_disable))
 <BR><BR>[Calls]<UL><LI><a href="#[130]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_ctrl_get_batch_mode_status
 </UL>
-<BR>[Called By]<UL><LI><a href="#[1d4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_mems_reg
+<BR>[Called By]<UL><LI><a href="#[13e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_read_mems
+<LI><a href="#[1d4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_mems_reg
 <LI><a href="#[15b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_single_mems_reg
 <LI><a href="#[13c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_read_mems_reg
-<LI><a href="#[13e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_read_mems
 </UL>
 
 <P><STRONG><a name="[20f]"></a>inv_set_bank</STRONG> (Thumb, 74 bytes, Stack size 16 bytes, icm20948transport.o(i.inv_set_bank))
@@ -5892,12 +5900,12 @@ Local Symbols
 <BR>[Calls]<UL><LI><a href="#[19a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_reg
 <LI><a href="#[18d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_read_reg
 </UL>
-<BR>[Called By]<UL><LI><a href="#[1d4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_mems_reg
-<LI><a href="#[15b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_single_mems_reg
-<LI><a href="#[13c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_read_mems_reg
-<LI><a href="#[144]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_mems
+<BR>[Called By]<UL><LI><a href="#[144]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_mems
 <LI><a href="#[13e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_read_mems
 <LI><a href="#[216]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_single_mems_reg_core
+<LI><a href="#[1d4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_mems_reg
+<LI><a href="#[15b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_write_single_mems_reg
+<LI><a href="#[13c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;inv_icm20948_read_mems_reg
 </UL>
 
 <P><STRONG><a name="[29e]"></a>__NVIC_EnableIRQ</STRONG> (Thumb, 26 bytes, Stack size 0 bytes, time_sync.o(i.__NVIC_EnableIRQ))
