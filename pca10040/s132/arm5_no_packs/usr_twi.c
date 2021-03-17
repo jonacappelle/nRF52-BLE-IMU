@@ -18,7 +18,7 @@ void twi_init (void)
        .scl                = ARDUINO_SCL_PIN,		// PIN 27
        .sda                = ARDUINO_SDA_PIN,		// PIN 26
        .frequency          = NRF_DRV_TWI_FREQ_400K,
-       .interrupt_priority = APP_IRQ_PRIORITY_HIGH,
+       .interrupt_priority = APP_IRQ_PRIORITY_LOW, //APP_IRQ_PRIORITY_HIGH,
        .clear_bus_init     = false
     };
 
@@ -115,3 +115,71 @@ ret_code_t i2c_read_bytes(const nrf_drv_twi_t *twi_handle, uint8_t address, uint
 		return err_code;
 }
 
+
+
+///**
+// * @brief Initialize the TWI Master module with PPI triggered
+// * R/W operations started by a counter module
+// */
+//static void twi_with_easy_dma_setup()
+//{
+//    // Disable the TWIM module while we reconfigure it
+//    NRF_TWIM0->ENABLE = TWIM_ENABLE_ENABLE_Disabled << TWIM_ENABLE_ENABLE_Pos;
+//    NRF_TWIM0->SHORTS = 0;
+//    NVIC_DisableIRQ(SPI0_TWI0_IRQn);
+//    NVIC_ClearPendingIRQ(SPI0_TWI0_IRQn);
+//    
+//    // Configure a gpiote channel to generate an event on a polarity change from 
+//    // low to high generated the MPU interrupt pin.
+//    uint8_t gpiote_ch_mpu_int_event = 0;
+//    NRF_GPIOTE->CONFIG[gpiote_ch_mpu_int_event] = ( (GPIOTE_CONFIG_MODE_Event   << GPIOTE_CONFIG_MODE_Pos) | 
+//                                                    (MPU_INT_PIN                << GPIOTE_CONFIG_PSEL_Pos) | 
+//                                                    (GPIOTE_CONFIG_POLARITY_LoToHi << GPIOTE_CONFIG_POLARITY_Pos));
+//    
+//    NRF_TWIM0->PSEL.SCL = MPU_TWI_SCL_PIN;
+//    NRF_TWIM0->PSEL.SDA = MPU_TWI_SDA_PIN;
+//    NRF_TWIM0->FREQUENCY = TWI_FREQUENCY_FREQUENCY_K400;
+//    
+//    // Load TWI TX buffer into TWI module. Set number of bytes to write pr transfer, max count, to one. 
+//    // Disable the EasyDMA list functionality for TWI TX.
+//    NRF_TWIM0->TXD.PTR = (uint32_t)&p_tx_buffer;
+//    NRF_TWIM0->TXD.MAXCNT = 1;
+//    NRF_TWIM0->TXD.LIST = TWIM_TXD_LIST_LIST_Disabled << TWIM_TXD_LIST_LIST_Pos;
+//    
+//    // Point to TWI RX buffer. Set number of bytes to read pr transfer, max count, to TWIM_RX_BUF_WIDTH. 
+//    // Disable the EasyDMA list functionality for TWI TX
+//    NRF_TWIM0->RXD.PTR = (uint32_t)&p_rx_buffer;
+//    NRF_TWIM0->RXD.MAXCNT = TWIM_RX_BUF_WIDTH;
+//    NRF_TWIM0->RXD.LIST = TWIM_RXD_LIST_LIST_ArrayList << TWIM_RXD_LIST_LIST_Pos;
+//    
+//    // Make sure that MPU address is set
+//    NRF_TWIM0->ADDRESS = MPU_ADDRESS;
+//    // Enable shortcuts that starts a read right after a write and sends a stop condition after last TWI read
+//    NRF_TWIM0->SHORTS = (TWIM_SHORTS_LASTTX_STARTRX_Enabled << TWIM_SHORTS_LASTTX_STARTRX_Pos) | 
+//                        (TWIM_SHORTS_LASTRX_STOP_Enabled << TWIM_SHORTS_LASTRX_STOP_Pos);
+//    
+//    // Configure PPI channel
+//    // Use MPU interrupt pin as event
+//    // Start timer 0 on event to count number of transfers
+//    // Also start TWI transfers on event
+//    // Enable PPI channel
+//    NRF_PPI->CH[0].EEP = (uint32_t)&NRF_GPIOTE->EVENTS_IN[gpiote_ch_mpu_int_event];
+//    NRF_PPI->CH[0].TEP = (uint32_t)&NRF_TIMER0->TASKS_COUNT;
+//    NRF_PPI->FORK[0].TEP = (uint32_t)&NRF_TWIM0->TASKS_STARTTX;
+//    
+//    // Enable the TWIM module
+//    NRF_TWIM0->ENABLE = TWIM_ENABLE_ENABLE_Enabled << TWIM_ENABLE_ENABLE_Pos;
+//}
+
+///**
+// * @brief Start the transfers
+// */
+//void start_transfers(void)
+//{
+//    // Enable timer interrupt
+//    NVIC_EnableIRQ(TIMER0_IRQn);
+//    // Start counter
+//    NRF_TIMER0->TASKS_START = 1;
+//    // Enable the PPI channel tying MPU interrupt pin to TWIM module
+//    NRF_PPI->CHEN = PPI_CHEN_CH0_Enabled << PPI_CHEN_CH0_Pos;
+//}

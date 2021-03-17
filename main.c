@@ -168,8 +168,11 @@ static volatile uint32_t last_irq_time = 0;
 void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 {
     //NRF_LOG_INFO("Interrupt Occured!");
-		last_irq_time = inv_icm20948_get_time_us();
+//		last_irq_time = inv_icm20948_get_time_us();
+	
+		nrf_gpio_pin_toggle(25);
 		interrupt = true;
+	nrf_gpio_pin_toggle(25);
 }
 
 uint64_t inv_icm20948_get_dataready_interrupt_time_us(void)
@@ -214,8 +217,8 @@ NRF_BLE_QWR_DEF(m_qwr);                                                         
 BLE_ADVERTISING_DEF(m_advertising);                                                 /**< Advertising module instance. */
 
 static uint16_t   m_conn_handle          = BLE_CONN_HANDLE_INVALID;                 /**< Handle of the current connection. */
-//static uint16_t   m_ble_nus_max_data_len = BLE_GATT_ATT_MTU_DEFAULT - 3;            /**< Maximum length of data (in bytes) that can be transmitted to the peer by the Nordic UART service module. */
-static uint16_t   m_ble_nus_max_data_len = 247 - 3;            /**< Maximum length of data (in bytes) that can be transmitted to the peer by the Nordic UART service module. */
+static uint16_t   m_ble_nus_max_data_len = BLE_GATT_ATT_MTU_DEFAULT - 3;            /**< Maximum length of data (in bytes) that can be transmitted to the peer by the Nordic UART service module. */
+//static uint16_t   m_ble_nus_max_data_len = 247 - 3;            /**< Maximum length of data (in bytes) that can be transmitted to the peer by the Nordic UART service module. */
 static ble_uuid_t m_adv_uuids[]          =                                          /**< Universally unique service identifier. */
 {
     {BLE_UUID_NUS_SERVICE, NUS_SERVICE_UUID_TYPE}
@@ -887,17 +890,28 @@ uint32_t nus_printf_custom(char* p_char)
 	return err_code;
 }
 
-uint32_t nus_send(uint8_t* data, uint16_t len)
+uint32_t nus_send()
 {
+	static uint16_t index;
+	static uint8_t data_array[BLE_NUS_MAX_DATA_LEN];
+	
+	for(int i=0; i<BLE_NUS_MAX_DATA_LEN; i++)
+	{
+		data_array[i] = 0x00;
+	}
+	index = 200;
+	
 		uint32_t err_code;
-		do {
-			//err_code = ble_nus_string_send(&m_nus, data_array, &index);
-			err_code = ble_nus_data_send(&m_nus, data, &len, m_conn_handle);
-			if ( (err_code != NRF_ERROR_INVALID_STATE) && (err_code != NRF_ERROR_BUSY) )
-			{
-				break;
-			}
-		} while (err_code == NRF_ERROR_BUSY);
+		do
+		{
+				err_code = ble_nus_data_send(&m_nus, data_array, &index, m_conn_handle);
+				if ((err_code != NRF_ERROR_INVALID_STATE) &&
+						(err_code != NRF_ERROR_RESOURCES) &&
+						(err_code != NRF_ERROR_NOT_FOUND))
+				{
+						APP_ERROR_CHECK(err_code);
+				}
+		} while (err_code == NRF_ERROR_RESOURCES);
 		
 		return err_code;
 }
@@ -965,6 +979,8 @@ static void sync_timer_button_init(void)
 int main(void)
 {
     bool erase_bonds;
+	
+
 
     // Initialize.
     uart_init();
@@ -981,6 +997,21 @@ int main(void)
 	
 		// TimeSync
 		sync_timer_button_init();
+	
+	
+	nrf_gpio_cfg_output(18);
+	nrf_gpio_cfg_output(19);
+			nrf_gpio_cfg_output(20);
+	////////////////////////////////
+		nrf_gpio_cfg_output(25);
+		nrf_gpio_pin_set(25);
+		nrf_gpio_pin_set(20);
+		nrf_delay_ms(1000);
+		nrf_gpio_pin_clear(25);
+		nrf_gpio_pin_clear(20);
+		nrf_delay_ms(1000);
+	////////////////////////////////
+		
 
     // Start execution.
     printf("\r\nUART started.\r\n");
@@ -1101,6 +1132,8 @@ int main(void)
 //		check_rc(rc);
 		
 		
+//		inv_device_set_sensor_timeout(device, INV_SENSOR_TYPE_GAME_ROTATION_VECTOR, 5);
+		
 		nrf_delay_ms(1000);
 		
 		// Loop: IMU gives interrupt -> bool interrupt = true -> poll device for data
@@ -1111,8 +1144,12 @@ int main(void)
 			{
 //				uint32_t timer_test = ts_timestamp_get_ticks_u32(NRF_PPI_CHANNEL0);
 //				NRF_LOG_INFO("Local time: %d", timer_test/16000000);
-				inv_device_poll(device);
+				
 				interrupt = false;
+				nrf_gpio_pin_set(20);
+				inv_device_poll(device);
+				nrf_gpio_pin_clear(20);
+				
 			}
 			NRF_LOG_FLUSH();
 			

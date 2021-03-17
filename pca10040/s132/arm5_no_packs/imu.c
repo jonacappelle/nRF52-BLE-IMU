@@ -160,6 +160,8 @@ void inv_icm20948_sleep_us(int us)
 #include "nrf_log_default_backends.h"
 
 extern uint32_t nus_printf_custom(char* p_char);
+extern uint32_t nus_send();
+
 
 /*
  * Function to return activity name in printable char
@@ -225,6 +227,10 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 		
 		float dummy_data = 1.001;
 		
+		
+		nrf_gpio_pin_set(18);
+		
+		
 			// Convert data to string over ble nus
 		sprintf(stringsend, "%d	- %f	%f	%f	%f - %f	%f	%f - %f	%f	%f - %f	%f	%f \n",
 //					(inv_sensor_str(event->sensor)),
@@ -257,10 +263,12 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 //					
 					);
 					
+				nrf_gpio_pin_clear(18);	
 					
-					
-	nus_printf_custom(stringsend);
-
+nrf_gpio_pin_set(19);
+//	nus_printf_custom(stringsend);
+//	nus_send();
+nrf_gpio_pin_clear(19);
 	
 //	for(int i=0; i<132; i++)
 //	{

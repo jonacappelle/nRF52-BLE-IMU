@@ -27,11 +27,16 @@ Project File Date:  03/16/2021
 <h2>Output:</h2>
 *** Using Compiler 'V5.06 update 6 (build 750)', folder: 'C:\Keil_v5\ARM\ARMCC\Bin'
 Build target 'nrf52832_xxaa'
-compiling main.c...
+compiling imu.c...
+imu.c(163): warning:  #1295-D: Deprecated declaration nus_send - give arg types
+  extern uint32_t nus_send();
+imu.c(228): warning:  #177-D: variable "dummy_data"  was declared but never referenced
+  		float dummy_data = 1.001;
+imu.c: 2 warnings, 0 errors
 linking...
-Program Size: Code=62736 RO-data=7596 RW-data=15344 ZI-data=25864  
+Program Size: Code=62784 RO-data=7596 RW-data=15344 ZI-data=26112  
 FromELF: creating hex file...
-".\_build\nrf52832_xxaa.axf" - 0 Error(s), 0 Warning(s).
+".\_build\nrf52832_xxaa.axf" - 0 Error(s), 2 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -61,7 +66,7 @@ Package Vendor: NordicSemiconductor
       Source file:   Device\Source\system_nrf52.c
       Include file:  Device\Include\system_nrf.h
       Include file:  Device\Include\system_nrf52.h
-Build Time Elapsed:  00:00:26
+Build Time Elapsed:  00:00:25
 </pre>
 </body>
 </html>
