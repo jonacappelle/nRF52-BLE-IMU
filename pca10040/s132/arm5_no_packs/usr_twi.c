@@ -18,7 +18,7 @@ void twi_init (void)
        .scl                = ARDUINO_SCL_PIN,		// PIN 27
        .sda                = ARDUINO_SDA_PIN,		// PIN 26
        .frequency          = NRF_DRV_TWI_FREQ_400K,
-       .interrupt_priority = APP_IRQ_PRIORITY_LOW, //APP_IRQ_PRIORITY_HIGH,
+       .interrupt_priority = APP_IRQ_PRIORITY_HIGH,
        .clear_bus_init     = false
     };
 
