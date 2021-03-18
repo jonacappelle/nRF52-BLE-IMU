@@ -5834,7 +5834,7 @@
 // <i> Anomaly 109 Addendum located at https://infocenter.nordicsemi.com/
 
 #ifndef TWIM_NRF52_ANOMALY_109_WORKAROUND_ENABLED
-#define TWIM_NRF52_ANOMALY_109_WORKAROUND_ENABLED 0
+#define TWIM_NRF52_ANOMALY_109_WORKAROUND_ENABLED 1
 #endif
 
 // </e>

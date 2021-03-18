@@ -6,6 +6,15 @@ const nrf_drv_twi_t m_twi = NRF_DRV_TWI_INSTANCE(TWI_INSTANCE_ID);
 /* Indicates if operation on TWI has ended. */
 static volatile bool m_xfer_done = false;
 
+
+static volatile bool twi_tx_done = false;
+static volatile bool twi_rx_done = false;
+	
+	
+#define MPU_TWI_TIMEOUT 			10000 
+
+
+
 /* I2C Initialisation */
 /**
  * @brief UART initialization.
@@ -33,25 +42,65 @@ void twi_init (void)
  */
 void twi_handler(nrf_drv_twi_evt_t const * p_event, void * p_context)
 {
-    switch (p_event->type)
+	
+	switch(p_event->type)
     {
         case NRF_DRV_TWI_EVT_DONE:
-            if (p_event->xfer_desc.type == NRF_DRV_TWI_XFER_RX)
+            switch(p_event->xfer_desc.type)
             {
-                //data_handler(data[0]);
+                case NRF_DRV_TWI_XFER_TX:
+                    twi_tx_done = true;
+                    break;
+                case NRF_DRV_TWI_XFER_TXTX:
+                    twi_tx_done = true;
+                    break;
+                case NRF_DRV_TWI_XFER_RX:
+                    twi_rx_done = true;
+                    break;
+                case NRF_DRV_TWI_XFER_TXRX:
+                    twi_rx_done = true;
+                    break;
+                default:
+                    break;
             }
-            m_xfer_done = true;
             break;
-				case NRF_DRV_TWI_EVT_ADDRESS_NACK:
-						NRF_LOG_INFO("Address NACK");
-						break;
-				case NRF_DRV_TWI_EVT_DATA_NACK:
+        case NRF_DRV_TWI_EVT_ADDRESS_NACK:
+						NRF_LOG_INFO("Address NACK")
+            break;
+        case NRF_DRV_TWI_EVT_DATA_NACK:
 						NRF_LOG_INFO("Data NACK");
-						break;
+            break;
         default:
             break;
     }
+//    switch (p_event->type)
+//    {
+//        case NRF_DRV_TWI_EVT_DONE:
+//            if (p_event->xfer_desc.type == NRF_DRV_TWI_XFER_RX)
+//            {
+//                //data_handler(data[0]);
+//            }
+//            m_xfer_done = true;
+//            break;
+//				case NRF_DRV_TWI_EVT_ADDRESS_NACK:
+//						NRF_LOG_INFO("Address NACK");
+//						break;
+//				case NRF_DRV_TWI_EVT_DATA_NACK:
+//						NRF_LOG_INFO("Data NACK");
+//						break;
+//        default:
+//            break;
+//    }
 }
+
+
+//// The TWI driver is not able to do two transmits without repeating the ADDRESS + Write bit byte
+//// Hence we need to merge the MPU register address with the buffer and then transmit all as one transmission
+//static void merge_register_and_data(uint8_t * new_buffer, uint8_t reg, uint8_t * p_data, uint32_t length)
+//{
+//    new_buffer[0] = reg;
+//    memcpy((new_buffer + 1), p_data, length);
+//}
 
 
 
@@ -67,50 +116,70 @@ ret_code_t i2c_write_byte(const nrf_drv_twi_t *twi_handle, uint8_t address, uint
     
     memcpy(tx_buf+1, data, len); // Shift the data to make place for subaddress
 	
-		m_xfer_done = false;
-	
 		err_code = nrf_drv_twi_tx(twi_handle, address, tx_buf, buf_len, stop);  
 		APP_ERROR_CHECK(err_code);
 	
-		while (m_xfer_done == false);
+		while (twi_tx_done == false);
+		twi_tx_done = false;
 	
 		return err_code;
 }
 
-/* reading byte or bytes from register before writing: special function*/        
-ret_code_t i2c_write_forread_byte(const nrf_drv_twi_t *twi_handle, uint8_t address, uint8_t sub_address)
-{   
-		ret_code_t err_code;
-		
-		m_xfer_done = false;
-	
-		err_code = nrf_drv_twi_tx(twi_handle, address, &sub_address, sizeof(sub_address), true);  
-		APP_ERROR_CHECK(err_code);
-	
-		while (m_xfer_done == false);
-	
-		return err_code;
-}
+///* reading byte or bytes from register before writing: special function*/        
+//ret_code_t i2c_write_forread_byte(const nrf_drv_twi_t *twi_handle, uint8_t address, uint8_t sub_address)
+//{   
+//		ret_code_t err_code;
+//		
+//		m_xfer_done = false;
+//	
+//		err_code = nrf_drv_twi_tx(twi_handle, address, &sub_address, sizeof(sub_address), true);  
+//		APP_ERROR_CHECK(err_code);
+//	
+//		while (m_xfer_done == false);
+//	
+//		return err_code;
+//}
 
 /* Low level read I2C functionality */
 ret_code_t i2c_read_bytes(const nrf_drv_twi_t *twi_handle, uint8_t address, uint8_t sub_address, uint8_t * dest, uint8_t dest_count)
 {   
 		ret_code_t err_code;  
-		
-		// Write address to read from first
-		err_code = i2c_write_forread_byte(twi_handle, address, sub_address);
-		
 	
-		if (NRF_SUCCESS == err_code)
-		{			
-			m_xfer_done = false;
-		
-			// Now we can actually read the data
-			err_code = nrf_drv_twi_rx(twi_handle, address, dest, dest_count);
-			APP_ERROR_CHECK(err_code);
+		uint8_t tx_buf[1];
+		tx_buf[0] = sub_address;
 	
-			while (m_xfer_done == false);
-		}
+		// Setting up transfer
+    nrf_drv_twi_xfer_desc_t xfer_desc;
+    xfer_desc.address = address;
+    xfer_desc.type = NRF_DRV_TWI_XFER_TXRX;
+    xfer_desc.primary_length = sizeof(tx_buf);
+		xfer_desc.secondary_length = dest_count;
+    xfer_desc.p_primary_buf = tx_buf;
+		xfer_desc.p_secondary_buf = dest;
+	
+		// Transferring
+    err_code = nrf_drv_twi_xfer(&m_twi, &xfer_desc, NRF_DRV_TWI_FLAG_TX_NO_STOP);
+		APP_ERROR_CHECK(err_code);
+		
+		
+		while(twi_rx_done == false);
+    twi_rx_done = false;
+
+	
+//		// Write address to read from first
+//		err_code = i2c_write_forread_byte(twi_handle, address, sub_address);
+//		
+//	
+//		if (NRF_SUCCESS == err_code)
+//		{			
+//			m_xfer_done = false;
+//		
+//			// Now we can actually read the data
+//			err_code = nrf_drv_twi_rx(twi_handle, address, dest, dest_count);
+//			APP_ERROR_CHECK(err_code);
+//	
+//			while (m_xfer_done == false);
+//		}
 	
 		return err_code;
 }
@@ -128,17 +197,19 @@ ret_code_t i2c_read_bytes(const nrf_drv_twi_t *twi_handle, uint8_t address, uint
 //    NRF_TWIM0->SHORTS = 0;
 //    NVIC_DisableIRQ(SPI0_TWI0_IRQn);
 //    NVIC_ClearPendingIRQ(SPI0_TWI0_IRQn);
-//    
+//	
+//	
+//    // Also already defined in usr_gpio
 //    // Configure a gpiote channel to generate an event on a polarity change from 
 //    // low to high generated the MPU interrupt pin.
-//    uint8_t gpiote_ch_mpu_int_event = 0;
-//    NRF_GPIOTE->CONFIG[gpiote_ch_mpu_int_event] = ( (GPIOTE_CONFIG_MODE_Event   << GPIOTE_CONFIG_MODE_Pos) | 
-//                                                    (MPU_INT_PIN                << GPIOTE_CONFIG_PSEL_Pos) | 
-//                                                    (GPIOTE_CONFIG_POLARITY_LoToHi << GPIOTE_CONFIG_POLARITY_Pos));
-//    
-//    NRF_TWIM0->PSEL.SCL = MPU_TWI_SCL_PIN;
-//    NRF_TWIM0->PSEL.SDA = MPU_TWI_SDA_PIN;
-//    NRF_TWIM0->FREQUENCY = TWI_FREQUENCY_FREQUENCY_K400;
+////    uint8_t gpiote_ch_mpu_int_event = 0;
+////    NRF_GPIOTE->CONFIG[gpiote_ch_mpu_int_event] = ( (GPIOTE_CONFIG_MODE_Event   << GPIOTE_CONFIG_MODE_Pos) | 
+////                                                    (MPU_INT_PIN                << GPIOTE_CONFIG_PSEL_Pos) | 
+////                                                    (GPIOTE_CONFIG_POLARITY_LoToHi << GPIOTE_CONFIG_POLARITY_Pos));
+//    // Already defined by nrf_drv_twi
+////    NRF_TWIM0->PSEL.SCL = MPU_TWI_SCL_PIN;
+////    NRF_TWIM0->PSEL.SDA = MPU_TWI_SDA_PIN;
+////    NRF_TWIM0->FREQUENCY = TWI_FREQUENCY_FREQUENCY_K400;
 //    
 //    // Load TWI TX buffer into TWI module. Set number of bytes to write pr transfer, max count, to one. 
 //    // Disable the EasyDMA list functionality for TWI TX.
