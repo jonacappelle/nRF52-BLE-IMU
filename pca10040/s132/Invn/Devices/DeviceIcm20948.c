@@ -249,6 +249,7 @@ int inv_device_icm20948_setup(void * context)
 			self->dmp3_image_size)) != 0)
 		goto error;
  
+	INV_MSG(INV_MSG_LEVEL_INFO, "Initialize auxiliary sensors");
 	/* Initialize auxiliary sensors */
 	inv_icm20948_initialize_auxiliary(&self->icm20948_states);
 

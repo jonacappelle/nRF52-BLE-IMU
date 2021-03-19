@@ -146,7 +146,8 @@ static uint8_t dmp3_image[] = {
 };
 
 /* Serif hal instances and listener */
-extern const inv_serif_hal_t my_serif_instance;
+//extern const inv_serif_hal_t my_serif_instance;
+extern const inv_host_serif_t my_serif_instance;
 extern inv_sensor_listener_t sensor_listener;
 
 
@@ -884,7 +885,7 @@ uint32_t nus_printf_custom(char* p_char)
 					}
 			} while (err_code == NRF_ERROR_RESOURCES);
 		
-			NRF_LOG_INFO("C:	%d", countrrr);
+//			NRF_LOG_INFO("C:	%d", countrrr);
 	countrrr++;
 		index = 0;
 	return err_code;
@@ -969,8 +970,27 @@ static void sync_timer_button_init(void)
 }
 
 
+//////////////////////////////////////////
+/**
+*  @internal
+*  @brief  Read data from the fifo
+*
+*  @param[out] data Location to store the date read from the fifo
+*  @param[in] len   Amount of data to read out of the fifo
+*
+*  @return MPU_SUCCESS or non-zero error code
+**/
+//static int dmp_read_fifo(unsigned char *data, uint_fast16_t len)
+//{
+
+//}
+/////////////////////////////////////////////
 
 
+
+
+/// Timer at 100 Hz
+bool timer_datasend_int = false;
 
 
 
@@ -1044,6 +1064,7 @@ int main(void)
 		/* Initialize us timer */
 		timer_init();
 
+
 		/* To keep track of errors */
 		int rc = 0;
 		
@@ -1051,25 +1072,37 @@ int main(void)
 		uint8_t whoami;
 		
 		/* Open serial interface (SPI or I2C) before playing with the device */
-		twi_init();
+//		twi_init();
+		
+		rc = inv_host_serif_open(&my_serif_instance);
+		check_rc(rc);
+		
 		NRF_LOG_INFO("i2c init");
 		NRF_LOG_FLUSH();
 		
+		
+		NRF_LOG_INFO("icm20948 init");
+		NRF_LOG_FLUSH();
 		/*
 		 * Create ICM20948 Device 
 		 * Pass to the driver:
 		 * - reference to serial interface object,
 		 * - reference to listener that will catch sensor events,
 		 */
-//		inv_device_icm20948_init(&device_icm20948, idd_io_hal_get_serif_instance_i2c(),&sensor_listener, dmp3_image, sizeof(dmp3_image));
-		inv_device_icm20948_init2(&device_icm20948, &my_serif_instance, &sensor_listener, dmp3_image, sizeof(dmp3_image));
+		inv_device_icm20948_init(&device_icm20948, &my_serif_instance, &sensor_listener, dmp3_image, sizeof(dmp3_image));
+//		inv_device_icm20948_init2(&device_icm20948, &my_serif_instance, &sensor_listener, dmp3_image, sizeof(dmp3_image));
 		NRF_LOG_FLUSH();
 		
+		
+		NRF_LOG_INFO("icm20948 get base");
+		NRF_LOG_FLUSH();
 		/*
 		 * Simply get generic device handle from Icm20948 Device
 		 */
 		device = inv_device_icm20948_get_base(&device_icm20948);
 		NRF_LOG_FLUSH();
+		
+		
 		
 		/* Just get the whoami */
 		rc += inv_device_whoami(device, &whoami);
@@ -1077,19 +1110,23 @@ int main(void)
 		NRF_LOG_INFO("Data: 0x%x", whoami);
 		NRF_LOG_FLUSH();
 		
+		
 		nrf_delay_ms(500);
 		
 		/* Configure and initialize the Icm20948 device */
 		NRF_LOG_INFO("Setting up ICM20948");
+		NRF_LOG_FLUSH();
 		rc += inv_device_setup(device);
 		check_rc(rc);
-		NRF_LOG_FLUSH();
+		
+		
 		
 		// Load DMP
 		NRF_LOG_INFO("Load DMP Image");
+		NRF_LOG_FLUSH();
 		rc += inv_device_load(device, NULL, dmp3_image, sizeof(dmp3_image), true /* verify */, NULL);
 		check_rc(rc);
-		NRF_LOG_FLUSH();
+		
 		
 //		rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_GYROSCOPE, 10); // 100 Hz
 //		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_GYROSCOPE);
@@ -1136,10 +1173,21 @@ int main(void)
 		
 		nrf_delay_ms(1000);
 		
+		
+		timer_datasend_init();
+		
 		// Loop: IMU gives interrupt -> bool interrupt = true -> poll device for data
 		////////////////////////////////////////////////////////////////		
 		while(1)
 		{
+			
+			if(timer_datasend_int)
+			{
+				timer_datasend_int = false;
+				nus_printf_custom("2	Test 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789\n\0");
+				
+			}
+			
 			if(interrupt)
 			{
 //				uint32_t timer_test = ts_timestamp_get_ticks_u32(NRF_PPI_CHANNEL0);
@@ -1153,8 +1201,12 @@ int main(void)
 			}
 			NRF_LOG_FLUSH();
 			
+			// Check for activity of CPU
+//			while(!interrupt) 		nrf_gpio_pin_toggle(18);
+			nrf_gpio_pin_toggle(18);
+			
 			/* Enter low power mode when idle */
-			idle_state_handle();
+//			idle_state_handle();
 		}
 		////////////////////////////////////////////////////////////////
 }

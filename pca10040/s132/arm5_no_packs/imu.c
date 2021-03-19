@@ -23,6 +23,7 @@
  * ________________________________________________________________________________________________________
  */
 #include "Invn/Devices/SerifHal.h"
+#include "Invn/Devices/HostSerif.h"
 // include to low level system driver
 // #include "MyTarget/SPI.h"
 #include "nrf_drv_twi.h"
@@ -33,6 +34,8 @@
 
 #include "DataConverter.h"
 
+#include "usr_twi.h"
+
 extern const nrf_drv_twi_t m_twi;
 
 extern ret_code_t i2c_read_bytes(const nrf_drv_twi_t *twi_handle, uint8_t address, uint8_t sub_address, uint8_t * dest, uint8_t dest_count);
@@ -42,27 +45,55 @@ extern void twi_handler(nrf_drv_twi_evt_t const * p_event, void * p_context);
 
 
 // forward declarations
-int my_serif_open_read_reg(void * context, uint8_t reg, uint8_t * rbuffer, uint32_t rlen);
-int my_serif_open_write_reg(void * context, uint8_t reg, const uint8_t * wbuffer, uint32_t wlen);
+int my_serif_open_adapter(void);
+int my_serif_open_read_reg(uint8_t reg, uint8_t * rbuffer, uint32_t rlen);
+int my_serif_open_write_reg(uint8_t reg, const uint8_t * wbuffer, uint32_t wlen);
+int my_serif_callback(void (*interrupt_cb)(void * context, int int_num), void * context);
+
 // Exported instance of SerifHal object:
 // A pointer to this structure shall be passed to the Device API,
 // for the device driver to access to the SPI/I2C bus.
 // The device will not modify the object, so it can be declared const
 // The underlying HW serial interface must be up and running before calling any
 // device methods
-const inv_serif_hal_t my_serif_instance = {
-        my_serif_open_read_reg,  /* callback to read_reg low level method */
-        my_serif_open_write_reg, /* callback to read_reg low level method */
-        256,                     /* maximum number of bytes allowed per read transaction,
-                                    (limitation can come from internal buffer in the system driver) */
-        256,                     /* maximum number of bytes allowed per write transaction,
-                                    (limitation can come from internal buffer in the system driver) */
-        INV_SERIF_HAL_TYPE_I2C,  /* type of the serial interface (between SPI or I2C) */
-        (void *)0xDEAD           /* some context pointer passed to read_reg/write_reg callbacks */
+//const inv_serif_hal_t my_serif_instance = {
+//        my_serif_open_read_reg,  /* callback to read_reg low level method */
+//        my_serif_open_write_reg, /* callback to read_reg low level method */
+//        256,                     /* maximum number of bytes allowed per read transaction,
+//                                    (limitation can come from internal buffer in the system driver) */
+//        256,                     /* maximum number of bytes allowed per write transaction,
+//                                    (limitation can come from internal buffer in the system driver) */
+//        INV_SERIF_HAL_TYPE_I2C,  /* type of the serial interface (between SPI or I2C) */
+//        (void *)0xDEAD           /* some context pointer passed to read_reg/write_reg callbacks */
+//};
+
+// definition of the instance
+const inv_host_serif_t my_serif_instance = {
+        my_serif_open_adapter,
+        0,
+        my_serif_open_read_reg,
+        my_serif_open_write_reg,
+				0,
+        256,
+				256,
+        INV_HOST_SERIF_TYPE_I2C,
 };
-int my_serif_open_read_reg(void * context, uint8_t reg, uint8_t * rbuffer, uint32_t rlen)
+
+int my_serif_open_adapter(void)
 {
-        (void)context, (void)reg, (void)rbuffer, (void)rlen;
+				twi_init();
+				return 0;
+}
+
+int my_serif_callback(void (*interrupt_cb)(void * context, int int_num), void * context)
+{
+		twi_handler, (void *)0xDEAD;
+		return 0;
+}
+
+int my_serif_open_read_reg(uint8_t reg, uint8_t * rbuffer, uint32_t rlen)
+{
+        (void)reg, (void)rbuffer, (void)rlen;
         // MyTarget_SPI_do_read_reg(&reg, 1, rbuffer, rlen);
 	
 				ret_code_t error = i2c_read_bytes( &m_twi, ICM_20948_I2C_ADDRESS, reg, rbuffer, rlen);
@@ -74,9 +105,9 @@ int my_serif_open_read_reg(void * context, uint8_t reg, uint8_t * rbuffer, uint3
 				}
 }
 
-int my_serif_open_write_reg(void * context, uint8_t reg, const uint8_t * wbuffer, uint32_t wlen)
+int my_serif_open_write_reg(uint8_t reg, const uint8_t * wbuffer, uint32_t wlen)
 {
-        (void)context, (void)reg, (void)wbuffer, (void)wlen;
+        (void)reg, (void)wbuffer, (void)wlen;
         // MyTarget_SPI_do_write_reg(&reg, 1, wbuffer, wlen);
 	
 //				for( int i=0; i<wlen; i++)
@@ -228,7 +259,7 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 		float dummy_data = 1.001;
 		
 		
-		nrf_gpio_pin_set(18);
+
 		
 		
 			// Convert data to string over ble nus
@@ -263,12 +294,12 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 //					
 					);
 					
-				nrf_gpio_pin_clear(18);	
+
 					
-nrf_gpio_pin_set(19);
+
 //	nus_printf_custom(stringsend);
 //	nus_send();
-nrf_gpio_pin_clear(19);
+
 	
 //	for(int i=0; i<132; i++)
 //	{
@@ -276,7 +307,7 @@ nrf_gpio_pin_clear(19);
 //	}
 //	nus_send(&test_troughput_array, 132);
 	
-	NRF_LOG_INFO("Counter: %d", counterr);
+//	NRF_LOG_INFO("Counter: %d", counterr);
 	
 	
 	
