@@ -999,25 +999,6 @@ static void sync_timer_button_init(void)
 }
 
 
-//////////////////////////////////////////
-/**
-*  @internal
-*  @brief  Read data from the fifo
-*
-*  @param[out] data Location to store the date read from the fifo
-*  @param[in] len   Amount of data to read out of the fifo
-*
-*  @return MPU_SUCCESS or non-zero error code
-**/
-//static int dmp_read_fifo(unsigned char *data, uint_fast16_t len)
-//{
-
-//}
-/////////////////////////////////////////////
-
-
-
-
 /// Timer at 100 Hz
 bool timer_datasend_int = false;
 
@@ -1046,9 +1027,11 @@ int main(void)
 		sync_timer_button_init();
 	
 	
-	nrf_gpio_cfg_output(18);
-	nrf_gpio_cfg_output(19);
-			nrf_gpio_cfg_output(20);
+	// GPIO stuff for timing purposes
+	////////////////////////////////	
+		nrf_gpio_cfg_output(18);
+		nrf_gpio_cfg_output(19);
+		nrf_gpio_cfg_output(20);
 	////////////////////////////////
 		nrf_gpio_cfg_output(25);
 		nrf_gpio_pin_set(25);
@@ -1073,27 +1056,28 @@ int main(void)
     NRF_LOG_INFO("\r\nSTART");
 		NRF_LOG_FLUSH();
 	
+		/* Initialize GPIO pins */
+		gpio_init();
+		
+		/* Initialize us timer */
+		timer_init();
+		
+		/* Initialize timer: Generates interrupt at 100 Hz */
+		timer_datasend_init();
+
+
+#ifdef ICM20948_ENABLE // enable - disable IMU stuff
 		/*
 		 * Setup message facility to see internal traces from IDD
 		 */
-#ifdef ICM20948_ENABLE
-		 __NOP();
+
 		INV_MSG_SETUP(MSG_LEVEL, msg_printer);
 
 		INV_MSG(INV_MSG_LEVEL_INFO, "###################################");
 		INV_MSG(INV_MSG_LEVEL_INFO, "#          20948 example          #");
 		INV_MSG(INV_MSG_LEVEL_INFO, "###################################");
 		NRF_LOG_FLUSH();
-		__NOP();
-#endif
 
-		/* Initialize GPIO pins */
-		gpio_init();
-		
-		/* Initialize us timer */
-		timer_init();
-
-#ifdef ICM20948_ENABLE
 		/* To keep track of errors */
 		int rc = 0;
 		
@@ -1101,6 +1085,7 @@ int main(void)
 		uint8_t whoami;
 		
 		/* Open serial interface (SPI or I2C) before playing with the device */
+		// Not needed anymore - this is implemented in the inv_host_serif_open(&my_serif_instance)
 //		twi_init();
 		
 		rc = inv_host_serif_open(&my_serif_instance);
@@ -1108,7 +1093,6 @@ int main(void)
 		
 		NRF_LOG_INFO("i2c init");
 		NRF_LOG_FLUSH();
-		
 		
 		NRF_LOG_INFO("icm20948 init");
 		NRF_LOG_FLUSH();
@@ -1122,7 +1106,6 @@ int main(void)
 //		inv_device_icm20948_init2(&device_icm20948, &my_serif_instance, &sensor_listener, dmp3_image, sizeof(dmp3_image));
 		NRF_LOG_FLUSH();
 		
-		
 		NRF_LOG_INFO("icm20948 get base");
 		NRF_LOG_FLUSH();
 		/*
@@ -1131,14 +1114,11 @@ int main(void)
 		device = inv_device_icm20948_get_base(&device_icm20948);
 		NRF_LOG_FLUSH();
 		
-		
-		
 		/* Just get the whoami */
 		rc += inv_device_whoami(device, &whoami);
 		check_rc(rc);
 		NRF_LOG_INFO("Data: 0x%x", whoami);
 		NRF_LOG_FLUSH();
-		
 		
 		nrf_delay_ms(500);
 		
@@ -1148,14 +1128,11 @@ int main(void)
 		rc += inv_device_setup(device);
 		check_rc(rc);
 		
-		
-		
 		// Load DMP
 		NRF_LOG_INFO("Load DMP Image");
 		NRF_LOG_FLUSH();
 		rc += inv_device_load(device, NULL, dmp3_image, sizeof(dmp3_image), true /* verify */, NULL);
 		check_rc(rc);
-		
 		
 //		rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_GYROSCOPE, 10); // 100 Hz
 //		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_GYROSCOPE);
@@ -1163,7 +1140,6 @@ int main(void)
 //		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_ACCELEROMETER);
 //		rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_MAGNETOMETER, 10); // 100 Hz
 //		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_MAGNETOMETER);
-
 
 		// Start 9DoF quaternion output
 		NRF_LOG_INFO("Start sensors");
@@ -1197,25 +1173,16 @@ int main(void)
 		
 		
 //		inv_device_set_sensor_timeout(device, INV_SENSOR_TYPE_GAME_ROTATION_VECTOR, 5);
-		
 #endif	
-
-		timer_datasend_init();
 		
+		// Delay before starting
 		nrf_delay_ms(5000);
 		
+		////////////////////////////////////////////////////////////////	
 		// Loop: IMU gives interrupt -> bool interrupt = true -> poll device for data
 		////////////////////////////////////////////////////////////////		
 		while(1)
 		{
-			
-//			if(timer_datasend_int)
-//			{
-//				timer_datasend_int = false;
-//				nus_printf_custom("Test 123\n\0");
-////				nus_printf_custom("2	Test 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789\n\0");
-//			}
-
 			
 /////////////////////////////////////////////////////////////////////////////////	
 //// Send data over BLE as fast as possible			
@@ -1256,7 +1223,6 @@ int main(void)
 			}
 /////////////////////////////////////////////////////////////////////////////////
 
-			
 #ifdef ICM20948_ENABLE
 			if(interrupt)
 			{
@@ -1267,86 +1233,24 @@ int main(void)
 				nrf_gpio_pin_set(20);
 				inv_device_poll(device);
 				nrf_gpio_pin_clear(20);
-				
 			}
 #endif
 			
+			// Flush all the debug info to RTT
 			NRF_LOG_FLUSH();
 			
 			// Check for activity of CPU
-//			while(!interrupt) 		nrf_gpio_pin_toggle(18);
 			nrf_gpio_pin_clear(18);
 			
 			/* Enter low power mode when idle */
 			idle_state_handle();
 			
+			// Check for activity of CPU
 			nrf_gpio_pin_set(18);
-		}
-		////////////////////////////////////////////////////////////////
-}
-
-
-/**
- * @}
- */
-
-
-//void apply_stored_offsets(void)
-//{
-//	uint8_t sensor_bias[84];
-//	int32_t acc_bias_q16[6] = {0}, gyro_bias_q16[6] = {0};
-//	uint8_t i, idx = 0;
-//	int rc;
-//	
-//	
-//	// TODO own implementation needed
-//	/* Retrieve Sel-test offsets stored in NV memory */
-////	if(flash_manager_readData(sensor_bias) != 0) {
-////		INV_MSG(INV_MSG_LEVEL_WARNING, "No bias values retrieved from NV memory !");
-////		return;
-////	}
-//	
-//	for(i = 0; i < 6; i++)
-//		gyro_bias_q16[i] = inv_dc_little8_to_int32((const uint8_t *)(&sensor_bias[i * sizeof(uint32_t)]));
-//	idx += sizeof(gyro_bias_q16);
-//	rc = inv_device_set_sensor_config(device, INV_SENSOR_TYPE_GYROSCOPE,
-//		VSENSOR_CONFIG_TYPE_OFFSET, gyro_bias_q16, sizeof(gyro_bias_q16));
-//	check_rc(rc);
-//	
-//	for(i = 0; i < 6; i++)
-//		acc_bias_q16[i] = inv_dc_little8_to_int32((const uint8_t *)(&sensor_bias[idx + i * sizeof(uint32_t)]));
-//	idx += sizeof(acc_bias_q16);
-//	rc = inv_device_set_sensor_config(device, INV_SENSOR_TYPE_ACCELEROMETER,
-//		VSENSOR_CONFIG_TYPE_OFFSET, acc_bias_q16, sizeof(acc_bias_q16));
-
-//}
+			
+		}// while(1)
+}// main
 
 
 
-//void store_offsets(void)
-//{
-//	int rc = 0;
-//	uint8_t i, idx = 0;
-//	int gyro_bias_q16[6] = {0}, acc_bias_q16[6] = {0};
-
-//	uint8_t sensor_bias[84] = {0};
-//	
-//	/* Strore Self-test bias in NV memory */
-//	rc = inv_device_get_sensor_config(device, INV_SENSOR_TYPE_GYROSCOPE,
-//			VSENSOR_CONFIG_TYPE_OFFSET, gyro_bias_q16, sizeof(gyro_bias_q16));
-//	check_rc(rc);
-//	for(i = 0; i < 6; i++)
-//		inv_dc_int32_to_little8(gyro_bias_q16[i], &sensor_bias[i * sizeof(uint32_t)]);
-//	idx += sizeof(gyro_bias_q16);
-//	
-//	rc = inv_device_get_sensor_config(device, INV_SENSOR_TYPE_ACCELEROMETER,
-//			VSENSOR_CONFIG_TYPE_OFFSET, acc_bias_q16, sizeof(acc_bias_q16));
-//	check_rc(rc);
-//	for(i = 0; i < 6; i++)
-//		inv_dc_int32_to_little8(acc_bias_q16[i], &sensor_bias[idx + i * sizeof(uint32_t)]);
-//	idx += sizeof(acc_bias_q16);
-
-//	// TODO own implementation needed to store sensor_bias in non volatile memory
-//	// flash_manager_writeData(sensor_bias);
-//}
 
