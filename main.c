@@ -124,6 +124,10 @@
 //  DEFINES   //
 ////////////////
 
+bool nus_buffer_full = false;
+
+//#define ICM20948_ENABLE
+
 /* Define msg level */
 #define MSG_LEVEL INV_MSG_LEVEL_DEBUG
 
@@ -303,32 +307,44 @@ static void nrf_qwr_error_handler(uint32_t nrf_error)
 /**@snippet [Handling the data received over BLE] */
 static void nus_data_handler(ble_nus_evt_t * p_evt)
 {
-
-    if (p_evt->type == BLE_NUS_EVT_RX_DATA)
+		uint32_t err_code;
+	
+    switch (p_evt->type)
     {
-        uint32_t err_code;
+		
+			case BLE_NUS_EVT_RX_DATA:
+					
+					NRF_LOG_DEBUG("Received data from BLE NUS. Writing data on UART.");
+					NRF_LOG_HEXDUMP_DEBUG(p_evt->params.rx_data.p_data, p_evt->params.rx_data.length);
 
-        NRF_LOG_DEBUG("Received data from BLE NUS. Writing data on UART.");
-        NRF_LOG_HEXDUMP_DEBUG(p_evt->params.rx_data.p_data, p_evt->params.rx_data.length);
+					for (uint32_t i = 0; i < p_evt->params.rx_data.length; i++)
+					{
+							do
+							{
+									err_code = app_uart_put(p_evt->params.rx_data.p_data[i]);
+									if ((err_code != NRF_SUCCESS) && (err_code != NRF_ERROR_BUSY))
+									{
+											NRF_LOG_ERROR("Failed receiving NUS message. Error 0x%x. ", err_code);
+											APP_ERROR_CHECK(err_code);
+									}
+							} while (err_code == NRF_ERROR_BUSY);
+					}
+					if (p_evt->params.rx_data.p_data[p_evt->params.rx_data.length - 1] == '\r')
+					{
+							while (app_uart_put('\n') == NRF_ERROR_BUSY);
+					}
+					break;
+				
+				// Added //
+				// When BLE NUS
+			case BLE_NUS_EVT_TX_RDY:
+						nus_buffer_full = false;
+//						NRF_LOG_INFO("BLE_NUS_EVT_TX_RDY");
+					break;
 
-        for (uint32_t i = 0; i < p_evt->params.rx_data.length; i++)
-        {
-            do
-            {
-                err_code = app_uart_put(p_evt->params.rx_data.p_data[i]);
-                if ((err_code != NRF_SUCCESS) && (err_code != NRF_ERROR_BUSY))
-                {
-                    NRF_LOG_ERROR("Failed receiving NUS message. Error 0x%x. ", err_code);
-                    APP_ERROR_CHECK(err_code);
-                }
-            } while (err_code == NRF_ERROR_BUSY);
-        }
-        if (p_evt->params.rx_data.p_data[p_evt->params.rx_data.length - 1] == '\r')
-        {
-            while (app_uart_put('\n') == NRF_ERROR_BUSY);
-        }
-    }
-
+			default:
+					break;
+			}
 }
 /**@snippet [Handling the data received over BLE] */
 
@@ -846,8 +862,38 @@ static void advertising_start(void)
 
 int countrrr = 0;
 
+
+// Bool to keep track if data over BLE NUS is send correctly
+bool NUS_send_OK = true;
+
 // CUSTOM
 uint32_t nus_printf_custom(char* p_char)
+{
+		static uint16_t index;
+		uint32_t err_code;
+		static uint8_t data_array[BLE_NUS_MAX_DATA_LEN];
+		while(*p_char != '\0'){
+						data_array[index] = *p_char;
+						index++;
+						p_char++;
+						}
+
+		err_code = ble_nus_data_send(&m_nus, data_array, &index, m_conn_handle);
+		
+		// Check for errors
+		if ((err_code != NRF_ERROR_INVALID_STATE) &&
+				(err_code != NRF_ERROR_RESOURCES) &&
+				(err_code != NRF_ERROR_NOT_FOUND))
+		{
+				APP_ERROR_CHECK(err_code);
+		}
+				
+		index = 0;
+		return err_code;
+}
+
+// CUSTOM
+uint32_t nus_printf_custom_1(char* p_char)
 {
 	static uint16_t index;
 	uint32_t err_code;
@@ -856,24 +902,7 @@ uint32_t nus_printf_custom(char* p_char)
           data_array[index] = *p_char;
           index++;
           p_char++;
-          }
-//		do {
-//				//err_code = ble_nus_string_send(&m_nus, data_array, &index);
-//				err_code = ble_nus_data_send(&m_nus, data_array, &index, m_conn_handle);
-//				if ( (err_code != NRF_ERROR_INVALID_STATE) && (err_code != NRF_ERROR_BUSY) )
-//				{
-//					break;
-//				}
-//		} while (err_code == NRF_ERROR_BUSY);
-//			do
-//			{
-//					err_code = ble_nus_data_send(&m_nus, data_array, &index, m_conn_handle);
-////					if (err_code == NRF_SUCCESS)
-////					{
-////							sent_bytes += nus_len;
-////					}
-//			}while (err_code == NRF_SUCCESS);
-			
+          }			
 			do
 			{
 					err_code = ble_nus_data_send(&m_nus, data_array, &index, m_conn_handle);
@@ -883,9 +912,9 @@ uint32_t nus_printf_custom(char* p_char)
 					{
 							APP_ERROR_CHECK(err_code);
 					}
-			} while (err_code == NRF_ERROR_RESOURCES);
+			} while (err_code == NRF_SUCCESS);
 		
-//			NRF_LOG_INFO("C:	%d", countrrr);
+			NRF_LOG_INFO("C:	%d", countrrr);
 	countrrr++;
 		index = 0;
 	return err_code;
@@ -1000,8 +1029,6 @@ int main(void)
 {
     bool erase_bonds;
 	
-
-
     // Initialize.
     uart_init();
     log_init();
@@ -1049,6 +1076,7 @@ int main(void)
 		/*
 		 * Setup message facility to see internal traces from IDD
 		 */
+#ifdef ICM20948_ENABLE
 		 __NOP();
 		INV_MSG_SETUP(MSG_LEVEL, msg_printer);
 
@@ -1057,6 +1085,7 @@ int main(void)
 		INV_MSG(INV_MSG_LEVEL_INFO, "###################################");
 		NRF_LOG_FLUSH();
 		__NOP();
+#endif
 
 		/* Initialize GPIO pins */
 		gpio_init();
@@ -1064,7 +1093,7 @@ int main(void)
 		/* Initialize us timer */
 		timer_init();
 
-
+#ifdef ICM20948_ENABLE
 		/* To keep track of errors */
 		int rc = 0;
 		
@@ -1145,7 +1174,7 @@ int main(void)
 		check_rc(rc);
 		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_GAME_ROTATION_VECTOR);
 		check_rc(rc);
-		
+	
 		// Start 9DoF euler angles output
 //		NRF_LOG_INFO("Start sensors");
 //		NRF_LOG_INFO("Ping sensor");
@@ -1155,8 +1184,6 @@ int main(void)
 //		check_rc(rc);
 //		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_ORIENTATION);
 //		check_rc(rc);
-		
-		nrf_delay_ms(2000);
 		
 		/* Activity classification */
 //		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_BAC);
@@ -1171,23 +1198,66 @@ int main(void)
 		
 //		inv_device_set_sensor_timeout(device, INV_SENSOR_TYPE_GAME_ROTATION_VECTOR, 5);
 		
-		nrf_delay_ms(1000);
-		
-		
+#endif	
+
 		timer_datasend_init();
+		
+		nrf_delay_ms(5000);
 		
 		// Loop: IMU gives interrupt -> bool interrupt = true -> poll device for data
 		////////////////////////////////////////////////////////////////		
 		while(1)
 		{
 			
-			if(timer_datasend_int)
-			{
-				timer_datasend_int = false;
-				nus_printf_custom("2	Test 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789\n\0");
-				
-			}
+//			if(timer_datasend_int)
+//			{
+//				timer_datasend_int = false;
+//				nus_printf_custom("Test 123\n\0");
+////				nus_printf_custom("2	Test 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789\n\0");
+//			}
+
 			
+/////////////////////////////////////////////////////////////////////////////////	
+//// Send data over BLE as fast as possible			
+/////////////////////////////////////////////////////////////////////////////////
+			
+			// if NUS TX buffer isn't full and imu_bytes_available() TODO add
+			if(!nus_buffer_full) 
+			{
+				uint32_t err_code;
+				do
+				{
+						// Load new data into buffer after NRF_SUCCESS (previous data has successfully been queued)
+						if(NUS_send_OK)
+						{
+//							IMU_data_get();
+						}
+						// Try to send data over BLE NUS
+						err_code = nus_printf_custom("2	Test 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789\n\0");
+//						err_code = nus_printf_custom("Test 123\n\0");
+						
+						// Packet has successfully been queued and send correctly
+						// If this happens, load new data into buffer
+						if(err_code == NRF_SUCCESS)
+						{
+							NUS_send_OK = true; // Ok, buffer is not full yet, buffer next data
+							countrrr++; // Increment send counter
+							NRF_LOG_INFO("NUS SUCCESS! %d", countrrr);
+						}
+						// If NUS send buffer is full, do not load new data into buffer 
+						// + stop queue of data until BLE_NUS_EVT_TX_RDY
+						if (err_code == NRF_ERROR_RESOURCES)
+						{
+							NUS_send_OK = false; // NUS send buffer is full
+							nus_buffer_full = true; // NUS send buffer is full
+//							NRF_LOG_INFO("NUS TX Buffer full!");
+						}
+				} while (err_code == NRF_SUCCESS);
+			}
+/////////////////////////////////////////////////////////////////////////////////
+
+			
+#ifdef ICM20948_ENABLE
 			if(interrupt)
 			{
 //				uint32_t timer_test = ts_timestamp_get_ticks_u32(NRF_PPI_CHANNEL0);
@@ -1199,14 +1269,18 @@ int main(void)
 				nrf_gpio_pin_clear(20);
 				
 			}
+#endif
+			
 			NRF_LOG_FLUSH();
 			
 			// Check for activity of CPU
 //			while(!interrupt) 		nrf_gpio_pin_toggle(18);
-			nrf_gpio_pin_toggle(18);
+			nrf_gpio_pin_clear(18);
 			
 			/* Enter low power mode when idle */
-//			idle_state_handle();
+			idle_state_handle();
+			
+			nrf_gpio_pin_set(18);
 		}
 		////////////////////////////////////////////////////////////////
 }

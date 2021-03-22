@@ -48,7 +48,7 @@ extern void twi_handler(nrf_drv_twi_evt_t const * p_event, void * p_context);
 int my_serif_open_adapter(void);
 int my_serif_open_read_reg(uint8_t reg, uint8_t * rbuffer, uint32_t rlen);
 int my_serif_open_write_reg(uint8_t reg, const uint8_t * wbuffer, uint32_t wlen);
-int my_serif_callback(void (*interrupt_cb)(void * context, int int_num), void * context);
+int my_adapter_register_interrupt_callback(void (*interrupt_cb)(void * context, int int_num), void * context);
 
 // Exported instance of SerifHal object:
 // A pointer to this structure shall be passed to the Device API,
@@ -73,10 +73,10 @@ const inv_host_serif_t my_serif_instance = {
         0,
         my_serif_open_read_reg,
         my_serif_open_write_reg,
-				0,
+				my_adapter_register_interrupt_callback,
         256,
 				256,
-        INV_HOST_SERIF_TYPE_I2C,
+        INV_HOST_SERIF_TYPE_I2C
 };
 
 int my_serif_open_adapter(void)
@@ -85,10 +85,15 @@ int my_serif_open_adapter(void)
 				return 0;
 }
 
-int my_serif_callback(void (*interrupt_cb)(void * context, int int_num), void * context)
+int my_adapter_register_interrupt_callback(void (*interrupt_cb)(void * context, int int_num), void * context)
 {
-		twi_handler, (void *)0xDEAD;
-		return 0;
+//				(*interrupt_cb) = twi_handler;
+//	
+//				
+//				context = 0;
+			
+        int rc=0;
+        return rc;
 }
 
 int my_serif_open_read_reg(uint8_t reg, uint8_t * rbuffer, uint32_t rlen)

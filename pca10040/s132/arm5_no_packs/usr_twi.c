@@ -50,17 +50,22 @@ void twi_handler(nrf_drv_twi_evt_t const * p_event, void * p_context)
             {
                 case NRF_DRV_TWI_XFER_TX:
                     twi_tx_done = true;
+//										return 0;
                     break;
                 case NRF_DRV_TWI_XFER_TXTX:
                     twi_tx_done = true;
+//										return 0;
                     break;
                 case NRF_DRV_TWI_XFER_RX:
                     twi_rx_done = true;
+//										return 0;
                     break;
                 case NRF_DRV_TWI_XFER_TXRX:
                     twi_rx_done = true;
+//										return 0;
                     break;
                 default:
+//										return -1;
                     break;
             }
             break;
@@ -184,6 +189,29 @@ ret_code_t i2c_read_bytes(const nrf_drv_twi_t *twi_handle, uint8_t address, uint
 		return err_code;
 }
 
+/* Low level read I2C functionality */
+ret_code_t i2c_read_bytes_dma(const nrf_drv_twi_t *twi_handle, uint8_t address, uint8_t sub_address, uint8_t * dest, uint8_t dest_count)
+{   
+		ret_code_t err_code;  
+	
+		uint8_t tx_buf[1];
+		tx_buf[0] = sub_address;
+	
+		// Setting up transfer
+    nrf_drv_twi_xfer_desc_t xfer_desc;
+    xfer_desc.address = address;
+    xfer_desc.type = NRF_DRV_TWI_XFER_TXRX;
+    xfer_desc.primary_length = sizeof(tx_buf);
+		xfer_desc.secondary_length = dest_count;
+    xfer_desc.p_primary_buf = tx_buf;
+		xfer_desc.p_secondary_buf = dest;
+	
+		// Transferring
+    err_code = nrf_drv_twi_xfer(&m_twi, &xfer_desc, NRF_DRV_TWI_FLAG_TX_NO_STOP);
+		APP_ERROR_CHECK(err_code);
+	
+		return err_code;
+}
 
 
 ///**

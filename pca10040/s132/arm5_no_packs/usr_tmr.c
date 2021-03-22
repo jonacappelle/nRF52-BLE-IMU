@@ -92,13 +92,8 @@ void timer_datasend_event_handler(nrf_timer_event_t event_type, void* p_context)
     switch (event_type)
     {
         case NRF_TIMER_EVENT_COMPARE0:
-            NRF_LOG_INFO("Timer interrupt!");
+//				NRF_LOG_INFO("Timer interrupt!");
 				nrf_gpio_pin_set(19);
-				__NOP();
-				__NOP();
-				__NOP();
-				__NOP();
-				__NOP();
 				
 				timer_datasend_int = true;
 						
