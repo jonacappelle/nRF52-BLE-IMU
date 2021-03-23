@@ -36,6 +36,11 @@
 
 #include "usr_twi.h"
 
+
+
+extern volatile bool twi_tx_done ;
+extern volatile bool twi_rx_done;
+
 extern const nrf_drv_twi_t m_twi;
 
 extern ret_code_t i2c_read_bytes(const nrf_drv_twi_t *twi_handle, uint8_t address, uint8_t sub_address, uint8_t * dest, uint8_t dest_count);
@@ -88,9 +93,6 @@ int my_serif_open_adapter(void)
 int my_adapter_register_interrupt_callback(void (*interrupt_cb)(void * context, int int_num), void * context)
 {
 //				(*interrupt_cb) = twi_handler;
-//	
-//				
-//				context = 0;
 			
         int rc=0;
         return rc;
@@ -108,6 +110,13 @@ int my_serif_open_read_reg(uint8_t reg, uint8_t * rbuffer, uint32_t rlen)
 				}else{
 					return -1;	// shall return a negative value on error
 				}
+					
+//					if(twi_tx_done) 
+//					{
+//						return 0;
+//					}
+//					return -1;
+	
 }
 
 int my_serif_open_write_reg(uint8_t reg, const uint8_t * wbuffer, uint32_t wlen)
@@ -121,12 +130,19 @@ int my_serif_open_write_reg(uint8_t reg, const uint8_t * wbuffer, uint32_t wlen)
 //					i++;
 //				}
 				// TODO: return value is now always 0
+	
 				if(error == NRF_SUCCESS)
 				{
 					return 0;
 				}else{
 					return -1;	// shall return a negative value on error
 				}
+//					if(twi_tx_done) 
+//					{
+//						return 0;
+//					}
+//					return -1;
+	
 //        return 0; // shall return a negative value on error
 }
 
@@ -263,41 +279,41 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 		
 		float dummy_data = 1.001;
 		
-		
+nrf_gpio_pin_set(19);
 
 		
 		
-			// Convert data to string over ble nus
-		sprintf(stringsend, "%d	- %f	%f	%f	%f - %f	%f	%f - %f	%f	%f - %f	%f	%f \n",
-//					(inv_sensor_str(event->sensor)),
-//					inv_icm20948_get_dataready_interrupt_time_us(),
-//					(event->timestamp),
-					(counterr),
-//					(ts_timestamp_get_ticks_u64(0)),
-//					NRF_RTC1->COUNTER,
-					(event->data.quaternion.quat[0]),
-					(event->data.quaternion.quat[1]),
-					(event->data.quaternion.quat[2]),
-					(event->data.quaternion.quat[3]),
-//					(event->data.quaternion.accuracy_flag),
-//					(event->data.quaternion.accuracy),
-					
-					(event->data.gyr.vect[0]),
-					(event->data.gyr.vect[1]),
-					(event->data.gyr.vect[2]),
-					
-					(event->data.acc.vect[0]),
-					(event->data.acc.vect[1]),
-					(event->data.acc.vect[2]),
-					
-					(event->data.mag.vect[0]),
-					(event->data.mag.vect[1]),
-					(event->data.mag.vect[2])
-					
-//					(dummy_data),(dummy_data),(dummy_data),(dummy_data),(dummy_data),(dummy_data),(dummy_data),(dummy_data),(dummy_data),
-//					(dummy_data),(dummy_data),(dummy_data),(dummy_data),(dummy_data),(dummy_data),(dummy_data),(dummy_data),(dummy_data)
+//			// Convert data to string over ble nus
+//		sprintf(stringsend, "%d	- %f	%f	%f	%f - %f	%f	%f - %f	%f	%f - %f	%f	%f \n",
+////					(inv_sensor_str(event->sensor)),
+////					inv_icm20948_get_dataready_interrupt_time_us(),
+////					(event->timestamp),
+//					(counterr),
+////					(ts_timestamp_get_ticks_u64(0)),
+////					NRF_RTC1->COUNTER,
+//					(event->data.quaternion.quat[0]),
+//					(event->data.quaternion.quat[1]),
+//					(event->data.quaternion.quat[2]),
+//					(event->data.quaternion.quat[3]),
+////					(event->data.quaternion.accuracy_flag),
+////					(event->data.quaternion.accuracy),
 //					
-					);
+//					(event->data.gyr.vect[0]),
+//					(event->data.gyr.vect[1]),
+//					(event->data.gyr.vect[2]),
+//					
+//					(event->data.acc.vect[0]),
+//					(event->data.acc.vect[1]),
+//					(event->data.acc.vect[2]),
+//					
+//					(event->data.mag.vect[0]),
+//					(event->data.mag.vect[1]),
+//					(event->data.mag.vect[2])
+//					
+////					(dummy_data),(dummy_data),(dummy_data),(dummy_data),(dummy_data),(dummy_data),(dummy_data),(dummy_data),(dummy_data),
+////					(dummy_data),(dummy_data),(dummy_data),(dummy_data),(dummy_data),(dummy_data),(dummy_data),(dummy_data),(dummy_data)
+////					
+//					);
 					
 
 					
@@ -416,6 +432,8 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 			INV_MSG(INV_MSG_LEVEL_INFO, "data event %s : ...", inv_sensor_str(event->sensor));
 			break;
 	}
+		
+	nrf_gpio_pin_clear(19);
 }
 }
 

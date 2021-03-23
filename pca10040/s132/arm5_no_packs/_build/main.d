@@ -144,4 +144,5 @@
 .\_build\main.o: ..\..\..\..\..\..\modules\nrfx\hal/nrf_gpiote.h
 .\_build\main.o: ..\..\..\..\..\common\time_sync.h
 .\_build\main.o: ..\..\..\..\..\..\modules\nrfx\hal\nrf_ppi.h
+.\_build\main.o: ..\..\..\..\..\..\components\libraries\scheduler\app_scheduler.h
 .\_build\main.o: ..\Invn/Images/icm20948_img.dmp3a.h

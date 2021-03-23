@@ -92,12 +92,15 @@ void timer_datasend_event_handler(nrf_timer_event_t event_type, void* p_context)
     switch (event_type)
     {
         case NRF_TIMER_EVENT_COMPARE0:
+					
+				// Pass event to event handler
+//				app_sched_event_put(pointer_to_own_data, size_of_data, my_flash_event_func);
+				
+				
 //				NRF_LOG_INFO("Timer interrupt!");
-				nrf_gpio_pin_set(19);
 				
 				timer_datasend_int = true;
 						
-				nrf_gpio_pin_clear(19);
             break;
 
         default:

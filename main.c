@@ -119,6 +119,9 @@
 #include "nrf_ppi.h"
 #include "nrf_timer.h"
 
+// Application scheduler
+#include "app_scheduler.h"
+
 
 ////////////////
 //  DEFINES   //
@@ -126,7 +129,7 @@
 
 bool nus_buffer_full = false;
 
-//#define ICM20948_ENABLE
+#define ICM20948_ENABLE
 
 /* Define msg level */
 #define MSG_LEVEL INV_MSG_LEVEL_DEBUG
@@ -843,7 +846,7 @@ static void power_management_init(void)
  *
  * @details If there is no pending log operation, then sleep until next the next event occurs.
  */
-static void idle_state_handle(void)
+void idle_state_handle(void)
 {
     if (NRF_LOG_PROCESS() == false)
     {
@@ -1004,6 +1007,12 @@ bool timer_datasend_int = false;
 
 
 
+// Event handler for scheduler
+void my_app_sched_event_handler(void *data, uint16_t size);
+
+
+
+
 /**@brief Application main function.
  */
 int main(void)
@@ -1022,6 +1031,9 @@ int main(void)
     services_init();
     advertising_init();
     conn_params_init();
+	
+		// Application scheduler (soft interrupt like)
+//		APP_SCHED_INIT(SCHED_MAX_EVENT_DATA_SIZE, SCHED_QUEUE_SIZE);
 	
 		// TimeSync
 		sync_timer_button_init();
@@ -1064,6 +1076,8 @@ int main(void)
 		
 		/* Initialize timer: Generates interrupt at 100 Hz */
 		timer_datasend_init();
+		
+		
 
 
 #ifdef ICM20948_ENABLE // enable - disable IMU stuff
@@ -1183,6 +1197,10 @@ int main(void)
 		////////////////////////////////////////////////////////////////		
 		while(1)
 		{
+			
+			
+			// App scheduler: handle event in buffer
+//			app_sched_execute();
 			
 /////////////////////////////////////////////////////////////////////////////////	
 //// Send data over BLE as fast as possible			
