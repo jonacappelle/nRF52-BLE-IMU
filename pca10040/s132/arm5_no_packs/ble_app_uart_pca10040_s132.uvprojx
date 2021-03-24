@@ -4213,6 +4213,36 @@
           </Files>
         </Group>
         <Group>
+          <GroupName>BLE</GroupName>
+          <Files>
+            <File>
+              <FileName>usr_ble.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\usr_ble.c</FilePath>
+            </File>
+            <File>
+              <FileName>usr_ble.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\usr_ble.h</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>UTIL</GroupName>
+          <Files>
+            <File>
+              <FileName>usr_util.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\usr_util.c</FilePath>
+            </File>
+            <File>
+              <FileName>usr_util.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\usr_util.h</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
           <GroupName>::CMSIS</GroupName>
         </Group>
         <Group>
@@ -8423,6 +8453,36 @@
               <FileName>time_sync.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\..\..\..\..\common\time_sync.h</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>BLE</GroupName>
+          <Files>
+            <File>
+              <FileName>usr_ble.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\usr_ble.c</FilePath>
+            </File>
+            <File>
+              <FileName>usr_ble.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\usr_ble.h</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>UTIL</GroupName>
+          <Files>
+            <File>
+              <FileName>usr_util.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\usr_util.c</FilePath>
+            </File>
+            <File>
+              <FileName>usr_util.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\usr_util.h</FilePath>
             </File>
           </Files>
         </Group>

@@ -10,8 +10,7 @@
 
 
 
-/* Interrupt pin number */
-#define INT_PIN	2
+
 
 void gpio_init(void);
 void gpiote_evt_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action);

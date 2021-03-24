@@ -36,7 +36,58 @@
 
 #include "usr_twi.h"
 
+#include "nrf_drv_gpiote.h"
 
+// Application scheduler
+#include "app_scheduler.h"
+
+
+// IMU
+////////////////
+//  INCLUDES  //
+////////////////
+#include <stdio.h>
+#include "boards.h"
+#include "app_util_platform.h"
+#include "app_error.h"
+#include "nrf_drv_twi.h"
+#include "nrf_delay.h"
+
+#include "nrf_log.h"
+#include "nrf_log_ctrl.h"
+#include "nrf_log_default_backends.h"
+
+#include "Invn/Devices/SerifHal.h"
+#include "Invn/Devices/DeviceIcm20948.h"
+#include "Invn/DynamicProtocol/DynProtocol.h"
+#include "Invn/DynamicProtocol/DynProtocolTransportUart.h"
+#include "Invn/EmbUtils/Message.h"
+
+
+/* Define msg level */
+#define MSG_LEVEL INV_MSG_LEVEL_DEBUG
+
+
+/*
+ * States for icm20948 device object
+ */
+
+static inv_device_icm20948_t device_icm20948; 
+static uint8_t dmp3_image[] = {
+	#include "Invn/Images/icm20948_img.dmp3a.h"
+};
+
+inv_device_t * device; /* just a handy variable to keep the handle to device object */
+
+/* Activity classification */
+const char * activityName(int act);
+
+//uint32_t imu_init(void);
+static void check_rc(int rc);
+
+uint32_t evt_scheduled = 0;
+void gpiote_evt_sceduled(void * p_event_data, uint16_t event_size);
+void gpiote_evt_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action);
 
 extern volatile bool twi_tx_done ;
 extern volatile bool twi_rx_done;
@@ -205,10 +256,8 @@ void inv_icm20948_sleep_us(int us)
          * You may provide a sleep function that blocks the current programm
          * execution for the specified amount of us
          */
-//				NRF_LOG_INFO("us value requested");
 	
         (void)us;
-
 	
 				nrf_delay_us(us);
 }
@@ -258,7 +307,14 @@ const char * activityName(int act)
 int counterr = 0;
 char stringsend[247];
 
-
+static void check_rc(int rc)
+{
+	if(rc == -1) {
+		NRF_LOG_INFO("BAD RC=%d", rc);
+		NRF_LOG_FLUSH();
+		while(1);
+	}
+}
 
 uint8_t test_troughput_array[132];
 
@@ -278,18 +334,7 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
         /* ... do something with event */
 	
 				//NRF_LOG_INFO("Sensor event!");
-				//NRF_LOG_FLUSH();
-	
-	
-	/* Send data from IMU to central */
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-	
-	
-
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	
+				//NRF_LOG_FLUSH();	
 	
 	if(event->status == INV_SENSOR_STATUS_DATA_UPDATED) {
 		
@@ -334,20 +379,7 @@ nrf_gpio_pin_set(19);
 
 					
 
-//	nus_printf_custom(stringsend);
-//	nus_send();
-
-	
-//	for(int i=0; i<132; i++)
-//	{
-//	test_troughput_array[i] = i;
-//	}
-//	nus_send(&test_troughput_array, 132);
-	
-//	NRF_LOG_INFO("Counter: %d", counterr);
-	
-	
-	
+//	nus_printf_custom(stringsend);	
 
 		switch(INV_SENSOR_ID_TO_TYPE(event->sensor)) {
 		case INV_SENSOR_TYPE_RAW_ACCELEROMETER:
@@ -468,10 +500,7 @@ inv_sensor_listener_t sensor_listener = {
 void msg_printer(int level, const char * str, va_list ap)
 {
 	NRF_LOG_INFO(str);
-//	NRF_LOG_INFO("Message printe ENABLED!!");
 	NRF_LOG_FLUSH();
-//	char str_length[100];
-//	sprintf(str_length, "%s", str);
 }
 
 
@@ -540,5 +569,163 @@ void msg_printer(int level, const char * str, va_list ap)
 //}
 
 
+
+
+/* Interrupt pin handeler callback function */
+void gpiote_evt_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
+{
+		nrf_gpio_pin_toggle(25);
+	
+		uint32_t err_code;
+	
+		if(pin == INT_PIN)
+		{
+				// If there are already events in the queue
+				if(evt_scheduled > 0)
+				{
+					evt_scheduled++;
+				}
+				// If there are not yet any events in the queue, schedule event. In gpiote_evt_sceduled all callbacks are called
+				else
+				{
+					evt_scheduled++;
+					err_code = app_sched_event_put(0, 0, gpiote_evt_sceduled);
+					APP_ERROR_CHECK(err_code);
+				}
+		}
+		
+	nrf_gpio_pin_toggle(25);
+}
+
+
+
+// Event handler DIY
+/**@brief GPIOTE sceduled handler, executed in main-context.
+ */
+void gpiote_evt_sceduled(void * p_event_data, uint16_t event_size)
+{
+    while ( (evt_scheduled > 0) )//&& m_mpu9250.enabled) TODO check when IMU is enabled or not
+    {
+				nrf_gpio_pin_set(20);
+			// Poll all data from IMU
+				inv_device_poll(device);
+				nrf_gpio_pin_clear(20);
+				evt_scheduled--;
+    }
+}
+
+
+uint32_t imu_init(void)
+{
+	
+		/*
+		 * Setup message facility to see internal traces from IDD
+		 */
+
+		INV_MSG_SETUP(MSG_LEVEL, msg_printer);
+
+		INV_MSG(INV_MSG_LEVEL_INFO, "###################################");
+		INV_MSG(INV_MSG_LEVEL_INFO, "#          20948 example          #");
+		INV_MSG(INV_MSG_LEVEL_INFO, "###################################");
+		NRF_LOG_FLUSH();
+
+		/* To keep track of errors */
+		int rc = 0;
+		
+		
+		uint8_t whoami;
+		
+		/* Open serial interface (SPI or I2C) before playing with the device */
+		// Not needed anymore - this is implemented in the inv_host_serif_open(&my_serif_instance)
+//		twi_init();
+		
+		rc = inv_host_serif_open(&my_serif_instance);
+		check_rc(rc);
+		
+		NRF_LOG_INFO("i2c init");
+		NRF_LOG_FLUSH();
+		
+		NRF_LOG_INFO("icm20948 init");
+		NRF_LOG_FLUSH();
+		/*
+		 * Create ICM20948 Device 
+		 * Pass to the driver:
+		 * - reference to serial interface object,
+		 * - reference to listener that will catch sensor events,
+		 */
+		inv_device_icm20948_init(&device_icm20948, &my_serif_instance, &sensor_listener, dmp3_image, sizeof(dmp3_image));
+//		inv_device_icm20948_init2(&device_icm20948, &my_serif_instance, &sensor_listener, dmp3_image, sizeof(dmp3_image));
+		NRF_LOG_FLUSH();
+		
+		NRF_LOG_INFO("icm20948 get base");
+		NRF_LOG_FLUSH();
+		/*
+		 * Simply get generic device handle from Icm20948 Device
+		 */
+		device = inv_device_icm20948_get_base(&device_icm20948);
+		NRF_LOG_FLUSH();
+		
+		/* Just get the whoami */
+		rc += inv_device_whoami(device, &whoami);
+		check_rc(rc);
+		NRF_LOG_INFO("Data: 0x%x", whoami);
+		NRF_LOG_FLUSH();
+		
+		nrf_delay_ms(500);
+		
+		/* Configure and initialize the Icm20948 device */
+		NRF_LOG_INFO("Setting up ICM20948");
+		NRF_LOG_FLUSH();
+		rc += inv_device_setup(device);
+		check_rc(rc);
+		
+		// Load DMP
+		NRF_LOG_INFO("Load DMP Image");
+		NRF_LOG_FLUSH();
+		rc += inv_device_load(device, NULL, dmp3_image, sizeof(dmp3_image), true /* verify */, NULL);
+		check_rc(rc);
+		
+//		rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_GYROSCOPE, 10); // 100 Hz
+//		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_GYROSCOPE);
+//		rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_ACCELEROMETER, 10); // 100 Hz
+//		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_ACCELEROMETER);
+//		rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_MAGNETOMETER, 10); // 100 Hz
+//		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_MAGNETOMETER);
+
+		// Start 9DoF quaternion output
+		NRF_LOG_INFO("Start sensors");
+		NRF_LOG_INFO("Ping sensor");
+		rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_GAME_ROTATION_VECTOR);
+		check_rc(rc);
+		rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_GAME_ROTATION_VECTOR, 5); // 100 Hz
+		check_rc(rc);
+		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_GAME_ROTATION_VECTOR);
+		check_rc(rc);
+	
+		// Start 9DoF euler angles output
+//		NRF_LOG_INFO("Start sensors");
+//		NRF_LOG_INFO("Ping sensor");
+//		rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_ORIENTATION);
+//		check_rc(rc);
+//		rc += inv_device_set_sensor_period_us(device, INV_SENSOR_TYPE_ORIENTATION, 50000); // 20 Hz
+//		check_rc(rc);
+//		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_ORIENTATION);
+//		check_rc(rc);
+		
+		/* Activity classification */
+//		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_BAC);
+//		check_rc(rc);
+		
+		/* Step Counter */
+//		rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_STEP_COUNTER);
+//		check_rc(rc);
+//		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_STEP_COUNTER);
+//		check_rc(rc);
+		
+		
+//		inv_device_set_sensor_timeout(device, INV_SENSOR_TYPE_GAME_ROTATION_VECTOR, 5);
+
+		return NRF_SUCCESS;
+}
 
 

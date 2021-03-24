@@ -1,7 +1,7 @@
 .\_build\imu.o: imu.c
 .\_build\imu.o: imu.h
-.\_build\imu.o: ..\Invn/Devices/SerifHal.h
 .\_build\imu.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+.\_build\imu.o: ..\Invn/Devices/SerifHal.h
 .\_build\imu.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\assert.h
 .\_build\imu.o: ..\Invn/InvError.h
 .\_build\imu.o: ..\Invn/Devices/HostSerif.h
@@ -80,11 +80,10 @@
 .\_build\imu.o: ..\..\..\..\..\..\modules\nrfx\hal\nrf_gpio.h
 .\_build\imu.o: ..\..\..\..\..\..\components\boards\pca10040.h
 .\_build\imu.o: ..\..\..\..\..\..\components\libraries\delay\nrf_delay.h
-.\_build\imu.o: ..\..\..\..\..\..\integration\nrfx\legacy\nrf_drv_timer.h
-.\_build\imu.o: ..\..\..\..\..\..\modules\nrfx\drivers\include\nrfx_timer.h
-.\_build\imu.o: ..\..\..\..\..\..\modules\nrfx\hal/nrf_timer.h
-.\_build\imu.o: ..\..\..\..\..\..\components\libraries\bsp\bsp.h
-.\_build\imu.o: ..\..\..\..\..\..\components\libraries\button\app_button.h
+.\_build\imu.o: ..\..\..\..\..\..\integration\nrfx\legacy\nrf_drv_gpiote.h
+.\_build\imu.o: ..\..\..\..\..\..\modules\nrfx\drivers\include\nrfx_gpiote.h
+.\_build\imu.o: ..\..\..\..\..\..\modules\nrfx\hal/nrf_gpiote.h
+.\_build\imu.o: ..\..\..\..\..\..\components\libraries\scheduler\app_scheduler.h
 .\_build\imu.o: ..\Invn/Devices/DeviceIcm20948.h
 .\_build\imu.o: ..\Invn/Devices/Device.h
 .\_build\imu.o: ..\Invn/InvBool.h
@@ -107,3 +106,9 @@
 .\_build\imu.o: ..\Invn/DynamicProtocol/DynProtocolTransport.h
 .\_build\imu.o: ..\Invn/EmbUtils/Message.h
 .\_build\imu.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdarg.h
+.\_build\imu.o: ..\Invn/Images/icm20948_img.dmp3a.h
+.\_build\imu.o: ..\..\..\..\..\..\integration\nrfx\legacy\nrf_drv_timer.h
+.\_build\imu.o: ..\..\..\..\..\..\modules\nrfx\drivers\include\nrfx_timer.h
+.\_build\imu.o: ..\..\..\..\..\..\modules\nrfx\hal/nrf_timer.h
+.\_build\imu.o: ..\..\..\..\..\..\components\libraries\bsp\bsp.h
+.\_build\imu.o: ..\..\..\..\..\..\components\libraries\button\app_button.h

@@ -123,6 +123,13 @@
 #include "app_scheduler.h"
 
 
+// User bluetooth BLE
+#include "usr_ble.h"
+
+// Utilities user
+#include "usr_util.h"
+
+
 ////////////////
 //  DEFINES   //
 ////////////////
@@ -132,101 +139,13 @@
 
 bool nus_buffer_full = false;
 
-#define ICM20948_ENABLE
-
-/* Define msg level */
-#define MSG_LEVEL INV_MSG_LEVEL_DEBUG
-
-/* Static variable to keep track if an interrupt has occurred in main loop */
-static bool interrupt = false;
-
-/* Activity classification */
-const char * activityName(int act);
-
-/* Declared in imu.c */
-extern void msg_printer(int level, const char * str, va_list ap);
-
-
-/*
- * States for icm20948 device object
- */
- inv_device_t * device; /* just a handy variable to keep the handle to device object */
-static inv_device_icm20948_t device_icm20948; 
-static uint8_t dmp3_image[] = {
-	#include "Invn/Images/icm20948_img.dmp3a.h"
-};
-
-/* Serif hal instances and listener */
-//extern const inv_serif_hal_t my_serif_instance;
-extern const inv_host_serif_t my_serif_instance;
-extern inv_sensor_listener_t sensor_listener;
-
-
-static void check_rc(int rc)
-{
-	if(rc == -1) {
-		NRF_LOG_INFO("BAD RC=%d", rc);
-		NRF_LOG_FLUSH();
-		while(1);
-	}
-}
-
-uint32_t evt_scheduled = 0;
-
-// Event handler DIY
-/**@brief GPIOTE sceduled handler, executed in main-context.
- */
-void gpiote_evt_sceduled(void * p_event_data, uint16_t event_size)
-{
-    while ( (evt_scheduled > 0) )//&& m_mpu9250.enabled) TODO check when IMU is enabled or not
-    {
-				nrf_gpio_pin_set(20);
-			// Poll all data from IMU
-				inv_device_poll(device);
-				nrf_gpio_pin_clear(20);
-				evt_scheduled--;
-    }
-}
-
 
 /*
  * Last time at which 20948 IRQ was fired
  */
 static volatile uint32_t last_irq_time = 0;
 
-/* Interrupt pin handeler callback function */
-void gpiote_evt_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
-{
-    //NRF_LOG_INFO("Interrupt Occured!");
-//		last_irq_time = inv_icm20948_get_time_us();
-	
-		nrf_gpio_pin_toggle(25);
-	
-		uint32_t err_code;
-	
-		if(pin == INT_PIN)
-		{
-				// If there are already events in the queue
-				if(evt_scheduled > 0)
-				{
-					evt_scheduled++;
-				}
-				// If there are not yet any events in the queue, schedule event. In gpiote_evt_sceduled all callbacks are called
-				else
-				{
-					evt_scheduled++;
-					err_code = app_sched_event_put(0, 0, gpiote_evt_sceduled);
-					APP_ERROR_CHECK(err_code);
-				}
-			
-//				interrupt = true;
-		}
-		
 
-	
-	
-	nrf_gpio_pin_toggle(25);
-}
 
 uint64_t inv_icm20948_get_dataready_interrupt_time_us(void)
 {
@@ -1062,6 +981,8 @@ void my_app_sched_event_handler(void *data, uint16_t size);
  */
 int main(void)
 {
+		uint32_t err_code;
+	
     bool erase_bonds;
 	
     // Initialize.
@@ -1122,117 +1043,10 @@ int main(void)
 		/* Initialize timer: Generates interrupt at 100 Hz */
 		timer_datasend_init();
 		
+		// Initialize IMU
+		err_code = imu_init();
+		APP_ERROR_CHECK(err_code);
 		
-
-
-#ifdef ICM20948_ENABLE // enable - disable IMU stuff
-		/*
-		 * Setup message facility to see internal traces from IDD
-		 */
-
-		INV_MSG_SETUP(MSG_LEVEL, msg_printer);
-
-		INV_MSG(INV_MSG_LEVEL_INFO, "###################################");
-		INV_MSG(INV_MSG_LEVEL_INFO, "#          20948 example          #");
-		INV_MSG(INV_MSG_LEVEL_INFO, "###################################");
-		NRF_LOG_FLUSH();
-
-		/* To keep track of errors */
-		int rc = 0;
-		
-		
-		uint8_t whoami;
-		
-		/* Open serial interface (SPI or I2C) before playing with the device */
-		// Not needed anymore - this is implemented in the inv_host_serif_open(&my_serif_instance)
-//		twi_init();
-		
-		rc = inv_host_serif_open(&my_serif_instance);
-		check_rc(rc);
-		
-		NRF_LOG_INFO("i2c init");
-		NRF_LOG_FLUSH();
-		
-		NRF_LOG_INFO("icm20948 init");
-		NRF_LOG_FLUSH();
-		/*
-		 * Create ICM20948 Device 
-		 * Pass to the driver:
-		 * - reference to serial interface object,
-		 * - reference to listener that will catch sensor events,
-		 */
-		inv_device_icm20948_init(&device_icm20948, &my_serif_instance, &sensor_listener, dmp3_image, sizeof(dmp3_image));
-//		inv_device_icm20948_init2(&device_icm20948, &my_serif_instance, &sensor_listener, dmp3_image, sizeof(dmp3_image));
-		NRF_LOG_FLUSH();
-		
-		NRF_LOG_INFO("icm20948 get base");
-		NRF_LOG_FLUSH();
-		/*
-		 * Simply get generic device handle from Icm20948 Device
-		 */
-		device = inv_device_icm20948_get_base(&device_icm20948);
-		NRF_LOG_FLUSH();
-		
-		/* Just get the whoami */
-		rc += inv_device_whoami(device, &whoami);
-		check_rc(rc);
-		NRF_LOG_INFO("Data: 0x%x", whoami);
-		NRF_LOG_FLUSH();
-		
-		nrf_delay_ms(500);
-		
-		/* Configure and initialize the Icm20948 device */
-		NRF_LOG_INFO("Setting up ICM20948");
-		NRF_LOG_FLUSH();
-		rc += inv_device_setup(device);
-		check_rc(rc);
-		
-		// Load DMP
-		NRF_LOG_INFO("Load DMP Image");
-		NRF_LOG_FLUSH();
-		rc += inv_device_load(device, NULL, dmp3_image, sizeof(dmp3_image), true /* verify */, NULL);
-		check_rc(rc);
-		
-//		rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_GYROSCOPE, 10); // 100 Hz
-//		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_GYROSCOPE);
-//		rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_ACCELEROMETER, 10); // 100 Hz
-//		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_ACCELEROMETER);
-//		rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_MAGNETOMETER, 10); // 100 Hz
-//		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_MAGNETOMETER);
-
-		// Start 9DoF quaternion output
-		NRF_LOG_INFO("Start sensors");
-		NRF_LOG_INFO("Ping sensor");
-		rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_GAME_ROTATION_VECTOR);
-		check_rc(rc);
-		rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_GAME_ROTATION_VECTOR, 5); // 100 Hz
-		check_rc(rc);
-		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_GAME_ROTATION_VECTOR);
-		check_rc(rc);
-	
-		// Start 9DoF euler angles output
-//		NRF_LOG_INFO("Start sensors");
-//		NRF_LOG_INFO("Ping sensor");
-//		rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_ORIENTATION);
-//		check_rc(rc);
-//		rc += inv_device_set_sensor_period_us(device, INV_SENSOR_TYPE_ORIENTATION, 50000); // 20 Hz
-//		check_rc(rc);
-//		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_ORIENTATION);
-//		check_rc(rc);
-		
-		/* Activity classification */
-//		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_BAC);
-//		check_rc(rc);
-		
-		/* Step Counter */
-//		rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_STEP_COUNTER);
-//		check_rc(rc);
-//		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_STEP_COUNTER);
-//		check_rc(rc);
-		
-		
-//		inv_device_set_sensor_timeout(device, INV_SENSOR_TYPE_GAME_ROTATION_VECTOR, 5);
-#endif	
 		
 		// Delay before starting
 		nrf_delay_ms(5000);
