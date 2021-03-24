@@ -1,6 +1,9 @@
 #include "usr_twi.h"
 
+
 /* TWI instance. */
+//#define MAX_PENDING_TRANSACTIONS    5
+//NRF_TWI_MNGR_DEF(m_nrf_twi_mngr, MAX_PENDING_TRANSACTIONS, TWI_INSTANCE_ID);
 const nrf_drv_twi_t m_twi = NRF_DRV_TWI_INSTANCE(TWI_INSTANCE_ID);
 
 /* Indicates if operation on TWI has ended. */
@@ -9,10 +12,6 @@ static volatile bool m_xfer_done = false;
 
 volatile bool twi_tx_done = false;
 volatile bool twi_rx_done = false;
-	
-	
-#define MPU_TWI_TIMEOUT 			10000 
-
 
 
 extern void idle_state_handle(void);
@@ -21,23 +20,43 @@ extern void idle_state_handle(void);
 /**
  * @brief UART initialization.
  */
-void twi_init (void)
+uint32_t twi_open (void)
 {
     ret_code_t err_code;
 
+	
     const nrf_drv_twi_config_t twi_imu_config = {
        .scl                = ARDUINO_SCL_PIN,		// PIN 27
        .sda                = ARDUINO_SDA_PIN,		// PIN 26
        .frequency          = NRF_DRV_TWI_FREQ_400K,
-       .interrupt_priority = APP_IRQ_PRIORITY_HIGH,
+       .interrupt_priority = APP_IRQ_PRIORITY_LOWEST,
        .clear_bus_init     = false
     };
 
     err_code = nrf_drv_twi_init(&m_twi, &twi_imu_config, twi_handler, NULL);
     APP_ERROR_CHECK(err_code);
+		
+		// Use twi manager for scheduled transactions
+//		err_code = nrf_twi_mngr_init(&m_nrf_twi_mngr, &config);
+//    APP_ERROR_CHECK(err_code);
 
     nrf_drv_twi_enable(&m_twi);
+		
+		return NRF_SUCCESS;
 }
+
+uint32_t twi_close(void)
+{
+    nrf_drv_twi_disable(&m_twi);
+
+    nrf_drv_twi_uninit(&m_twi);
+
+    return NRF_SUCCESS;
+}
+
+
+
+
 
 /**
  * @brief TWI events handler.
@@ -123,16 +142,24 @@ ret_code_t i2c_write_byte(const nrf_drv_twi_t *twi_handle, uint8_t address, uint
     
     memcpy(tx_buf+1, data, len); // Shift the data to make place for subaddress
 	
+		// Open the I2C connection
+		err_code = twi_open();
+    APP_ERROR_CHECK(err_code);
+	
 		err_code = nrf_drv_twi_tx(twi_handle, address, tx_buf, buf_len, stop);  
 		APP_ERROR_CHECK(err_code);
 	
 		do{
 			nrf_gpio_pin_clear(18);
-			nrf_delay_us(100);
+//			nrf_delay_us(100);
 			idle_state_handle();
 			nrf_gpio_pin_set(18);
 		}
 		while(twi_tx_done == false);
+		
+		// Close the I2C connection
+		err_code = twi_close();
+    APP_ERROR_CHECK(err_code);
 	
 //		while (twi_tx_done == false);
 		twi_tx_done = false;
@@ -172,18 +199,26 @@ ret_code_t i2c_read_bytes(const nrf_drv_twi_t *twi_handle, uint8_t address, uint
     xfer_desc.p_primary_buf = tx_buf;
 		xfer_desc.p_secondary_buf = dest;
 	
+	
+		// Open the I2C connection
+		err_code = twi_open();
+    APP_ERROR_CHECK(err_code);
+	
 		// Transferring
     err_code = nrf_drv_twi_xfer(&m_twi, &xfer_desc, NRF_DRV_TWI_FLAG_TX_NO_STOP);
 		APP_ERROR_CHECK(err_code);
 		
 		do{
 			nrf_gpio_pin_clear(18);
-			nrf_delay_us(100);
+//			nrf_delay_us(100);
 			idle_state_handle();
 			nrf_gpio_pin_set(18);
 		}
 		while(twi_rx_done == false);
 			
+		// Close the I2C connection
+		err_code = twi_close();
+    APP_ERROR_CHECK(err_code);
 
 //		while(twi_rx_done == false);
     twi_rx_done = false;

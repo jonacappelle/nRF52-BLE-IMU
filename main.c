@@ -127,6 +127,9 @@
 //  DEFINES   //
 ////////////////
 
+#define SCHED_MAX_EVENT_DATA_SIZE   APP_TIMER_SCHED_EVENT_DATA_SIZE /**< Maximum size of scheduler events. */
+#define SCHED_QUEUE_SIZE            60  /**< Maximum number of events in the scheduler queue. */
+
 bool nus_buffer_full = false;
 
 #define ICM20948_ENABLE
@@ -147,6 +150,7 @@ extern void msg_printer(int level, const char * str, va_list ap);
 /*
  * States for icm20948 device object
  */
+ inv_device_t * device; /* just a handy variable to keep the handle to device object */
 static inv_device_icm20948_t device_icm20948; 
 static uint8_t dmp3_image[] = {
 	#include "Invn/Images/icm20948_img.dmp3a.h"
@@ -167,19 +171,60 @@ static void check_rc(int rc)
 	}
 }
 
+uint32_t evt_scheduled = 0;
+
+// Event handler DIY
+/**@brief GPIOTE sceduled handler, executed in main-context.
+ */
+void gpiote_evt_sceduled(void * p_event_data, uint16_t event_size)
+{
+    while ( (evt_scheduled > 0) )//&& m_mpu9250.enabled) TODO check when IMU is enabled or not
+    {
+				nrf_gpio_pin_set(20);
+			// Poll all data from IMU
+				inv_device_poll(device);
+				nrf_gpio_pin_clear(20);
+				evt_scheduled--;
+    }
+}
+
+
 /*
  * Last time at which 20948 IRQ was fired
  */
 static volatile uint32_t last_irq_time = 0;
 
 /* Interrupt pin handeler callback function */
-void in_pin_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
+void gpiote_evt_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 {
     //NRF_LOG_INFO("Interrupt Occured!");
 //		last_irq_time = inv_icm20948_get_time_us();
 	
 		nrf_gpio_pin_toggle(25);
-		interrupt = true;
+	
+		uint32_t err_code;
+	
+		if(pin == INT_PIN)
+		{
+				// If there are already events in the queue
+				if(evt_scheduled > 0)
+				{
+					evt_scheduled++;
+				}
+				// If there are not yet any events in the queue, schedule event. In gpiote_evt_sceduled all callbacks are called
+				else
+				{
+					evt_scheduled++;
+					err_code = app_sched_event_put(0, 0, gpiote_evt_sceduled);
+					APP_ERROR_CHECK(err_code);
+				}
+			
+//				interrupt = true;
+		}
+		
+
+	
+	
 	nrf_gpio_pin_toggle(25);
 }
 
@@ -923,7 +968,7 @@ uint32_t nus_printf_custom_1(char* p_char)
 	return err_code;
 }
 
-uint32_t nus_send()
+uint32_t nus_send(void)
 {
 	static uint16_t index;
 	static uint8_t data_array[BLE_NUS_MAX_DATA_LEN];
@@ -1033,7 +1078,7 @@ int main(void)
     conn_params_init();
 	
 		// Application scheduler (soft interrupt like)
-//		APP_SCHED_INIT(SCHED_MAX_EVENT_DATA_SIZE, SCHED_QUEUE_SIZE);
+		APP_SCHED_INIT(SCHED_MAX_EVENT_DATA_SIZE, SCHED_QUEUE_SIZE);
 	
 		// TimeSync
 		sync_timer_button_init();
@@ -1095,7 +1140,7 @@ int main(void)
 		/* To keep track of errors */
 		int rc = 0;
 		
-		inv_device_t * device; /* just a handy variable to keep the handle to device object */
+		
 		uint8_t whoami;
 		
 		/* Open serial interface (SPI or I2C) before playing with the device */
@@ -1200,7 +1245,7 @@ int main(void)
 			
 			
 			// App scheduler: handle event in buffer
-//			app_sched_execute();
+			app_sched_execute();
 			
 /////////////////////////////////////////////////////////////////////////////////	
 //// Send data over BLE as fast as possible			
@@ -1240,19 +1285,6 @@ int main(void)
 				} while (err_code == NRF_SUCCESS);
 			}
 /////////////////////////////////////////////////////////////////////////////////
-
-#ifdef ICM20948_ENABLE
-			if(interrupt)
-			{
-//				uint32_t timer_test = ts_timestamp_get_ticks_u32(NRF_PPI_CHANNEL0);
-//				NRF_LOG_INFO("Local time: %d", timer_test/16000000);
-				
-				interrupt = false;
-				nrf_gpio_pin_set(20);
-				inv_device_poll(device);
-				nrf_gpio_pin_clear(20);
-			}
-#endif
 			
 			// Flush all the debug info to RTT
 			NRF_LOG_FLUSH();

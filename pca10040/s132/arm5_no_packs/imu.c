@@ -46,11 +46,14 @@ extern const nrf_drv_twi_t m_twi;
 extern ret_code_t i2c_read_bytes(const nrf_drv_twi_t *twi_handle, uint8_t address, uint8_t sub_address, uint8_t * dest, uint8_t dest_count);
 extern ret_code_t i2c_write_byte(const nrf_drv_twi_t *twi_handle, uint8_t address, uint8_t sub_address, const uint8_t* data, uint32_t len, bool stop);
 extern void twi_handler(nrf_drv_twi_evt_t const * p_event, void * p_context);
+
+
 #define ICM_20948_I2C_ADDRESS		0x69U
 
 
 // forward declarations
 int my_serif_open_adapter(void);
+int my_serif_close_adapter(void);
 int my_serif_open_read_reg(uint8_t reg, uint8_t * rbuffer, uint32_t rlen);
 int my_serif_open_write_reg(uint8_t reg, const uint8_t * wbuffer, uint32_t wlen);
 int my_adapter_register_interrupt_callback(void (*interrupt_cb)(void * context, int int_num), void * context);
@@ -75,7 +78,7 @@ int my_adapter_register_interrupt_callback(void (*interrupt_cb)(void * context, 
 // definition of the instance
 const inv_host_serif_t my_serif_instance = {
         my_serif_open_adapter,
-        0,
+        my_serif_close_adapter,
         my_serif_open_read_reg,
         my_serif_open_write_reg,
 				my_adapter_register_interrupt_callback,
@@ -84,11 +87,26 @@ const inv_host_serif_t my_serif_instance = {
         INV_HOST_SERIF_TYPE_I2C
 };
 
+// Not used - is integrated in I2C read - write
 int my_serif_open_adapter(void)
 {
-				twi_init();
-				return 0;
+//				ret_code_t err = twi_open();
+//				if(err == NRF_SUCCESS)
+//				{
+//					return 0;
+//				}else{
+//					return -1;
+//				}
+				int rc = 0;
+				return rc;
 }
+
+int my_serif_close_adapter(void)
+{
+				int rc = 0;
+				return rc;
+}
+
 
 int my_adapter_register_interrupt_callback(void (*interrupt_cb)(void * context, int int_num), void * context)
 {
@@ -212,7 +230,7 @@ void inv_icm20948_sleep_us(int us)
 #include "nrf_log_default_backends.h"
 
 extern uint32_t nus_printf_custom(char* p_char);
-extern uint32_t nus_send();
+extern uint32_t nus_send(void);
 
 
 /*
@@ -276,8 +294,6 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 	if(event->status == INV_SENSOR_STATUS_DATA_UPDATED) {
 		
 		counterr++;
-		
-		float dummy_data = 1.001;
 		
 nrf_gpio_pin_set(19);
 
@@ -388,11 +404,11 @@ nrf_gpio_pin_set(19);
 		case INV_SENSOR_TYPE_GAME_ROTATION_VECTOR:
 		case INV_SENSOR_TYPE_ROTATION_VECTOR:
 		case INV_SENSOR_TYPE_GEOMAG_ROTATION_VECTOR:
-//			NRF_LOG_INFO("RV: Accuracy: %d %d %d %d", //inv_sensor_str(event->sensor),
-////					(int)(event->data.quaternion.quat[0]*1000),
-////					(int)(event->data.quaternion.quat[1]*1000),
-////					(int)(event->data.quaternion.quat[2]*1000),
-////					(int)(event->data.quaternion.quat[3]*1000),
+			NRF_LOG_INFO("%s:	%d %d %d %d", inv_sensor_str(event->sensor),
+					(int)(event->data.quaternion.quat[0]*1000),
+					(int)(event->data.quaternion.quat[1]*1000),
+					(int)(event->data.quaternion.quat[2]*1000),
+					(int)(event->data.quaternion.quat[3]*1000));
 //					(int)(event->data.gyr.accuracy_flag),
 //					(int)(event->data.acc.accuracy_flag),	
 //					(int)(event->data.mag.accuracy_flag), // 0 - 3: not calibrated - fully calibrated

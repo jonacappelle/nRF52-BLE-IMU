@@ -17,7 +17,7 @@ void gpio_init(void)
     nrf_drv_gpiote_in_config_t in_config = GPIOTE_CONFIG_IN_SENSE_LOTOHI(true); // Low to high trigger
     in_config.pull = NRF_GPIO_PIN_PULLUP;
 
-    err_code = nrf_drv_gpiote_in_init(INT_PIN, &in_config, in_pin_handler);
+    err_code = nrf_drv_gpiote_in_init(INT_PIN, &in_config, gpiote_evt_handler);
     APP_ERROR_CHECK(err_code);
 
     nrf_drv_gpiote_in_event_enable(INT_PIN, true);
