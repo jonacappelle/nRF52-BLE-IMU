@@ -139,9 +139,6 @@
 #define SCHED_MAX_EVENT_DATA_SIZE   APP_TIMER_SCHED_EVENT_DATA_SIZE /**< Maximum size of scheduler events. */
 #define SCHED_QUEUE_SIZE            60  /**< Maximum number of events in the scheduler queue. */
 
-
-
-
 /*
  * Last time at which 20948 IRQ was fired
  */
@@ -196,56 +193,29 @@ int main(void)
 	
 		// Application scheduler (soft interrupt like)
 		APP_SCHED_INIT(SCHED_MAX_EVENT_DATA_SIZE, SCHED_QUEUE_SIZE);
-
-	
-	// GPIO stuff for timing purposes
-	////////////////////////////////	
-		nrf_gpio_cfg_output(18);
-		nrf_gpio_cfg_output(19);
-		nrf_gpio_cfg_output(20);
-	////////////////////////////////
-		nrf_gpio_cfg_output(25);
-		nrf_gpio_pin_set(25);
-		nrf_gpio_pin_set(20);
-		nrf_delay_ms(1000);
-		nrf_gpio_pin_clear(25);
-		nrf_gpio_pin_clear(20);
-		nrf_delay_ms(1000);
-	////////////////////////////////
 		
-
     // Start execution.
     printf("\r\nUART started.\r\n");
     NRF_LOG_INFO("Debug logging for UART over RTT started.");
-
-	
-//		APP_ERROR_CHECK(NRF_LOG_INIT(NULL));
-//    NRF_LOG_DEFAULT_BACKENDS_INIT();
 	
 		/* Initialize GPIO pins */
 		gpio_init();
 		
-		/* Initialize us timer */
-		timer_init();
-		
-		/* Initialize timer: Generates interrupt at 100 Hz */
-		timer_datasend_init();
-		
+		// Initialize all needed timers
+		timers_init();
+				
 		// Initialize IMU
 		err_code = imu_init();
 		APP_ERROR_CHECK(err_code);
 		
-		
 		// Delay before starting
-		nrf_delay_ms(5000);
+		nrf_delay_ms(2000);
 		
 		////////////////////////////////////////////////////////////////	
 		// Loop: IMU gives interrupt -> bool interrupt = true -> poll device for data
 		////////////////////////////////////////////////////////////////		
 		while(1)
 		{
-			
-			
 			// App scheduler: handle event in buffer
 			app_sched_execute();
 			

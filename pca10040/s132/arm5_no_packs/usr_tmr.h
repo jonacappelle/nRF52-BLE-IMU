@@ -13,6 +13,7 @@
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
 
+void timers_init(void);
 
 void timer_init (void);
 void timer_event_handler(nrf_timer_event_t event_type, void* p_context);

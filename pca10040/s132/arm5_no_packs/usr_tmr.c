@@ -110,3 +110,12 @@ void timer_datasend_event_handler(nrf_timer_event_t event_type, void* p_context)
             break;
     }
 }
+
+void timers_init(void)
+{
+		/* Initialize us timer */
+		timer_init();
+	
+		/* Initialize timer: Generates interrupt at 100 Hz */
+		timer_datasend_init();
+}

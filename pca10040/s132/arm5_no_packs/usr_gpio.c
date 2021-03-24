@@ -21,4 +21,21 @@ void gpio_init(void)
     APP_ERROR_CHECK(err_code);
 
     nrf_drv_gpiote_in_event_enable(INT_PIN, true);
+	
+	
+	
+		// GPIO stuff for timing purposes
+	////////////////////////////////	
+		nrf_gpio_cfg_output(18);
+		nrf_gpio_cfg_output(19);
+		nrf_gpio_cfg_output(20);
+	////////////////////////////////
+		nrf_gpio_cfg_output(25);
+		nrf_gpio_pin_set(25);
+		nrf_gpio_pin_set(20);
+		nrf_delay_ms(1000);
+		nrf_gpio_pin_clear(25);
+		nrf_gpio_pin_clear(20);
+		nrf_delay_ms(1000);
+	////////////////////////////////
 }
