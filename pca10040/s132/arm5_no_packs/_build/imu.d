@@ -1,6 +1,7 @@
 .\_build\imu.o: imu.c
 .\_build\imu.o: imu.h
 .\_build\imu.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
+.\_build\imu.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdbool.h
 .\_build\imu.o: ..\Invn/Devices/SerifHal.h
 .\_build\imu.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\assert.h
 .\_build\imu.o: ..\Invn/InvError.h
@@ -13,7 +14,6 @@
 .\_build\imu.o: ..\config\sdk_config.h
 .\_build\imu.o: ..\..\..\..\..\..\modules\nrfx\drivers/nrfx_common.h
 .\_build\imu.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stddef.h
-.\_build\imu.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdbool.h
 .\_build\imu.o: C:\Users\Jona Cappelle\AppData\Local\Arm\Packs\NordicSemiconductor\nRF_DeviceFamilyPack\8.35.0\Device\Include\nrf.h
 .\_build\imu.o: C:\Users\Jona Cappelle\AppData\Local\Arm\Packs\NordicSemiconductor\nRF_DeviceFamilyPack\8.35.0\Device\Include\nrf52.h
 .\_build\imu.o: C:\Users\Jona Cappelle\AppData\Local\Arm\Packs\ARM\CMSIS\5.6.0\CMSIS\Core\Include\core_cm4.h

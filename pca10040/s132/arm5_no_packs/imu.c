@@ -63,9 +63,20 @@
 #include "Invn/DynamicProtocol/DynProtocolTransportUart.h"
 #include "Invn/EmbUtils/Message.h"
 
+typedef struct
+{
+	uint64_t time;
+	float	gyro[3];
+	float	accel[3];
+	float	mag[3];
+	float quat[4];
+}imu_data_t;
+
 
 /* Define msg level */
 #define MSG_LEVEL INV_MSG_LEVEL_DEBUG
+
+bool new_imu_data;
 
 
 /*
@@ -338,6 +349,11 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 	
 	if(event->status == INV_SENSOR_STATUS_DATA_UPDATED) {
 		
+		// New IMU data is available
+		new_imu_data = true;
+		
+		
+		
 		counterr++;
 		
 nrf_gpio_pin_set(19);
@@ -436,11 +452,11 @@ nrf_gpio_pin_set(19);
 		case INV_SENSOR_TYPE_GAME_ROTATION_VECTOR:
 		case INV_SENSOR_TYPE_ROTATION_VECTOR:
 		case INV_SENSOR_TYPE_GEOMAG_ROTATION_VECTOR:
-			NRF_LOG_INFO("%s:	%d %d %d %d", inv_sensor_str(event->sensor),
-					(int)(event->data.quaternion.quat[0]*1000),
-					(int)(event->data.quaternion.quat[1]*1000),
-					(int)(event->data.quaternion.quat[2]*1000),
-					(int)(event->data.quaternion.quat[3]*1000));
+//			NRF_LOG_INFO("%s:	%d %d %d %d", inv_sensor_str(event->sensor),
+//					(int)(event->data.quaternion.quat[0]*1000),
+//					(int)(event->data.quaternion.quat[1]*1000),
+//					(int)(event->data.quaternion.quat[2]*1000),
+//					(int)(event->data.quaternion.quat[3]*1000));
 //					(int)(event->data.gyr.accuracy_flag),
 //					(int)(event->data.acc.accuracy_flag),	
 //					(int)(event->data.mag.accuracy_flag), // 0 - 3: not calibrated - fully calibrated
@@ -728,4 +744,18 @@ uint32_t imu_init(void)
 		return NRF_SUCCESS;
 }
 
+bool imu_get_bytes_available(void)
+{
+	return new_imu_data;
+}
+
+void imu_set_bytes_available(bool bytes_available)
+{
+	new_imu_data = bytes_available;
+}
+
+void IMU_data_get(uint8_t * send_data)
+{
+	
+}
 

@@ -182,6 +182,8 @@ bool timer_datasend_int = false;
 // Event handler for scheduler
 void my_app_sched_event_handler(void *data, uint16_t size);
 
+uint8_t send_data[244];
+
 
 /**@brief Application main function.
  */
@@ -216,6 +218,7 @@ int main(void)
 		////////////////////////////////////////////////////////////////		
 		while(1)
 		{
+		
 			// App scheduler: handle event in buffer
 			app_sched_execute();
 			
@@ -224,7 +227,7 @@ int main(void)
 /////////////////////////////////////////////////////////////////////////////////
 			
 			// if NUS TX buffer isn't full and imu_bytes_available() TODO add
-			if(!nus_buffer_full) 
+			if(!nus_buffer_full)// && imu_get_bytes_available())
 			{
 				uint32_t err_code;
 				do
@@ -232,7 +235,7 @@ int main(void)
 						// Load new data into buffer after NRF_SUCCESS (previous data has successfully been queued)
 						if(NUS_send_OK)
 						{
-//							IMU_data_get();
+//							IMU_data_get(send_data);
 						}
 						// Try to send data over BLE NUS
 						err_code = nus_printf_custom("2	Test 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789\n\0");
@@ -244,7 +247,8 @@ int main(void)
 						{
 							NUS_send_OK = true; // Ok, buffer is not full yet, buffer next data
 							countrrr++; // Increment send counter
-							NRF_LOG_INFO("NUS SUCCESS! %d", countrrr);
+//							imu_set_bytes_available(false);
+//							NRF_LOG_INFO("NUS SUCCESS! %d", countrrr);
 						}
 						// If NUS send buffer is full, do not load new data into buffer 
 						// + stop queue of data until BLE_NUS_EVT_TX_RDY
@@ -256,6 +260,9 @@ int main(void)
 						}
 				} while (err_code == NRF_SUCCESS);
 			}
+			
+
+			
 /////////////////////////////////////////////////////////////////////////////////
 			
 			// Flush all the debug info to RTT
