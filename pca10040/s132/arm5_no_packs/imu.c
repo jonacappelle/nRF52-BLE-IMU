@@ -63,6 +63,13 @@
 #include "Invn/DynamicProtocol/DynProtocolTransportUart.h"
 #include "Invn/EmbUtils/Message.h"
 
+
+// Ringbuffer
+#include "nrf_ringbuf.h"
+// Create the ringbuffer for storing IMU data that has to be transmitted
+NRF_RINGBUF_DEF(m_ringbuf, 512);
+
+
 typedef struct
 {
 	uint64_t time;
@@ -73,10 +80,11 @@ typedef struct
 }imu_data_t;
 
 
+
 /* Define msg level */
 #define MSG_LEVEL INV_MSG_LEVEL_DEBUG
 
-bool new_imu_data;
+uint32_t bytes_available = 0;
 
 
 /*
@@ -349,8 +357,7 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 	
 	if(event->status == INV_SENSOR_STATUS_DATA_UPDATED) {
 		
-		// New IMU data is available
-		new_imu_data = true;
+
 		
 		
 		
@@ -452,6 +459,11 @@ nrf_gpio_pin_set(19);
 		case INV_SENSOR_TYPE_GAME_ROTATION_VECTOR:
 		case INV_SENSOR_TYPE_ROTATION_VECTOR:
 		case INV_SENSOR_TYPE_GEOMAG_ROTATION_VECTOR:
+		{
+				// New IMU data is available: count how many bytes are available
+				bytes_available++;
+//			NRF_LOG_INFO("Bytes: %d", bytes_available);
+			
 //			NRF_LOG_INFO("%s:	%d %d %d %d", inv_sensor_str(event->sensor),
 //					(int)(event->data.quaternion.quat[0]*1000),
 //					(int)(event->data.quaternion.quat[1]*1000),
@@ -461,7 +473,25 @@ nrf_gpio_pin_set(19);
 //					(int)(event->data.acc.accuracy_flag),	
 //					(int)(event->data.mag.accuracy_flag), // 0 - 3: not calibrated - fully calibrated
 //					(int)(event->data.quaternion.accuracy_flag));
-			break;
+				
+				// Put data in the ringbuffer
+				uint32_t err_code;
+				size_t len_in = sizeof(event->data.quaternion.quat);
+//				uint8_t quat[len_in];
+//				for(uint8_t i=0; i<4; i++){
+//					uint32_t temp = (uint32_t) event->data.quaternion.quat[i];
+//					quat[i*4] = (uint8_t)(temp >> 24);
+//					quat[1+i*4] = (uint8_t)(temp >> 16);
+//					quat[2+i*4] = (uint8_t)(temp >> 8);
+//					quat[3+i*4] = (uint8_t)(temp & 0x000000ff);
+//				}
+					
+				err_code = nrf_ringbuf_cpy_put(&m_ringbuf, (uint8_t *)(event->data.quaternion.quat), &len_in); //(uint8_t *)(event->data.quaternion.quat)
+				APP_ERROR_CHECK(err_code);
+				
+
+				break;
+			}
 		case INV_SENSOR_TYPE_ORIENTATION:
 //			NRF_LOG_INFO("data event %s (e-3):, %d, %d, %d, Accuracy: %d ", inv_sensor_str(event->sensor),
 //					(int)(event->data.orientation.x*1000),
@@ -744,18 +774,93 @@ uint32_t imu_init(void)
 		return NRF_SUCCESS;
 }
 
-bool imu_get_bytes_available(void)
+uint32_t imu_get_bytes_available(void)
 {
-	return new_imu_data;
+	return bytes_available;
 }
 
-void imu_set_bytes_available(bool bytes_available)
+void imu_set_bytes_available(uint32_t bytes)
 {
-	new_imu_data = bytes_available;
+	bytes_available = bytes;
 }
 
-void IMU_data_get(uint8_t * send_data)
+//////////////////////////////////////////////////
+// How do pointers work?
+//////////////////////////////////////////////////
+//  int var = 5;
+//  printf("var: %d\n", var);
+
+//  // Notice the use of & before var
+//  printf("address of var: %p", &var);
+//  return 0;
+//////////////////////////////////////////////////
+//   int* pc, c;
+//   
+//   c = 22;
+//   printf("Address of c: %p\n", &c);
+//   printf("Value of c: %d\n\n", c);  // 22
+//   
+//   pc = &c;
+//   printf("Address of pointer pc: %p\n", pc);
+//   printf("Content of pointer pc: %d\n\n", *pc); // 22
+//   
+//   c = 11;
+//   printf("Address of pointer pc: %p\n", pc);
+//   printf("Content of pointer pc: %d\n\n", *pc); // 11
+//   
+//   *pc = 2;
+//   printf("Address of c: %p\n", &c);
+//   printf("Value of c: %d\n\n", c); // 2
+//   return 0;
+//////////////////////////////////////////////////
+
+
+
+
+void IMU_data_get(float * data)
 {
+		uint32_t err_code;
+		float quat[4];
+		size_t len_out = 16; //sizeof(quat);
+//		uint8_t quat_bin[len_out];
 	
+//					for(uint8_t i=0; i<4; i++){
+//					uint32_t temp = (uint32_t) event->data.quaternion.quat[i];
+//					quat[i*4] = (uint8_t)(temp >> 24);
+//					quat[1+i*4] = (uint8_t)(temp >> 16);
+//					quat[2+i*4] = (uint8_t)(temp >> 8);
+//					quat[3+i*4] = (uint8_t)(temp & 0x000000ff);
+
+//				}
+				
+//		err_code = nrf_ringbuf_cpy_get(&m_ringbuf, (uint8_t *)(quat), &len_out);
+//		for(uint8_t i=0; i<4; i++){
+//				uint8_t b3, b2, b1, b0;
+//				b3 = quat_bin[i*4];
+//				b2 = quat_bin[1+i*4];
+//				b1 = quat_bin[2+i*4];
+//				b0 = quat_bin[3+i*4];
+//				uint32_t temp = (uint32_t)(b3 << 24);
+//			  temp |= (b2 << 16);
+//				temp |= (b1 << 8);
+//				temp |= b0 ;
+//				quat[i] = temp;
+//		}
+//		APP_ERROR_CHECK(err_code);	
+		
+		err_code = nrf_ringbuf_cpy_get(&m_ringbuf, (uint8_t *) quat, &len_out); //(uint8_t *)(quat)
+		APP_ERROR_CHECK(err_code);
+		NRF_LOG_INFO("%d %d %d %d", (int)(quat[0]*1000),(int)(quat[1]*1000),(int)(quat[2]*1000),(int)(quat[3]*1000));
+
+		data[0] = quat[0];
+		data[1] = quat[1];
+		data[2] = quat[2];
+		data[3] = quat[3];
+}
+
+
+void usr_ringbuf_init(void)
+{
+	nrf_ringbuf_init(&m_ringbuf);
 }
 

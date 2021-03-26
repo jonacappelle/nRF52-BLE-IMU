@@ -133,6 +133,7 @@
 .\_build\main.o: ..\Invn/EmbUtils/Message.h
 .\_build\main.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdarg.h
 .\_build\main.o: ..\arm5_no_packs\imu.h
+.\_build\main.o: ..\arm5_no_packs\usr_util.h
 .\_build\main.o: ..\arm5_no_packs\usr_twi.h
 .\_build\main.o: ..\arm5_no_packs\usr_tmr.h
 .\_build\main.o: ..\..\..\..\..\..\integration\nrfx\legacy\nrf_drv_timer.h
@@ -146,4 +147,4 @@
 .\_build\main.o: ..\..\..\..\..\..\modules\nrfx\hal\nrf_ppi.h
 .\_build\main.o: ..\..\..\..\..\..\components\libraries\scheduler\app_scheduler.h
 .\_build\main.o: ..\arm5_no_packs\usr_ble.h
-.\_build\main.o: ..\arm5_no_packs\usr_util.h
+.\_build\main.o: ..\..\..\..\..\..\components\libraries\ringbuf\nrf_ringbuf.h

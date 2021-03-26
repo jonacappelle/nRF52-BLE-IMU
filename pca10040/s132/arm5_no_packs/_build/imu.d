@@ -2,6 +2,8 @@
 .\_build\imu.o: imu.h
 .\_build\imu.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
 .\_build\imu.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdbool.h
+.\_build\imu.o: usr_util.h
+.\_build\imu.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
 .\_build\imu.o: ..\Invn/Devices/SerifHal.h
 .\_build\imu.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\assert.h
 .\_build\imu.o: ..\Invn/InvError.h
@@ -43,7 +45,6 @@
 .\_build\imu.o: ..\..\..\..\..\..\components\softdevice\s132\headers\nrf_error_soc.h
 .\_build\imu.o: ..\..\..\..\..\..\components\softdevice\s132\headers\nrf_nvic.h
 .\_build\imu.o: ..\..\..\..\..\..\components\libraries\util\app_error.h
-.\_build\imu.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h
 .\_build\imu.o: ..\..\..\..\..\..\components\libraries\util\sdk_errors.h
 .\_build\imu.o: ..\..\..\..\..\..\components\libraries\util\app_error_weak.h
 .\_build\imu.o: ..\..\..\..\..\..\modules\nrfx\soc/nrfx_coredep.h
@@ -106,6 +107,8 @@
 .\_build\imu.o: ..\Invn/DynamicProtocol/DynProtocolTransport.h
 .\_build\imu.o: ..\Invn/EmbUtils/Message.h
 .\_build\imu.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdarg.h
+.\_build\imu.o: ..\..\..\..\..\..\components\libraries\ringbuf\nrf_ringbuf.h
+.\_build\imu.o: ..\..\..\..\..\..\components\libraries\atomic\nrf_atomic.h
 .\_build\imu.o: ..\Invn/Images/icm20948_img.dmp3a.h
 .\_build\imu.o: ..\..\..\..\..\..\integration\nrfx\legacy\nrf_drv_timer.h
 .\_build\imu.o: ..\..\..\..\..\..\modules\nrfx\drivers\include\nrfx_timer.h

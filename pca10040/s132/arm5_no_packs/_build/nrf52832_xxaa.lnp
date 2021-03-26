@@ -103,6 +103,7 @@
 ".\_build\time_sync.o"
 ".\_build\usr_ble.o"
 ".\_build\usr_util.o"
+".\_build\usr_fifo.o"
 ".\_build\arm_startup_nrf52.o"
 ".\_build\system_nrf52.o"
 --library_type=microlib --strict --scatter ".\_build\nrf52832_xxaa.sct"

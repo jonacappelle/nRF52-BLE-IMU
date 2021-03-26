@@ -53,3 +53,4 @@
 .\_build\usr_gpio.o: ..\..\..\..\..\..\components\boards\pca10040.h
 .\_build\usr_gpio.o: ..\..\..\..\..\..\components\libraries\delay\nrf_delay.h
 .\_build\usr_gpio.o: imu.h
+.\_build\usr_gpio.o: usr_util.h
