@@ -850,7 +850,7 @@ void IMU_data_get(float * data)
 		
 		err_code = nrf_ringbuf_cpy_get(&m_ringbuf, (uint8_t *) quat, &len_out); //(uint8_t *)(quat)
 		APP_ERROR_CHECK(err_code);
-		NRF_LOG_INFO("%d %d %d %d", (int)(quat[0]*1000),(int)(quat[1]*1000),(int)(quat[2]*1000),(int)(quat[3]*1000));
+//		NRF_LOG_INFO("%d %d %d %d", (int)(quat[0]*1000),(int)(quat[1]*1000),(int)(quat[2]*1000),(int)(quat[3]*1000));
 
 		data[0] = quat[0];
 		data[1] = quat[1];

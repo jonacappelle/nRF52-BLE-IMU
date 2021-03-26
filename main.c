@@ -256,8 +256,9 @@ int main(void)
 //							NRF_LOG_INFO("%d %d %d %d", (int)(send_data[0]*1000), (int)(send_data[1]*1000), (int)(send_data[2]*1000), (int)(send_data[3]*1000));
 						}
 						// Try to send data over BLE NUS
-						err_code = nus_printf_custom("2	Test 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789\n\0");
-
+//						err_code = nus_printf_custom("2	Test 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789\n\0");
+						err_code = nus_send( (uint8_t *) send_data, sizeof(send_data) );
+						
 						// Packet has successfully been queued and send correctly
 						// If this happens, load new data into buffer
 						if(err_code == NRF_SUCCESS)

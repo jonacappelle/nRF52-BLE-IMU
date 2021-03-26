@@ -9,4 +9,7 @@ uint32_t nus_printf_custom(char* p_char);
 void idle_state_handle(void);
 
 
+uint32_t nus_send(uint8_t * data, uint16_t len);
+
+
 #endif

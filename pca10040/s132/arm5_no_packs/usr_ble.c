@@ -772,29 +772,19 @@ uint32_t nus_printf_custom_1(char* p_char)
 	return err_code;
 }
 
-uint32_t nus_send(void)
+uint32_t nus_send(uint8_t * data, uint16_t len)
 {
-	static uint16_t index;
-	static uint8_t data_array[BLE_NUS_MAX_DATA_LEN];
-	
-	for(int i=0; i<BLE_NUS_MAX_DATA_LEN; i++)
-	{
-		data_array[i] = 0x00;
-	}
-	index = 200;
-	
 		uint32_t err_code;
-		do
-		{
-				err_code = ble_nus_data_send(&m_nus, data_array, &index, m_conn_handle);
-				if ((err_code != NRF_ERROR_INVALID_STATE) &&
-						(err_code != NRF_ERROR_RESOURCES) &&
-						(err_code != NRF_ERROR_NOT_FOUND))
-				{
-						APP_ERROR_CHECK(err_code);
-				}
-		} while (err_code == NRF_ERROR_RESOURCES);
+	
+		err_code = ble_nus_data_send(&m_nus, data, &len, m_conn_handle);
 		
+		// Check for errors
+		if ((err_code != NRF_ERROR_INVALID_STATE) &&
+				(err_code != NRF_ERROR_RESOURCES) &&
+				(err_code != NRF_ERROR_NOT_FOUND))
+		{
+				APP_ERROR_CHECK(err_code);
+		}
 		return err_code;
 }
 
