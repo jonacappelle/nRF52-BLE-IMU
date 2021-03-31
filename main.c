@@ -85,6 +85,9 @@
 // Ringbuffer
 #include "nrf_ringbuf.h"
 
+// IMU params
+#include "imu_params.h"
+
 
 ////////////////
 //  DEFINES   //
@@ -167,8 +170,8 @@ int main(void)
 		timers_init();
 		
 		// IMU Settings
-		imu.quat9_enabled = true;
-		imu.period = 5;
+//		imu.quat9_enabled = true;
+		imu.period = 5; // 225 Hz
 	
 		// Initialize IMU
 		err_code = imu_init();

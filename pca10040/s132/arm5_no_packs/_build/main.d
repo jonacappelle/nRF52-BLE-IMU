@@ -148,3 +148,4 @@
 .\_build\main.o: ..\..\..\..\..\..\components\libraries\scheduler\app_scheduler.h
 .\_build\main.o: ..\arm5_no_packs\usr_ble.h
 .\_build\main.o: ..\..\..\..\..\..\components\libraries\ringbuf\nrf_ringbuf.h
+.\_build\main.o: ..\arm5_no_packs\imu_params.h

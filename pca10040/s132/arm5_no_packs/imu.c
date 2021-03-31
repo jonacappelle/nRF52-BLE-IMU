@@ -64,6 +64,9 @@
 #include "Invn/EmbUtils/Message.h"
 
 
+// IMU params
+#include "imu_params.h"
+
 // Ringbuffer
 #include "nrf_ringbuf.h"
 // Create the ringbuffer for storing IMU data that has to be transmitted
@@ -643,75 +646,57 @@ void gpiote_evt_sceduled(void * p_event_data, uint16_t event_size)
 }
 
 
-uint32_t imu_init(void)
+void set_imu_packet_length(IMU imu)
 {
-		/*
-		 * Setup message facility to see internal traces from IDD
-		 */
+	imu.packet_length = 0;
+	
+	if(imu.gyro_enabled)
+	{
+		imu.packet_length += 3 * sizeof(float);
+	}
+	if(imu.accel_enabled)
+	{
+		imu.packet_length += 3 * sizeof(float);
+	}
+	if(imu.mag_enabled)
+	{
+		imu.packet_length += 3 * sizeof(float);
+	}
+	if(imu.quat6_enabled)
+	{
+		imu.packet_length += 4 * sizeof(float);
+	}
+	if(imu.quat9_enabled)
+	{
+		imu.packet_length += 4 * sizeof(float);
+	}
+	if(imu.euler_enabled)
+	{
+		imu.packet_length += 3 * sizeof(float);
+	}
+	
+	NRF_LOG_INFO("Packet Len set to: %d", imu.packet_length);
+}
 
-		INV_MSG_SETUP(MSG_LEVEL, msg_printer);
-
-		INV_MSG(INV_MSG_LEVEL_INFO, "###################################");
-		INV_MSG(INV_MSG_LEVEL_INFO, "#          20948 example          #");
-		INV_MSG(INV_MSG_LEVEL_INFO, "###################################");
-		NRF_LOG_FLUSH();
-
-		/* To keep track of errors */
+uint32_t imu_enable_sensors(IMU imu)
+{
 		int rc = 0;
-		
-		
-		uint8_t whoami;
-		
-		/* Open serial interface (SPI or I2C) before playing with the device */
-		// Not needed anymore - this is implemented in the inv_host_serif_open(&my_serif_instance)
-//		twi_init();
-		
-		rc = inv_host_serif_open(&my_serif_instance);
+	
+		// Stop all sensors before enabling the new ones
+		rc += inv_device_stop_sensor(device, INV_SENSOR_TYPE_GAME_ROTATION_VECTOR);
 		check_rc(rc);
-		
-		NRF_LOG_INFO("i2c init");
-		NRF_LOG_FLUSH();
-		
-		NRF_LOG_INFO("icm20948 init");
-		NRF_LOG_FLUSH();
-		/*
-		 * Create ICM20948 Device 
-		 * Pass to the driver:
-		 * - reference to serial interface object,
-		 * - reference to listener that will catch sensor events,
-		 */
-		inv_device_icm20948_init(&device_icm20948, &my_serif_instance, &sensor_listener, dmp3_image, sizeof(dmp3_image));
-//		inv_device_icm20948_init2(&device_icm20948, &my_serif_instance, &sensor_listener, dmp3_image, sizeof(dmp3_image));
-		NRF_LOG_FLUSH();
-		
-		NRF_LOG_INFO("icm20948 get base");
-		NRF_LOG_FLUSH();
-		/*
-		 * Simply get generic device handle from Icm20948 Device
-		 */
-		device = inv_device_icm20948_get_base(&device_icm20948);
-		NRF_LOG_FLUSH();
-		
-		/* Just get the whoami */
-		rc += inv_device_whoami(device, &whoami);
+		rc += inv_device_stop_sensor(device, INV_SENSOR_TYPE_ROTATION_VECTOR);
 		check_rc(rc);
-		NRF_LOG_INFO("Data: 0x%x", whoami);
-		NRF_LOG_FLUSH();
-		
-		nrf_delay_ms(500);
-		
-		/* Configure and initialize the Icm20948 device */
-		NRF_LOG_INFO("Setting up ICM20948");
-		NRF_LOG_FLUSH();
-		rc += inv_device_setup(device);
-		check_rc(rc);
-		
-		// Load DMP
-		NRF_LOG_INFO("Load DMP Image");
-		NRF_LOG_FLUSH();
-		rc += inv_device_load(device, NULL, dmp3_image, sizeof(dmp3_image), true /* verify */, NULL);
+		rc += inv_device_stop_sensor(device, INV_SENSOR_TYPE_ORIENTATION);
+		check_rc(rc);	
+		rc += inv_device_stop_sensor(device, INV_SENSOR_TYPE_GYROSCOPE);
+		check_rc(rc);	
+		rc += inv_device_stop_sensor(device, INV_SENSOR_TYPE_ACCELEROMETER);
+		check_rc(rc);	
+		rc += inv_device_stop_sensor(device, INV_SENSOR_TYPE_MAGNETOMETER);
 		check_rc(rc);
 
+	
 		// If enabled: Start 6DoF quaternion output
 		if(imu.quat6_enabled)
 		{
@@ -790,6 +775,81 @@ uint32_t imu_init(void)
 //		check_rc(rc);
 		
 //		inv_device_set_sensor_timeout(device, INV_SENSOR_TYPE_GAME_ROTATION_VECTOR, 5);
+		
+			return NRF_SUCCESS;
+}
+
+
+uint32_t imu_init(void)
+{
+		/*
+		 * Setup message facility to see internal traces from IDD
+		 */
+
+		INV_MSG_SETUP(MSG_LEVEL, msg_printer);
+
+		INV_MSG(INV_MSG_LEVEL_INFO, "###################################");
+		INV_MSG(INV_MSG_LEVEL_INFO, "#          20948 example          #");
+		INV_MSG(INV_MSG_LEVEL_INFO, "###################################");
+		NRF_LOG_FLUSH();
+
+		/* To keep track of errors */
+		int rc = 0;
+		
+		
+		uint8_t whoami;
+		
+		/* Open serial interface (SPI or I2C) before playing with the device */
+		// Not needed anymore - this is implemented in the inv_host_serif_open(&my_serif_instance)
+//		twi_init();
+		
+		rc = inv_host_serif_open(&my_serif_instance);
+		check_rc(rc);
+		
+		NRF_LOG_INFO("i2c init");
+		NRF_LOG_FLUSH();
+		
+		NRF_LOG_INFO("icm20948 init");
+		NRF_LOG_FLUSH();
+		/*
+		 * Create ICM20948 Device 
+		 * Pass to the driver:
+		 * - reference to serial interface object,
+		 * - reference to listener that will catch sensor events,
+		 */
+		inv_device_icm20948_init(&device_icm20948, &my_serif_instance, &sensor_listener, dmp3_image, sizeof(dmp3_image));
+//		inv_device_icm20948_init2(&device_icm20948, &my_serif_instance, &sensor_listener, dmp3_image, sizeof(dmp3_image));
+		NRF_LOG_FLUSH();
+		
+		NRF_LOG_INFO("icm20948 get base");
+		NRF_LOG_FLUSH();
+		/*
+		 * Simply get generic device handle from Icm20948 Device
+		 */
+		device = inv_device_icm20948_get_base(&device_icm20948);
+		NRF_LOG_FLUSH();
+		
+		/* Just get the whoami */
+		rc += inv_device_whoami(device, &whoami);
+		check_rc(rc);
+		NRF_LOG_INFO("Data: 0x%x", whoami);
+		NRF_LOG_FLUSH();
+		
+		nrf_delay_ms(500);
+		
+		/* Configure and initialize the Icm20948 device */
+		NRF_LOG_INFO("Setting up ICM20948");
+		NRF_LOG_FLUSH();
+		rc += inv_device_setup(device);
+		check_rc(rc);
+		
+		// Load DMP
+		NRF_LOG_INFO("Load DMP Image");
+		NRF_LOG_FLUSH();
+		rc += inv_device_load(device, NULL, dmp3_image, sizeof(dmp3_image), true /* verify */, NULL);
+		check_rc(rc);
+
+		imu_enable_sensors(imu);
 
 		return NRF_SUCCESS;
 }
@@ -802,6 +862,11 @@ uint32_t imu_get_bytes_available(void)
 void imu_set_bytes_available(uint32_t bytes)
 {
 	bytes_available = bytes;
+}
+
+size_t get_imu_packet_length()
+{
+
 }
 
 void IMU_data_get(float * data)

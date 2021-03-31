@@ -18,6 +18,7 @@ typedef struct imu
 	bool quat9_enabled;
 	bool euler_enabled;
 	uint32_t period; // period in milliseconds (ms)
+	uint16_t packet_length;
 }IMU;
 
 
@@ -26,7 +27,7 @@ void IMU_data_get(float * data);
 uint32_t imu_get_bytes_available(void);
 void imu_set_bytes_available(uint32_t bytes);
 void usr_ringbuf_init(void);
-
+uint32_t imu_enable_sensors(IMU imu);
 
 
 #endif

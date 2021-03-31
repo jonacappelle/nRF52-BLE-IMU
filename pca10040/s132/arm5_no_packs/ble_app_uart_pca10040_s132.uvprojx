@@ -4250,6 +4250,11 @@
               <FileType>5</FileType>
               <FilePath>.\usr_util.h</FilePath>
             </File>
+            <File>
+              <FileName>imu_params.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\imu_params.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -8518,6 +8523,11 @@
               <FileName>usr_util.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\usr_util.h</FilePath>
+            </File>
+            <File>
+              <FileName>imu_params.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\imu_params.h</FilePath>
             </File>
           </Files>
         </Group>

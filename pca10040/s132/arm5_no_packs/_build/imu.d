@@ -107,6 +107,7 @@
 .\_build\imu.o: ..\Invn/DynamicProtocol/DynProtocolTransport.h
 .\_build\imu.o: ..\Invn/EmbUtils/Message.h
 .\_build\imu.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdarg.h
+.\_build\imu.o: imu_params.h
 .\_build\imu.o: ..\..\..\..\..\..\components\libraries\ringbuf\nrf_ringbuf.h
 .\_build\imu.o: ..\..\..\..\..\..\components\libraries\atomic\nrf_atomic.h
 .\_build\imu.o: ..\Invn/Images/icm20948_img.dmp3a.h

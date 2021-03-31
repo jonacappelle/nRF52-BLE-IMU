@@ -43,7 +43,13 @@
 #include "nrf_ppi.h"
 #include "nrf_timer.h"
 
+// IMU params
+#include "imu_params.h"
+#include "imu.h"
+extern IMU imu;
 
+// Application scheduler
+#include "app_scheduler.h"
 
 
 int countrrr = 0;
@@ -147,6 +153,16 @@ static void gap_params_init(void)
 }
 
 
+// Event handler DIY
+/**@brief GPIOTE sceduled handler, executed in main-context.
+ */
+void imu_config_evt_sceduled(void * p_event_data, uint16_t event_size)
+{
+		// Enable sensor parameters based on received configuration
+		uint32_t err_code;
+		err_code =  imu_enable_sensors(imu);
+		APP_ERROR_CHECK(err_code);
+}
 
 
 /**@brief Function for handling the data from the Nordic UART Service.
@@ -165,28 +181,94 @@ static void nus_data_handler(ble_nus_evt_t * p_evt)
     {
 		
 			case BLE_NUS_EVT_RX_DATA:
-					
-					NRF_LOG_DEBUG("Received data from BLE NUS. Writing data on UART.");
-					NRF_LOG_HEXDUMP_DEBUG(p_evt->params.rx_data.p_data, p_evt->params.rx_data.length);
-
-					for (uint32_t i = 0; i < p_evt->params.rx_data.length; i++)
-					{
-							do
-							{
-									err_code = app_uart_put(p_evt->params.rx_data.p_data[i]);
-									if ((err_code != NRF_SUCCESS) && (err_code != NRF_ERROR_BUSY))
-									{
-											NRF_LOG_ERROR("Failed receiving NUS message. Error 0x%x. ", err_code);
-											APP_ERROR_CHECK(err_code);
-									}
-							} while (err_code == NRF_ERROR_BUSY);
-					}
-					if (p_evt->params.rx_data.p_data[p_evt->params.rx_data.length - 1] == '\r')
-					{
-							while (app_uart_put('\n') == NRF_ERROR_BUSY);
-					}
-					break;
+			{
+						uint8_t len = p_evt->params.rx_data.length;
+						uint8_t buffer[len];
+			
+						// Copy data into buffer
+						memcpy(buffer, p_evt->params.rx_data.p_data, len);
+						
+						uint8_t temp = buffer[0];
 				
+						// Reset all params to 0 to start with
+						imu.gyro_enabled = 0;
+						imu.accel_enabled = 0;
+						imu.mag_enabled = 0;
+						imu.quat6_enabled = 0;
+						imu.quat9_enabled = 0;
+						imu.euler_enabled = 0;
+			
+						// Set struct parameters based on what configuration is set at central
+						switch (temp)
+						{
+								case ENABLE_QUAT6:
+									imu.quat6_enabled = 1;
+									NRF_LOG_INFO("ENABLE_QUAT6 Received");
+									break;
+
+								case ENABLE_QUAT9:
+									imu.quat9_enabled = 1;
+									NRF_LOG_INFO("ENABLE_QUAT9 Received");
+									break;
+								
+								case ENABLE_EULER:
+									imu.euler_enabled = 1;
+									NRF_LOG_INFO("ENABLE_EULER Received");
+									break;
+								
+								case ENABLE_GYRO:
+									imu.gyro_enabled = 1;
+									NRF_LOG_INFO("ENABLE_GYRO Received");
+									break;
+								
+								case ENABLE_ACCEL:
+									imu.accel_enabled = 1;
+									NRF_LOG_INFO("ENABLE_ACCEL Received");
+									break;
+								
+								case ENABLE_MAG:
+									imu.mag_enabled = 1;
+									NRF_LOG_INFO("ENABLE_MAG Received");
+									break;
+								
+								default:
+									imu.gyro_enabled = 0;
+									imu.accel_enabled = 0;
+									imu.mag_enabled = 0;
+									imu.quat6_enabled = 0;
+									imu.quat9_enabled = 0;
+									imu.euler_enabled = 0;
+									NRF_LOG_INFO("Unknown Config Received");
+									break;
+						}
+						
+						set_imu_packet_length(imu);
+						
+						// Pass change IMU settings to event handler
+						err_code = app_sched_event_put(0, 0, imu_config_evt_sceduled);
+						APP_ERROR_CHECK(err_code);
+						
+//					NRF_LOG_DEBUG("Received data from BLE NUS. Writing data on UART.");
+//					NRF_LOG_HEXDUMP_DEBUG(p_evt->params.rx_data.p_data, p_evt->params.rx_data.length);
+
+//					for (uint32_t i = 0; i < p_evt->params.rx_data.length; i++)
+//					{
+//							do
+//							{
+//									err_code = app_uart_put(p_evt->params.rx_data.p_data[i]);
+//									if ((err_code != NRF_SUCCESS) && (err_code != NRF_ERROR_BUSY))
+//									{
+//											NRF_LOG_ERROR("Failed receiving NUS message. Error 0x%x. ", err_code);
+//											APP_ERROR_CHECK(err_code);
+//									}
+//							} while (err_code == NRF_ERROR_BUSY);
+//					}
+//					if (p_evt->params.rx_data.p_data[p_evt->params.rx_data.length - 1] == '\r')
+//					{
+//							while (app_uart_put('\n') == NRF_ERROR_BUSY);
+//					}
+					break;
+				}
 				// Added //
 				// When BLE NUS
 			case BLE_NUS_EVT_TX_RDY:
