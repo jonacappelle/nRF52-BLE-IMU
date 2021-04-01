@@ -142,7 +142,7 @@ bool timer_datasend_int = false;
 void my_app_sched_event_handler(void *data, uint16_t size);
 
 // IMU data
-float send_data[4];
+float send_data[13];
 
 // Struct to keep track of which IMU function are activated
 IMU imu;
@@ -155,7 +155,7 @@ int main(void)
 		uint32_t err_code;
 		
 		usr_ble_init();
-	
+
 		// Application scheduler (soft interrupt like)
 		APP_SCHED_INIT(SCHED_MAX_EVENT_DATA_SIZE, SCHED_QUEUE_SIZE);
 		

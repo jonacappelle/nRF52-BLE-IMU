@@ -184,11 +184,13 @@ static void nus_data_handler(ble_nus_evt_t * p_evt)
 			{
 						uint8_t len = p_evt->params.rx_data.length;
 						uint8_t buffer[len];
-			
+				
+
 						// Copy data into buffer
 						memcpy(buffer, p_evt->params.rx_data.p_data, len);
-						
-						uint8_t temp = buffer[0];
+				
+					NRF_LOG_INFO("BLE_NUS_EVT_RX_DATA: %X %X len: %d", buffer[0], buffer[1], len);
+				
 				
 						// Reset all params to 0 to start with
 						imu.gyro_enabled = 0;
@@ -198,55 +200,66 @@ static void nus_data_handler(ble_nus_evt_t * p_evt)
 						imu.quat9_enabled = 0;
 						imu.euler_enabled = 0;
 			
-						// Set struct parameters based on what configuration is set at central
-						switch (temp)
+						for(uint8_t i=0; i<len; i++)
 						{
-								case ENABLE_QUAT6:
-									imu.quat6_enabled = 1;
-									NRF_LOG_INFO("ENABLE_QUAT6 Received");
-									break;
+							uint8_t temp = buffer[i];
+							
+							// Set struct parameters based on what configuration is set at central
+							switch (temp)
+							{
+									case ENABLE_QUAT6:
+										imu.quat6_enabled = 1;
+										NRF_LOG_INFO("ENABLE_QUAT6 Received");
+										break;
 
-								case ENABLE_QUAT9:
-									imu.quat9_enabled = 1;
-									NRF_LOG_INFO("ENABLE_QUAT9 Received");
-									break;
-								
-								case ENABLE_EULER:
-									imu.euler_enabled = 1;
-									NRF_LOG_INFO("ENABLE_EULER Received");
-									break;
-								
-								case ENABLE_GYRO:
-									imu.gyro_enabled = 1;
-									NRF_LOG_INFO("ENABLE_GYRO Received");
-									break;
-								
-								case ENABLE_ACCEL:
-									imu.accel_enabled = 1;
-									NRF_LOG_INFO("ENABLE_ACCEL Received");
-									break;
-								
-								case ENABLE_MAG:
-									imu.mag_enabled = 1;
-									NRF_LOG_INFO("ENABLE_MAG Received");
-									break;
-								
-								default:
-									imu.gyro_enabled = 0;
-									imu.accel_enabled = 0;
-									imu.mag_enabled = 0;
-									imu.quat6_enabled = 0;
-									imu.quat9_enabled = 0;
-									imu.euler_enabled = 0;
-									NRF_LOG_INFO("Unknown Config Received");
-									break;
+									case ENABLE_QUAT9:
+										imu.quat9_enabled = 1;
+										NRF_LOG_INFO("ENABLE_QUAT9 Received");
+										break;
+									
+									case ENABLE_EULER:
+										imu.euler_enabled = 1;
+										NRF_LOG_INFO("ENABLE_EULER Received");
+										break;
+									
+									case ENABLE_GYRO:
+										imu.gyro_enabled = 1;
+										NRF_LOG_INFO("ENABLE_GYRO Received");
+										break;
+									
+									case ENABLE_ACCEL:
+										imu.accel_enabled = 1;
+										NRF_LOG_INFO("ENABLE_ACCEL Received");
+										break;
+									
+									case ENABLE_MAG:
+										imu.mag_enabled = 1;
+										NRF_LOG_INFO("ENABLE_MAG Received");
+										break;
+									
+									case STOP_IMU:
+										imu.stop = 1;
+										NRF_LOG_INFO("STOP_IMU Received");
+										break;
+									
+									default:
+										imu.gyro_enabled = 0;
+										imu.accel_enabled = 0;
+										imu.mag_enabled = 0;
+										imu.quat6_enabled = 0;
+										imu.quat9_enabled = 0;
+										imu.euler_enabled = 0;
+										NRF_LOG_INFO("Unknown Config Received");
+										break;
+							}
 						}
 						
-						set_imu_packet_length(imu);
+						set_imu_packet_length();
 						
 						// Pass change IMU settings to event handler
 						err_code = app_sched_event_put(0, 0, imu_config_evt_sceduled);
 						APP_ERROR_CHECK(err_code);
+						
 						
 //					NRF_LOG_DEBUG("Received data from BLE NUS. Writing data on UART.");
 //					NRF_LOG_HEXDUMP_DEBUG(p_evt->params.rx_data.p_data, p_evt->params.rx_data.length);
