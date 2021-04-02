@@ -142,11 +142,14 @@ bool timer_datasend_int = false;
 void my_app_sched_event_handler(void *data, uint16_t size);
 
 // IMU data
-float send_data[13];
+uint8_t send_data[200];
+uint16_t send_data_len;
 
 // Struct to keep track of which IMU function are activated
 IMU imu;
 
+
+float temp[4] = {0.01, 0.02, 0.03, 0.04};
 
 /**@brief Application main function.
  */
@@ -210,7 +213,7 @@ int main(void)
 						// Load new data into buffer after NRF_SUCCESS (previous data has successfully been queued)
 						if(NUS_send_OK)
 						{
-							IMU_data_get(send_data);
+							IMU_data_get(send_data, &send_data_len);
 							// Decrement available bytes once a byte has been send
 							uint32_t bytes_available = imu_get_bytes_available();
 							bytes_available--;
@@ -220,7 +223,9 @@ int main(void)
 						}
 						// Try to send data over BLE NUS
 //						err_code = nus_printf_custom("2	Test 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789\n\0");
-						err_code = nus_send( (uint8_t *) send_data, sizeof(send_data) );
+						err_code = nus_send(send_data, send_data_len);
+						NRF_LOG_INFO("send_data: %X %X %X %X", send_data[0], send_data[1], send_data[2], send_data[3]);
+						NRF_LOG_INFO("send_data_len: %d", send_data_len);
 						
 						// Packet has successfully been queued and send correctly
 						// If this happens, load new data into buffer

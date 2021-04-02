@@ -26,7 +26,7 @@ typedef struct imu
 
 
 uint32_t imu_init(void);
-void IMU_data_get(float * data);
+void IMU_data_get(uint8_t * data, uint16_t * len);
 uint32_t imu_get_bytes_available(void);
 void imu_set_bytes_available(uint32_t bytes);
 void usr_ringbuf_init(void);

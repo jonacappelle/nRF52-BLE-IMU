@@ -357,6 +357,8 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 		uint32_t err_code;
 		size_t len_in;
 		
+		uint8_t config_data[1];
+		
 		counterr++;
 		
 nrf_gpio_pin_set(19);
@@ -432,8 +434,12 @@ nrf_gpio_pin_set(19);
 					(int)(event->data.gyr.vect[1]*1000),
 					(int)(event->data.gyr.vect[2]*1000),
 					(int)(event->data.gyr.accuracy_flag));
+	
 					
 				// Put data in the ringbuffer
+				config_data[0] = ENABLE_GYRO;
+				len_in = sizeof(config_data);
+				err_code = nrf_ringbuf_cpy_put(&m_ringbuf, config_data, &len_in);
 				len_in = sizeof(event->data.gyr.vect);					
 				err_code = nrf_ringbuf_cpy_put(&m_ringbuf, (uint8_t *)(event->data.gyr.vect), &len_in); //(uint8_t *)(event->data.quaternion.quat)
 				APP_ERROR_CHECK(err_code);
@@ -489,7 +495,10 @@ nrf_gpio_pin_set(19);
 //					(int)(event->data.quaternion.accuracy_flag));
 				
 				// Put data in the ringbuffer
-				len_in = sizeof(event->data.quaternion.quat);					
+				config_data[0] = ENABLE_QUAT6;
+				len_in = sizeof(config_data);
+				err_code = nrf_ringbuf_cpy_put(&m_ringbuf, config_data, &len_in);
+				len_in = sizeof(event->data.quaternion.quat);	
 				err_code = nrf_ringbuf_cpy_put(&m_ringbuf, (uint8_t *)(event->data.quaternion.quat), &len_in); //(uint8_t *)(event->data.quaternion.quat)
 				APP_ERROR_CHECK(err_code);
 
@@ -680,35 +689,37 @@ void set_imu_packet_length()
 	packet_length_temp = 0;
 	imu.packet_length = 0;
 	
+	
+	// Data length is length of 3 or 4 floats + 1 byte for data classification
 	if(imu.gyro_enabled)
 	{
-		packet_length_temp += 3 * sizeof(float);
-		imu.packet_length += 3 * sizeof(float);
+		packet_length_temp += (3 * sizeof(float)) + 1;
+		imu.packet_length += (3 * sizeof(float)) + 1;
 	}
 	if(imu.accel_enabled)
 	{
-		packet_length_temp += 3 * sizeof(float);
-		imu.packet_length += 3 * sizeof(float);
+		packet_length_temp += (3 * sizeof(float)) + 1;
+		imu.packet_length += (3 * sizeof(float)) + 1;
 	}
 	if(imu.mag_enabled)
 	{
-		packet_length_temp += 3 * sizeof(float);
-		imu.packet_length += 3 * sizeof(float);
+		packet_length_temp += (3 * sizeof(float)) + 1;
+		imu.packet_length += (3 * sizeof(float)) + 1;
 	}
 	if(imu.quat6_enabled)
 	{
-		packet_length_temp += 4 * sizeof(float);
-		imu.packet_length += 4 * sizeof(float);
+		packet_length_temp += (4 * sizeof(float)) + 1;
+		imu.packet_length += (4 * sizeof(float)) + 1;
 	}
 	if(imu.quat9_enabled)
 	{
-		packet_length_temp += 4 * sizeof(float);
-		imu.packet_length += 4 * sizeof(float);
+		packet_length_temp += (4 * sizeof(float)) + 1;
+		imu.packet_length += (4 * sizeof(float)) + 1;
 	}
 	if(imu.euler_enabled)
 	{
-		packet_length_temp += 3 * sizeof(float);
-		imu.packet_length += 3 * sizeof(float);
+		packet_length_temp += (3 * sizeof(float)) + 1;
+		imu.packet_length += (3 * sizeof(float)) + 1;
 	}
 	
 	NRF_LOG_INFO("Packet Len set to: %d", imu.packet_length);
@@ -906,18 +917,22 @@ size_t get_imu_packet_length(IMU imu)
 	return imu.packet_length;
 }
 
-void IMU_data_get(float * data)
+void IMU_data_get(uint8_t * data, uint16_t * len)
 {
 		uint32_t err_code;
-		size_t len_out = packet_length_temp;
-		NRF_LOG_INFO("len_out: %d   %d", len_out, packet_length_temp);
+
+		*len = imu.packet_length;
 	
-		float temp[len_out/sizeof(float)];
-		err_code = nrf_ringbuf_cpy_get(&m_ringbuf, (uint8_t *) temp, &len_out);
+		NRF_LOG_INFO("len_out: %d   %d", *len, packet_length_temp);
+	
+		uint8_t temp[*len];
+		err_code = nrf_ringbuf_cpy_get(&m_ringbuf, temp, (size_t *) len);
 		APP_ERROR_CHECK(err_code);
+	
+	NRF_LOG_INFO("temp: %X %X %X %X", temp[0], temp[1], temp[2], temp[3]);
 //		NRF_LOG_INFO("%d %d %d %d", (int)(quat[0]*1000),(int)(quat[1]*1000),(int)(quat[2]*1000),(int)(quat[3]*1000));
 //		NRF_LOG_INFO("%d %d %d", (int)(temp[0]*1000),(int)(temp[1]*1000),(int)(temp[2]*1000));
-		memcpy(data, temp, len_out);
+		memcpy(data, temp, *len);
 }
 
 void usr_ringbuf_init(void)
