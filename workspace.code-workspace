@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"deviceicm20948.h": "c",
+			"serifhal.h": "c",
+			"dynprotocol.h": "c"
+		}
+	}
+}
