@@ -3,15 +3,8 @@
         {
             "name": "pca10040/s132",
             "includePath": [
-                "${workspaceFolder}/pca10040/s132/config",
-                "${env:NRF_SDK}/**",
-                "${workspaceFolder}/pca10040/s132/arm5_no_packs",
-                "${workspaceFolder}/pca10040/s132/Invn",
-                "${workspaceFolder}/pca10040/s132/Invn/Devices",
-                "${workspaceFolder}/pca10040/s132/Invn/DynamicProtocol",
-                "${workspaceFolder}/pca10040/s132/Invn/EmbUtils",
-                "${workspaceFolder}/pca10040/s132/Invn/Images",
-                "${workspaceFolder}/pca10040/s132/Invn/VSensor"
+                "${workspaceFolder}/**",
+                "${env:NRF_SDK}/**"
             ],
             "defines": [
                 "BOARD_PCA10040",

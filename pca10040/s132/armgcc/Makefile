@@ -8,8 +8,35 @@ PROJ_DIR := ../../..
 $(OUTPUT_DIRECTORY)/nrf52832_xxaa.out: \
   LINKER_SCRIPT  := ble_app_uart_gcc_nrf52.ld
 
+
+DEPS := $(addprefix $(DEPS_DIR)/,$(OBJ:.o=.d))
+
+
+
+# Include all $.c files in a given directory: "wildcard"
+SRC_FILES += $(wildcard $(PROJ_DIR)/*.c)
+SRC_FILES += $(wildcard $(PROJ_DIR)/Invn/*.c)
+SRC_FILES += $(wildcard $(PROJ_DIR)/Invn/Devices/*.c)
+SRC_FILES += $(wildcard $(PROJ_DIR)/Invn/Devices/Drivers/Icm20948/*.c)
+SRC_FILES += $(wildcard $(PROJ_DIR)/Invn/DynamicProtocol/*.c)
+SRC_FILES += $(wildcard $(PROJ_DIR)/Invn/EmbUtils/*.c)
+SRC_FILES += $(wildcard $(PROJ_DIR)/Invn/Images/*.c)
+SRC_FILES += $(wildcard $(PROJ_DIR)/Invn/VSensor/*.c)
+
+
 # Source files common to all targets
 SRC_FILES += \
+  $(PROJ_DIR)/Invn/Devices/HostSerif.c \
+  $(PROJ_DIR)/Invn/Devices/DeviceIcm20948.c \
+  $(PROJ_DIR)/Invn/Devices/VSensorId.c \
+  $(PROJ_DIR)/BLE/usr_ble.c \
+  $(PROJ_DIR)/IMU/imu.c \
+  $(PROJ_DIR)/IMU/usr_twi.c \
+  $(PROJ_DIR)/TimeSync/time_sync.c \
+  $(PROJ_DIR)/UTIL/usr_fifo.c \
+  $(PROJ_DIR)/UTIL/usr_gpio.c \
+  $(PROJ_DIR)/UTIL/usr_tmr.c \
+  $(PROJ_DIR)/UTIL/usr_util.c \
   $(SDK_ROOT)/modules/nrfx/mdk/gcc_startup_nrf52.S \
   $(SDK_ROOT)/components/libraries/log/src/nrf_log_backend_rtt.c \
   $(SDK_ROOT)/components/libraries/log/src/nrf_log_backend_serial.c \
@@ -70,6 +97,13 @@ SRC_FILES += \
   $(SDK_ROOT)/components/softdevice/common/nrf_sdh.c \
   $(SDK_ROOT)/components/softdevice/common/nrf_sdh_ble.c \
   $(SDK_ROOT)/components/softdevice/common/nrf_sdh_soc.c \
+  $(SDK_ROOT)/integration/nrfx/legacy/nrf_drv_twi.c \
+  $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_twim.c \
+  $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_timer.c \
+  
+
+
+
 
 # Include folders common to all targets
 INC_FOLDERS += \
@@ -205,13 +239,30 @@ INC_FOLDERS += \
   $(SDK_ROOT)/components/nfc/ndef/conn_hand_parser/ac_rec_parser \
   $(SDK_ROOT)/components/libraries/stack_guard \
   $(SDK_ROOT)/components/libraries/log/src \
+  $(PROJ_DIR)/Invn \
+  $(PROJ_DIR)/Invn/Devices \
+  $(PROJ_DIR)/Invn/Devices/Drivers \
+  $(PROJ_DIR)/Invn/Devices/Drivers/Icm20948 \
+  $(PROJ_DIR)/Invn/DynamicProtocol \
+  $(PROJ_DIR)/Invn/EmbUtils \
+  $(PROJ_DIR)/Invn/Images \
+  $(PROJ_DIR)/Invn/VSensor \
+  $(PROJ_DIR)/BLE \
+  $(PROJ_DIR)/IMU \
+  $(PROJ_DIR)/Invn/VSensor \
+  $(PROJ_DIR)/UTIL \
+  $(PROJ_DIR)/TimeSync \
+  $(SDK_ROOT)/modules/nrfx/drivers/src \
+
+
 
 # Libraries common to all targets
 LIB_FILES += \
 
 
 # Optimization flags
-OPT = -O3 -g3
+# OPT = -O3 -g3
+OPT = -O0 -g
 # Uncomment the line below to enable link time optimization
 #OPT += -flto
 
@@ -230,7 +281,7 @@ CFLAGS += -DS132
 CFLAGS += -DSOFTDEVICE_PRESENT
 CFLAGS += -mcpu=cortex-m4
 CFLAGS += -mthumb -mabi=aapcs
-CFLAGS += -Wall -Werror
+# CFLAGS += -Wall -Werror # Make sure not all warnings are threated as errors
 CFLAGS += -mfloat-abi=hard -mfpu=fpv4-sp-d16
 # keep every function in a separate section, this allows linker to discard unused ones
 CFLAGS += -ffunction-sections -fdata-sections -fno-strict-aliasing
@@ -298,7 +349,7 @@ $(foreach target, $(TARGETS), $(call define_target, $(target)))
 .PHONY: flash flash_softdevice erase
 
 # Flash the program
-flash: default
+flash: #default
 	@echo Flashing: $(OUTPUT_DIRECTORY)/nrf52832_xxaa.hex
 	nrfjprog -f nrf52 --program $(OUTPUT_DIRECTORY)/nrf52832_xxaa.hex --sectorerase
 	nrfjprog -f nrf52 --reset
@@ -316,3 +367,5 @@ SDK_CONFIG_FILE := ../config/sdk_config.h
 CMSIS_CONFIG_TOOL := $(SDK_ROOT)/external_tools/cmsisconfig/CMSIS_Configuration_Wizard.jar
 sdk_config:
 	java -jar $(CMSIS_CONFIG_TOOL) $(SDK_CONFIG_FILE)
+
+

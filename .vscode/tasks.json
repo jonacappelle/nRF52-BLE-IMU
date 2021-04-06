@@ -6,7 +6,7 @@
         {
             "label": "build",
             "type": "shell",
-            "command": "${env:GNU_TOOLS}/make",
+            "command": "${env:GNU_TOOLS}/make -j8",
             "options": {
                 "cwd": "${workspaceFolder}/pca10040/s132/armgcc"
             },
@@ -24,7 +24,7 @@
         {
             "label": "flash",
             "type": "shell",
-            "command": "${env:GNU_TOOLS}/make flash",
+            "command": "${env:GNU_TOOLS}/make flash -j8",
             "options": {
                 "cwd": "${workspaceFolder}/pca10040/s132/armgcc"
             },

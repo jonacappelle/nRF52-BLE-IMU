@@ -53,11 +53,11 @@
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
 
-#include "Invn/Devices/SerifHal.h"
-#include "Invn/Devices/DeviceIcm20948.h"
-#include "Invn/DynamicProtocol/DynProtocol.h"
-#include "Invn/DynamicProtocol/DynProtocolTransportUart.h"
-#include "Invn/EmbUtils/Message.h"
+#include "../Devices/SerifHal.h"
+#include "../Devices/DeviceIcm20948.h"
+#include "../DynamicProtocol/DynProtocol.h"
+#include "../DynamicProtocol/DynProtocolTransportUart.h"
+#include "../EmbUtils/Message.h"
 
 // Own includes
 #include "imu.h"
