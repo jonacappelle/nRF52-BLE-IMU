@@ -9,7 +9,8 @@
 			"deviceicm20948.h": "c",
 			"serifhal.h": "c",
 			"dynprotocol.h": "c",
-			"invexport.h": "c"
+			"invexport.h": "c",
+			"app_fifo.h": "c"
 		}
 	}
 }

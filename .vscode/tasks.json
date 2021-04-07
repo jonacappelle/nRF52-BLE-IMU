@@ -6,11 +6,15 @@
         {
             "label": "build",
             "type": "shell",
-            "command": "${env:GNU_TOOLS}/make -j8",
+            "command": "${env:GNU_TOOLS}/make -j100",
             "options": {
                 "cwd": "${workspaceFolder}/pca10040/s132/armgcc"
             },
-            "problemMatcher": []
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
         },
         {
             "label": "clean",
@@ -28,10 +32,7 @@
             "options": {
                 "cwd": "${workspaceFolder}/pca10040/s132/armgcc"
             },
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
+            "group": "build",
             "problemMatcher": []
         },
         {

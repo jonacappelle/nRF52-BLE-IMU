@@ -26,6 +26,7 @@ SRC_FILES += $(wildcard $(PROJ_DIR)/Invn/VSensor/*.c)
 
 # Source files common to all targets
 SRC_FILES += \
+  $(SDK_ROOT)/components/libraries/fifo/app_fifo.c \
   $(PROJ_DIR)/Invn/Devices/HostSerif.c \
   $(PROJ_DIR)/Invn/Devices/DeviceIcm20948.c \
   $(PROJ_DIR)/Invn/Devices/VSensorId.c \
@@ -253,6 +254,7 @@ INC_FOLDERS += \
   $(PROJ_DIR)/UTIL \
   $(PROJ_DIR)/TimeSync \
   $(SDK_ROOT)/modules/nrfx/drivers/src \
+  $(SDK_ROOT)/components/libraries/fifo \
 
 
 

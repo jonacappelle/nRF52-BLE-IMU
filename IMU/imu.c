@@ -72,6 +72,13 @@
 // Create the ringbuffer for storing IMU data that has to be transmitted
 NRF_RINGBUF_DEF(m_ringbuf, 512);
 
+#include "app_fifo.h"
+// Create a FIFO structure
+app_fifo_t imu_fifo;
+// Create a buffer for the IMU FIFO
+uint8_t imu_buffer[2048];
+
+
 
 extern IMU imu;
 
@@ -442,8 +449,7 @@ nrf_gpio_pin_set(19);
 				err_code = nrf_ringbuf_cpy_put(&m_ringbuf, config_data, &len_in);
 				len_in = sizeof(event->data.gyr.vect);					
 				err_code = nrf_ringbuf_cpy_put(&m_ringbuf, (uint8_t *)(event->data.gyr.vect), &len_in); //(uint8_t *)(event->data.quaternion.quat)
-				APP_ERROR_CHECK(err_code);
-					
+				APP_ERROR_CHECK(err_code);					
 			break;
 		case INV_SENSOR_TYPE_MAGNETOMETER:
 			NRF_LOG_INFO("data event %s (nT): %d %d %d %d", inv_sensor_str(event->sensor),
@@ -497,10 +503,30 @@ nrf_gpio_pin_set(19);
 				// Put data in the ringbuffer
 				config_data[0] = ENABLE_QUAT6;
 				len_in = sizeof(config_data);
-				err_code = nrf_ringbuf_cpy_put(&m_ringbuf, config_data, &len_in);
-				len_in = sizeof(event->data.quaternion.quat);	
-				err_code = nrf_ringbuf_cpy_put(&m_ringbuf, (uint8_t *)(event->data.quaternion.quat), &len_in); //(uint8_t *)(event->data.quaternion.quat)
-				APP_ERROR_CHECK(err_code);
+
+				uint32_t buffer_len = sizeof(config_data) + sizeof(event->data.quaternion.quat);
+				uint8_t buffer[buffer_len];
+
+				// Copy data into buffer
+				memcpy(buffer, config_data, sizeof(config_data));
+				memcpy(&buffer[1], (event->data.quaternion.quat), sizeof(event->data.quaternion.quat));
+
+				// // err_code = nrf_ringbuf_cpy_put(&m_ringbuf, config_data, &len_in);
+				// // len_in = sizeof(event->data.quaternion.quat);	
+				// err_code = nrf_ringbuf_cpy_put(&m_ringbuf, buffer, &buffer_len); //(uint8_t *)(event->data.quaternion.quat)
+				// APP_ERROR_CHECK(err_code);
+
+				
+				// Put the data in FIFO buffer: APP_FIFO instead of ringbuff library
+            	err_code = app_fifo_write(&imu_fifo, buffer, &buffer_len);
+				if (err_code == NRF_ERROR_NO_MEM)
+            	{
+                	NRF_LOG_INFO("IMU FIFO BUFFER FULL!");
+            	}
+				if (err_code == NRF_SUCCESS)
+				{
+					NRF_LOG_INFO("OK");
+				}
 
 				break;
 			}
@@ -830,6 +856,11 @@ uint32_t imu_enable_sensors(IMU imu)
 
 uint32_t imu_init(void)
 {
+
+		// Initialize IMU FIFO structure
+		uint32_t err_code = app_fifo_init(&imu_fifo, imu_buffer, (uint16_t)sizeof(imu_buffer));
+
+
 		/*
 		 * Setup message facility to see internal traces from IDD
 		 */
@@ -899,6 +930,8 @@ uint32_t imu_init(void)
 
 		imu_enable_sensors(imu);
 
+
+
 		return NRF_SUCCESS;
 }
 
@@ -926,13 +959,23 @@ void IMU_data_get(uint8_t * data, uint16_t * len)
 		NRF_LOG_INFO("len_out: %d   %d", *len, packet_length_temp);
 	
 		uint8_t temp[*len];
-		err_code = nrf_ringbuf_cpy_get(&m_ringbuf, temp, (size_t *) len);
-		APP_ERROR_CHECK(err_code);
+		// err_code = nrf_ringbuf_cpy_get(&m_ringbuf, temp, (size_t *) len);
+		// APP_ERROR_CHECK(err_code);
+
+		if( (err_code = app_fifo_read(&imu_fifo, temp, len)) == NRF_SUCCESS )
+		{
+			memcpy(data, temp, *len);
+			NRF_LOG_INFO("OKK");
+		}
+		if( err_code = NRF_ERROR_NOT_FOUND )
+		{
+			NRF_LOG_INFO("IMU FIFO EMPTY");
+		}
 	
 	NRF_LOG_INFO("temp: %X %X %X %X", temp[0], temp[1], temp[2], temp[3]);
 //		NRF_LOG_INFO("%d %d %d %d", (int)(quat[0]*1000),(int)(quat[1]*1000),(int)(quat[2]*1000),(int)(quat[3]*1000));
 //		NRF_LOG_INFO("%d %d %d", (int)(temp[0]*1000),(int)(temp[1]*1000),(int)(temp[2]*1000));
-		memcpy(data, temp, *len);
+		// memcpy(data, temp, *len);
 }
 
 void usr_ringbuf_init(void)
