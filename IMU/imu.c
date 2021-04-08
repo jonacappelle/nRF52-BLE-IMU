@@ -412,6 +412,7 @@ nrf_gpio_pin_set(19);
 		switch(INV_SENSOR_ID_TO_TYPE(event->sensor)) {
 		case INV_SENSOR_TYPE_RAW_ACCELEROMETER:
 		case INV_SENSOR_TYPE_RAW_GYROSCOPE:
+		{
 //			NRF_LOG_INFO("data event: %d %d %d %d", //inv_sensor_str(event->sensor),
 //					(int)event->timestamp,
 //					(int)event->data.raw3d.vect[0],
@@ -420,51 +421,116 @@ nrf_gpio_pin_set(19);
 				NRF_LOG_INFO("Data");
 //					NRF_LOG_INFO("%d	%d	%d", event->data.raw3d.vect[0], event->data.raw3d.vect[1], event->data.raw3d.vect[2]);
 			break;
+		}
 		case INV_SENSOR_TYPE_ACCELEROMETER:
 		case INV_SENSOR_TYPE_LINEAR_ACCELERATION:
 		case INV_SENSOR_TYPE_GRAVITY:
+		{
 			NRF_LOG_INFO("data event %s (mg): %d %d %d %d", inv_sensor_str(event->sensor),
 					(int)(event->data.acc.vect[0]*1000),
 					(int)(event->data.acc.vect[1]*1000),
 					(int)(event->data.acc.vect[2]*1000),
 					(int)(event->data.acc.accuracy_flag));
 					
+				// New IMU data is available: count how many bytes are available
+				bytes_available++;
+					
 				// Put data in the ringbuffer
-				len_in = sizeof(event->data.acc.vect);					
-				err_code = nrf_ringbuf_cpy_put(&m_ringbuf, (uint8_t *)(event->data.acc.vect), &len_in);
-				APP_ERROR_CHECK(err_code);
+				config_data[0] = ENABLE_ACCEL;
+				len_in = sizeof(config_data);
+
+				uint32_t buffer_acc_len = sizeof(config_data) + sizeof(event->data.acc.vect);
+				uint8_t buffer_acc[buffer_acc_len];
+
+				// Copy data into buffer
+				memcpy(buffer_acc, config_data, sizeof(config_data));
+				memcpy(&buffer_acc[1], (event->data.acc.vect), sizeof(event->data.acc.vect));
+
+				// Put the data in FIFO buffer: APP_FIFO instead of ringbuff library
+            	err_code = app_fifo_write(&imu_fifo, buffer_acc, &buffer_acc_len);
+				if (err_code == NRF_ERROR_NO_MEM)
+            	{
+                	NRF_LOG_INFO("IMU FIFO BUFFER FULL!");
+            	}
+				if (err_code == NRF_SUCCESS)
+				{
+					NRF_LOG_INFO("OK");
+				}
 					
 			break;
+		}
 		case INV_SENSOR_TYPE_GYROSCOPE:
+		{
 			NRF_LOG_INFO("data event %s (mdps): %d %d %d %d", inv_sensor_str(event->sensor),
 					(int)(event->data.gyr.vect[0]*1000),
 					(int)(event->data.gyr.vect[1]*1000),
 					(int)(event->data.gyr.vect[2]*1000),
 					(int)(event->data.gyr.accuracy_flag));
 	
+				// New IMU data is available: count how many bytes are available
+				bytes_available++;
 					
 				// Put data in the ringbuffer
 				config_data[0] = ENABLE_GYRO;
 				len_in = sizeof(config_data);
-				err_code = nrf_ringbuf_cpy_put(&m_ringbuf, config_data, &len_in);
-				len_in = sizeof(event->data.gyr.vect);					
-				err_code = nrf_ringbuf_cpy_put(&m_ringbuf, (uint8_t *)(event->data.gyr.vect), &len_in); //(uint8_t *)(event->data.quaternion.quat)
-				APP_ERROR_CHECK(err_code);					
+
+				uint32_t buffer_gyro_len = sizeof(config_data) + sizeof(event->data.gyr.vect);
+				uint8_t buffer_gyro[buffer_gyro_len];
+
+				// Copy data into buffer
+				memcpy(buffer_gyro, config_data, sizeof(config_data));
+				memcpy(&buffer_gyro[1], (event->data.gyr.vect), sizeof(event->data.gyr.vect));
+
+				// Put the data in FIFO buffer: APP_FIFO instead of ringbuff library
+            	err_code = app_fifo_write(&imu_fifo, buffer_gyro, &buffer_gyro_len);
+				if (err_code == NRF_ERROR_NO_MEM)
+            	{
+                	NRF_LOG_INFO("IMU FIFO BUFFER FULL!");
+            	}
+				if (err_code == NRF_SUCCESS)
+				{
+					NRF_LOG_INFO("OK");
+				}
+
 			break;
+		}
 		case INV_SENSOR_TYPE_MAGNETOMETER:
+		{
 			NRF_LOG_INFO("data event %s (nT): %d %d %d %d", inv_sensor_str(event->sensor),
 					(int)(event->data.mag.vect[0]*1000),
 					(int)(event->data.mag.vect[1]*1000),
 					(int)(event->data.mag.vect[2]*1000),
 					(int)(event->data.mag.accuracy_flag));
 					
+				// New IMU data is available: count how many bytes are available
+				bytes_available++;
+					
 				// Put data in the ringbuffer
-				len_in = sizeof(event->data.mag.vect);					
-				err_code = nrf_ringbuf_cpy_put(&m_ringbuf, (uint8_t *)(event->data.mag.vect), &len_in); //(uint8_t *)(event->data.quaternion.quat)
-				APP_ERROR_CHECK(err_code);
+				config_data[0] = ENABLE_MAG;
+				len_in = sizeof(config_data);
+
+				uint32_t buffer_mag_len = sizeof(config_data) + sizeof(event->data.mag.vect);
+				uint8_t buffer_mag[buffer_mag_len];
+
+				// Copy data into buffer
+				memcpy(buffer_mag, config_data, sizeof(config_data));
+				memcpy(&buffer_mag[1], (event->data.mag.vect), sizeof(event->data.mag.vect));
+
+				// Put the data in FIFO buffer: APP_FIFO instead of ringbuff library
+            	err_code = app_fifo_write(&imu_fifo, buffer_mag, &buffer_mag_len);
+				if (err_code == NRF_ERROR_NO_MEM)
+            	{
+                	NRF_LOG_INFO("IMU FIFO BUFFER FULL!");
+            	}
+				if (err_code == NRF_SUCCESS)
+				{
+					NRF_LOG_INFO("OK");
+				}
 					
 			break;
+		}
 		case INV_SENSOR_TYPE_UNCAL_GYROSCOPE:
+		{
 			INV_MSG(INV_MSG_LEVEL_INFO, "data event %s (mdps): %d %d %d %d %d %d", inv_sensor_str(event->sensor),
 					(int)(event->data.gyr.vect[0]*1000),
 					(int)(event->data.gyr.vect[1]*1000),
@@ -473,7 +539,9 @@ nrf_gpio_pin_set(19);
 					(int)(event->data.gyr.bias[1]*1000),
 					(int)(event->data.gyr.bias[2]*1000));
 			break;
+		}
 		case INV_SENSOR_TYPE_UNCAL_MAGNETOMETER:
+		{
 			INV_MSG(INV_MSG_LEVEL_INFO, "data event %s (nT): %d %d %d %d %d %d", inv_sensor_str(event->sensor),
 					(int)(event->data.mag.vect[0]*1000),
 					(int)(event->data.mag.vect[1]*1000),
@@ -482,6 +550,7 @@ nrf_gpio_pin_set(19);
 					(int)(event->data.mag.bias[1]*1000),
 					(int)(event->data.mag.bias[2]*1000));
 			break;
+		}
 		case INV_SENSOR_TYPE_GAME_ROTATION_VECTOR:
 		case INV_SENSOR_TYPE_ROTATION_VECTOR:
 		case INV_SENSOR_TYPE_GEOMAG_ROTATION_VECTOR:
@@ -531,6 +600,7 @@ nrf_gpio_pin_set(19);
 				break;
 			}
 		case INV_SENSOR_TYPE_ORIENTATION:
+		{
 //			NRF_LOG_INFO("data event %s (e-3):, %d, %d, %d, Accuracy: %d ", inv_sensor_str(event->sensor),
 //					(int)(event->data.orientation.x*1000),
 //					(int)(event->data.orientation.y*1000),
@@ -556,7 +626,9 @@ nrf_gpio_pin_set(19);
 				APP_ERROR_CHECK(err_code);
 					
 			break;
+		}
 		case INV_SENSOR_TYPE_BAC:
+		{
 //			INV_MSG(INV_MSG_LEVEL_INFO, "data event %s : %d %s", inv_sensor_str(event->sensor),
 //					event->data.bac.event, activityName(event->data.bac.event));
 				NRF_LOG_INFO("data event %s : %d %s", inv_sensor_str(event->sensor),
@@ -574,6 +646,7 @@ nrf_gpio_pin_set(19);
 		default:
 			INV_MSG(INV_MSG_LEVEL_INFO, "data event %s : ...", inv_sensor_str(event->sensor));
 			break;
+		}
 	}
 		
 	nrf_gpio_pin_clear(19);
