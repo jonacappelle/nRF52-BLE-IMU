@@ -442,14 +442,28 @@ nrf_gpio_pin_set(19);
 					(int)(event->data.gyr.vect[2]*1000),
 					(int)(event->data.gyr.accuracy_flag));
 	
-					
-				// Put data in the ringbuffer
+				// Put the data in FIFO buffer: APP_FIFO instead of ringbuff library
 				config_data[0] = ENABLE_GYRO;
 				len_in = sizeof(config_data);
-				err_code = nrf_ringbuf_cpy_put(&m_ringbuf, config_data, &len_in);
+            	err_code = app_fifo_write(&imu_fifo, config_data, &len_in);
+				if (err_code == NRF_ERROR_NO_MEM)
+            	{
+                	NRF_LOG_INFO("IMU FIFO BUFFER FULL!");
+            	}
+				APP_ERROR_CHECK(err_code);	
+
 				len_in = sizeof(event->data.gyr.vect);					
-				err_code = nrf_ringbuf_cpy_put(&m_ringbuf, (uint8_t *)(event->data.gyr.vect), &len_in); //(uint8_t *)(event->data.quaternion.quat)
-				APP_ERROR_CHECK(err_code);					
+            	err_code = app_fifo_write(&imu_fifo, (uint8_t *)(event->data.gyr.vect), &len_in);
+				if (err_code == NRF_ERROR_NO_MEM)
+            	{
+                	NRF_LOG_INFO("IMU FIFO BUFFER FULL!");
+            	}
+				if (err_code == NRF_SUCCESS)
+				{
+					NRF_LOG_INFO("OK Gyro");
+				}
+				APP_ERROR_CHECK(err_code);	
+
 			break;
 		case INV_SENSOR_TYPE_MAGNETOMETER:
 			NRF_LOG_INFO("data event %s (nT): %d %d %d %d", inv_sensor_str(event->sensor),
@@ -490,11 +504,11 @@ nrf_gpio_pin_set(19);
 				bytes_available++;
 //			NRF_LOG_INFO("Bytes: %d", bytes_available);
 			
-//			NRF_LOG_INFO("%s:	%d %d %d %d", inv_sensor_str(event->sensor),
-//					(int)(event->data.quaternion.quat[0]*1000),
-//					(int)(event->data.quaternion.quat[1]*1000),
-//					(int)(event->data.quaternion.quat[2]*1000),
-//					(int)(event->data.quaternion.quat[3]*1000));
+			NRF_LOG_INFO("%s:	%d %d %d %d", inv_sensor_str(event->sensor),
+					(int)(event->data.quaternion.quat[0]*1000),
+					(int)(event->data.quaternion.quat[1]*1000),
+					(int)(event->data.quaternion.quat[2]*1000),
+					(int)(event->data.quaternion.quat[3]*1000));
 //					(int)(event->data.gyr.accuracy_flag),
 //					(int)(event->data.acc.accuracy_flag),	
 //					(int)(event->data.mag.accuracy_flag), // 0 - 3: not calibrated - fully calibrated
@@ -525,7 +539,7 @@ nrf_gpio_pin_set(19);
             	}
 				if (err_code == NRF_SUCCESS)
 				{
-					NRF_LOG_INFO("OK");
+					NRF_LOG_INFO("OK Quat");
 				}
 
 				break;
