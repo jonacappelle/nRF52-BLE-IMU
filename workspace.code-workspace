@@ -10,7 +10,8 @@
 			"serifhal.h": "c",
 			"dynprotocol.h": "c",
 			"invexport.h": "c",
-			"app_fifo.h": "c"
+			"app_fifo.h": "c",
+			"ble_srv_common.h": "c"
 		}
 	}
 }

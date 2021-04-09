@@ -51,6 +51,9 @@ extern IMU imu;
 // Application scheduler
 #include "app_scheduler.h"
 
+// Add TMS service for transmitting IMU data
+#include "ble_tms.h"
+
 
 int countrrr = 0;
 bool nus_buffer_full = false;
@@ -97,10 +100,206 @@ BLE_ADVERTISING_DEF(m_advertising);                                             
 static uint16_t   m_conn_handle          = BLE_CONN_HANDLE_INVALID;                 /**< Handle of the current connection. */
 static uint16_t   m_ble_nus_max_data_len = BLE_GATT_ATT_MTU_DEFAULT - 3;            /**< Maximum length of data (in bytes) that can be transmitted to the peer by the Nordic UART service module. */
 //static uint16_t   m_ble_nus_max_data_len = 247 - 3;            /**< Maximum length of data (in bytes) that can be transmitted to the peer by the Nordic UART service module. */
+
+#define TMS_SERVICE_UUID_TYPE       BLE_UUID_TYPE_VENDOR_BEGIN
+
 static ble_uuid_t m_adv_uuids[]          =                                          /**< Universally unique service identifier. */
 {
-    {BLE_UUID_NUS_SERVICE, NUS_SERVICE_UUID_TYPE}
+    {BLE_UUID_NUS_SERVICE, NUS_SERVICE_UUID_TYPE},
+    {BLE_UUID_TMS_SERVICE, TMS_SERVICE_UUID_TYPE} // Added for TMS service
 };
+
+
+//////////////////
+// TMS Motion service
+//////////////////
+
+
+
+static void ble_tms_evt_handler(ble_tms_t        * p_tms,
+                                ble_tms_evt_type_t evt_type,
+                                uint8_t          * p_data,
+                                uint16_t           length)
+{
+    uint32_t err_code;
+    
+    switch (evt_type)
+    {
+        case BLE_TMS_EVT_NOTIF_TAP:
+            NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_TAP - %d\r\n", p_tms->is_tap_notif_enabled);
+            // if (p_tms->is_tap_notif_enabled)
+            // {
+            //     err_code = drv_motion_enable(DRV_MOTION_FEATURE_MASK_TAP);
+            //     APP_ERROR_CHECK(err_code);
+            // }
+            // else
+            // {
+            //     err_code = drv_motion_disable(DRV_MOTION_FEATURE_MASK_TAP);
+            //     APP_ERROR_CHECK(err_code);
+            // }
+            break;
+
+        case BLE_TMS_EVT_NOTIF_ORIENTATION:
+            NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_ORIENTATION - %d\r\n", p_tms->is_orientation_notif_enabled);
+            // if (p_tms->is_orientation_notif_enabled)
+            // {
+            //     err_code = drv_motion_enable(DRV_MOTION_FEATURE_MASK_ORIENTATION);
+            //     APP_ERROR_CHECK(err_code);
+            // }
+            // else
+            // {
+            //     err_code = drv_motion_disable(DRV_MOTION_FEATURE_MASK_ORIENTATION);
+            //     APP_ERROR_CHECK(err_code);
+            // }
+            break;
+
+        case BLE_TMS_EVT_NOTIF_QUAT:
+            NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_QUAT - %d\r\n", p_tms->is_quat_notif_enabled);
+            // if (p_tms->is_quat_notif_enabled)
+            // {
+            //     err_code = drv_motion_enable(DRV_MOTION_FEATURE_MASK_QUAT);
+            //     APP_ERROR_CHECK(err_code);
+            // }
+            // else
+            // {
+            //     err_code = drv_motion_disable(DRV_MOTION_FEATURE_MASK_QUAT);
+            //     APP_ERROR_CHECK(err_code);
+            // }
+            break;
+
+        case BLE_TMS_EVT_NOTIF_PEDOMETER:
+            NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_PEDOMETER - %d\r\n", p_tms->is_pedo_notif_enabled);
+            // if (p_tms->is_pedo_notif_enabled)
+            // {
+            //     err_code = drv_motion_enable(DRV_MOTION_FEATURE_MASK_PEDOMETER);
+            //     APP_ERROR_CHECK(err_code);
+            // }
+            // else
+            // {
+            //     err_code = drv_motion_disable(DRV_MOTION_FEATURE_MASK_PEDOMETER);
+            //     APP_ERROR_CHECK(err_code);
+            // }
+            break;
+
+        case BLE_TMS_EVT_NOTIF_RAW:
+            NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_RAW - %d\r\n", p_tms->is_raw_notif_enabled);
+            // if (p_tms->is_raw_notif_enabled)
+            // {
+            //     err_code = drv_motion_enable(DRV_MOTION_FEATURE_MASK_RAW);
+            //     APP_ERROR_CHECK(err_code);
+            // }
+            // else
+            // {
+            //     err_code = drv_motion_disable(DRV_MOTION_FEATURE_MASK_RAW);
+            //     APP_ERROR_CHECK(err_code);
+            // }
+            break;
+
+        case BLE_TMS_EVT_NOTIF_EULER:
+            NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_EULER - %d\r\n", p_tms->is_euler_notif_enabled);
+            // if (p_tms->is_euler_notif_enabled)
+            // {
+            //     err_code = drv_motion_enable(DRV_MOTION_FEATURE_MASK_EULER);
+            //     APP_ERROR_CHECK(err_code);
+            // }
+            // else
+            // {
+            //     err_code = drv_motion_disable(DRV_MOTION_FEATURE_MASK_EULER);
+            //     APP_ERROR_CHECK(err_code);
+            // }
+            break;
+
+        case BLE_TMS_EVT_NOTIF_ROT_MAT:
+            NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_ROT_MAT - %d\r\n", p_tms->is_rot_mat_notif_enabled);
+            // if (p_tms->is_rot_mat_notif_enabled)
+            // {
+            //     err_code = drv_motion_enable(DRV_MOTION_FEATURE_MASK_ROT_MAT);
+            //     APP_ERROR_CHECK(err_code);
+            // }
+            // else
+            // {
+            //     err_code = drv_motion_disable(DRV_MOTION_FEATURE_MASK_ROT_MAT);
+            //     APP_ERROR_CHECK(err_code);
+            // }
+            break;
+
+        case BLE_TMS_EVT_NOTIF_HEADING:
+            NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_HEADING - %d\r\n", p_tms->is_heading_notif_enabled);
+            // if (p_tms->is_heading_notif_enabled)
+            // {
+            //     err_code = drv_motion_enable(DRV_MOTION_FEATURE_MASK_HEADING);
+            //     APP_ERROR_CHECK(err_code);
+            // }
+            // else
+            // {
+            //     err_code = drv_motion_disable(DRV_MOTION_FEATURE_MASK_HEADING);
+            //     APP_ERROR_CHECK(err_code);
+            // }
+            break;
+
+        case BLE_TMS_EVT_NOTIF_GRAVITY:
+            NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_GRAVITY - %d\r\n", p_tms->is_gravity_notif_enabled);
+            // if (p_tms->is_gravity_notif_enabled)
+            // {
+            //     err_code = drv_motion_enable(DRV_MOTION_FEATURE_MASK_GRAVITY_VECTOR);
+            //     APP_ERROR_CHECK(err_code);
+            // }
+            // else
+            // {
+            //     err_code = drv_motion_disable(DRV_MOTION_FEATURE_MASK_GRAVITY_VECTOR);
+            //     APP_ERROR_CHECK(err_code);
+            // }
+            break;
+
+        case BLE_TMS_EVT_CONFIG_RECEIVED:
+            NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_CONFIG_RECEIVED - %d\r\n", length);
+            // APP_ERROR_CHECK_BOOL(length == sizeof(ble_tms_config_t));
+
+            // err_code = m_motion_flash_config_store((ble_tms_config_t *)p_data);
+            // APP_ERROR_CHECK(err_code);
+
+            // err_code = m_motion_configuration_apply((ble_tms_config_t *)p_data);
+            // APP_ERROR_CHECK(err_code);
+            break;
+
+        default:
+            break;
+    }
+
+}
+
+static ble_tms_t              m_tms;
+static ble_tms_config_t     * m_config;
+
+uint32_t usr_tms_init(void)
+{
+    uint32_t err_code;
+    ble_tms_init_t        tms_init;
+
+    memset(&tms_init, 0, sizeof(tms_init));
+
+    tms_init.p_init_config = m_config;
+    tms_init.evt_handler = ble_tms_evt_handler;
+
+    NRF_LOG_INFO("motion_service_init: ble_tms_init \r\n");
+    NRF_LOG_DEBUG("ble_tms_init");
+    err_code = ble_tms_init(&m_tms, &tms_init);
+    if (err_code != NRF_SUCCESS)
+    {
+        NRF_LOG_ERROR("FAILED - %d\r\n", err_code);
+        return err_code;
+    }
+}
+
+
+
+
+
+
+
+
+
+
 
 
 /**@brief Function for handling Queued Write Module errors.
@@ -732,8 +931,18 @@ static void advertising_init(void)
     init.advdata.include_appearance = false;
     init.advdata.flags              = BLE_GAP_ADV_FLAGS_LE_ONLY_LIMITED_DISC_MODE;
 
-    init.srdata.uuids_complete.uuid_cnt = sizeof(m_adv_uuids) / sizeof(m_adv_uuids[0]);
-    init.srdata.uuids_complete.p_uuids  = m_adv_uuids;
+    // CHANGES
+    // init.srdata.uuids_complete.uuid_cnt = sizeof(m_adv_uuids) / sizeof(m_adv_uuids[0]);
+    // init.srdata.uuids_complete.p_uuids  = m_adv_uuids;
+
+    // Costum added for TMS: need to use "uuids_more_available" and scan responce packet "srdata" becaus when advertising both uuids, 
+    // the advertising packet length becomes more than 31 (which is the max length)
+    init.advdata.uuids_more_available.uuid_cnt = 1;
+    init.advdata.uuids_more_available.p_uuids = &m_adv_uuids[0];
+
+    init.srdata.uuids_more_available.uuid_cnt = 1;
+    init.srdata.uuids_more_available.p_uuids = &m_adv_uuids[1];
+    // End Costum
 
     init.config.ble_adv_fast_enabled  = true;
     init.config.ble_adv_fast_interval = APP_ADV_INTERVAL;
@@ -938,9 +1147,10 @@ static void sync_timer_button_init(void)
 
 uint32_t usr_ble_init(void)
 {
-		bool erase_bonds;
+    bool erase_bonds;
+    uint32_t err_code;
 
-		uart_init();
+    uart_init();
     log_init();
     timers_init();
     buttons_leds_init(&erase_bonds);
@@ -948,15 +1158,30 @@ uint32_t usr_ble_init(void)
 
     ble_stack_init();
     gap_params_init();
-		gatt_init();
+    gatt_init();
+    
+    // Init NUS services and standard services
     services_init();
-		advertising_init();
-		conn_params_init();
 
-		// TimeSync
-		sync_timer_button_init();
-	
-		advertising_start();
+    NRF_LOG_DEBUG("DEBUG enabled in preprocessor");
+    NRF_LOG_FLUSH();
+
+    // Init TMS service
+    err_code = usr_tms_init();
+    APP_ERROR_CHECK(err_code);
+    NRF_LOG_DEBUG("usr_tms_init done");
+
+    advertising_init();
+    NRF_LOG_DEBUG("advertising_init done");
+    conn_params_init();
+    NRF_LOG_DEBUG("conn_params_init done");
+
+    // TimeSync
+    sync_timer_button_init();
+    NRF_LOG_DEBUG("sync_timer_button_init done");
+
+    advertising_start();
+    NRF_LOG_DEBUG("advertising_start done");
 
     return NRF_SUCCESS;
 }

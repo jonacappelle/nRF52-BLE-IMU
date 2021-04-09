@@ -26,6 +26,7 @@ SRC_FILES += $(wildcard $(PROJ_DIR)/Invn/VSensor/*.c)
 
 # Source files common to all targets
 SRC_FILES += \
+  $(PROJ_DIR)/ble_services/ble_tms.c \
   $(SDK_ROOT)/components/libraries/fifo/app_fifo.c \
   $(PROJ_DIR)/Invn/Devices/HostSerif.c \
   $(PROJ_DIR)/Invn/Devices/DeviceIcm20948.c \
@@ -255,6 +256,7 @@ INC_FOLDERS += \
   $(PROJ_DIR)/TimeSync \
   $(SDK_ROOT)/modules/nrfx/drivers/src \
   $(SDK_ROOT)/components/libraries/fifo \
+  $(PROJ_DIR)/ble_services \
 
 
 
@@ -288,6 +290,7 @@ CFLAGS += -mfloat-abi=hard -mfpu=fpv4-sp-d16
 # keep every function in a separate section, this allows linker to discard unused ones
 CFLAGS += -ffunction-sections -fdata-sections -fno-strict-aliasing
 CFLAGS += -fno-builtin -fshort-enums
+CFLAGS += -DEBUG
 
 # C++ flags common to all targets
 CXXFLAGS += $(OPT)
