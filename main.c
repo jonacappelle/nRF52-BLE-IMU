@@ -204,14 +204,8 @@ int main(void)
 		////////////////////////////////////////////////////////////////		
 		while(1)
 		{
-			// Test TMS data transmission
-			ble_tms_quat_t data;
-			data.w = 1;
-            data.x = 2;
-            data.y = 3;
-            data.z = 4;
-			(void)ble_tms_quat_set(&m_tms, &data);
-			NRF_LOG_DEBUG("ble_tms_quat_set");
+			tms_test();
+			NRF_LOG_DEBUG("Loop");
 
 			battery_level_update(bat);
 			bat--;

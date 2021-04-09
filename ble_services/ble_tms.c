@@ -938,18 +938,22 @@ void ble_tms_on_ble_evt(ble_tms_t * p_tms, ble_evt_t * p_ble_evt)
     {
         case BLE_GAP_EVT_CONNECTED:
             on_connect(p_tms, p_ble_evt);
+            NRF_LOG_DEBUG("BLE_GAP_EVT_CONNECTED");
             break;
 
         case BLE_GAP_EVT_DISCONNECTED:
             on_disconnect(p_tms, p_ble_evt);
+            NRF_LOG_DEBUG("BLE_GAP_EVT_DISCONNECTED");
             break;
 
         case BLE_GATTS_EVT_WRITE:
             on_write(p_tms, p_ble_evt);
+            NRF_LOG_DEBUG("BLE_GATTS_EVT_WRITE");
             break;
 
         case BLE_GATTS_EVT_RW_AUTHORIZE_REQUEST:
             on_authorize_req(p_tms, p_ble_evt);
+            NRF_LOG_DEBUG("BLE_GATTS_EVT_RW_AUTHORIZE_REQUEST");
             break;
 
         default:

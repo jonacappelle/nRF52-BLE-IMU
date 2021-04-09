@@ -274,7 +274,8 @@ static void ble_tms_evt_handler(ble_tms_t        * p_tms,
 
 }
 
-ble_tms_t              m_tms;
+BLE_TMS_DEF(m_tms);
+
 static ble_tms_config_t     * m_config;
 
 uint32_t usr_tms_init(void)
@@ -303,6 +304,20 @@ uint32_t usr_tms_init(void)
         return err_code;
     }
 }
+
+void tms_test(void)
+{
+    // Test TMS data transmission
+    ble_tms_quat_t data;
+    data.w = 1;
+    data.x = 2;
+    data.y = 3;
+    data.z = 4;
+    (void)ble_tms_quat_set(&m_tms, &data);
+}
+
+
+
 
 
 BLE_BAS_DEF(m_bas);                                                 /**< Structure used to identify the battery service. */

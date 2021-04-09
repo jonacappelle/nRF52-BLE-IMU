@@ -64,6 +64,22 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#define BLE_TMS_BLE_OBSERVER_PRIO       2       //--> BLE TMS event gets send with high priority
+
+
+/**@brief Macro for defining a ble_tms instance.
+ *
+ * @param   _name  Name of the instance.
+ * @hideinitializer
+ */
+#define BLE_TMS_DEF(_name)                          \
+    static ble_tms_t _name;                         \
+    NRF_SDH_BLE_OBSERVER(_name ## _obs,             \
+                         BLE_TMS_BLE_OBSERVER_PRIO, \
+                         ble_tms_on_ble_evt,        \
+                         &_name)
+
+
 #define BLE_UUID_TMS_SERVICE 0x0400                      /**< The UUID of the Motion Service. */
 #define BLE_TMS_MAX_DATA_LEN (BLE_GATT_ATT_MTU_DEFAULT - 3) /**< Maximum length of data (in bytes) that can be transmitted to the peer by the Motion service module. */
 

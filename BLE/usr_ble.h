@@ -11,5 +11,6 @@ void idle_state_handle(void);
 
 uint32_t nus_send(uint8_t * data, uint16_t len);
 void battery_level_update(uint8_t battery_level);
+void tms_test(void);
 
 #endif
