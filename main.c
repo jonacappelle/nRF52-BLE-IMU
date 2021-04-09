@@ -91,6 +91,9 @@
 // TMS Service
 #include "ble_tms.h"
 
+// BLE Battery service
+#include "ble_bas.h"
+
 
 ////////////////
 //  DEFINES   //
@@ -193,6 +196,8 @@ int main(void)
 		
 		// Delay before starting
 		nrf_delay_ms(2000);
+
+		uint8_t bat = 100;
 		
 		////////////////////////////////////////////////////////////////	
 		// Loop: IMU gives interrupt -> bool interrupt = true -> poll device for data
@@ -208,7 +213,8 @@ int main(void)
 			(void)ble_tms_quat_set(&m_tms, &data);
 			NRF_LOG_DEBUG("ble_tms_quat_set");
 
-
+			battery_level_update(bat);
+			bat--;
 
 			// App scheduler: handle event in buffer
 			app_sched_execute();
@@ -277,7 +283,7 @@ int main(void)
 			/* Enter low power mode when idle */
 			// idle_state_handle();
 
-			nrf_delay_ms(100);
+			nrf_delay_ms(1000);
 			
 			// Check for activity of CPU
 			nrf_gpio_pin_set(18);

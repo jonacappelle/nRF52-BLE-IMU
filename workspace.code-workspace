@@ -11,7 +11,8 @@
 			"dynprotocol.h": "c",
 			"invexport.h": "c",
 			"app_fifo.h": "c",
-			"ble_srv_common.h": "c"
+			"ble_srv_common.h": "c",
+			"ble_bas.h": "c"
 		}
 	}
 }

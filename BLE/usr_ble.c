@@ -54,6 +54,9 @@ extern IMU imu;
 // Add TMS service for transmitting IMU data
 #include "ble_tms.h"
 
+// BLE Battery service
+#include "ble_bas.h"
+
 
 int countrrr = 0;
 bool nus_buffer_full = false;
@@ -106,7 +109,8 @@ static uint16_t   m_ble_nus_max_data_len = BLE_GATT_ATT_MTU_DEFAULT - 3;        
 static ble_uuid_t m_adv_uuids[]          =                                          /**< Universally unique service identifier. */
 {
     {BLE_UUID_NUS_SERVICE, NUS_SERVICE_UUID_TYPE},
-    {BLE_UUID_TMS_SERVICE, TMS_SERVICE_UUID_TYPE} // Added for TMS service
+    {BLE_UUID_TMS_SERVICE, TMS_SERVICE_UUID_TYPE}, // Added for TMS service
+    {BLE_UUID_BATTERY_SERVICE, BLE_UUID_TYPE_BLE}
 };
 
 
@@ -301,7 +305,46 @@ uint32_t usr_tms_init(void)
 }
 
 
+BLE_BAS_DEF(m_bas);                                                 /**< Structure used to identify the battery service. */
 
+uint32_t usr_bas_init(void)
+{
+    uint32_t err_code;
+    ble_bas_init_t     bas_init;
+    
+    // Initialize Battery Service.
+    memset(&bas_init, 0, sizeof(bas_init));
+
+    bas_init.evt_handler          = NULL;
+    bas_init.support_notification = true;
+    bas_init.p_report_ref         = NULL;
+    bas_init.initial_batt_level   = 100;
+
+    // Here the sec level for the Battery Service can be changed/increased.
+    bas_init.bl_rd_sec        = SEC_OPEN;
+    bas_init.bl_cccd_wr_sec   = SEC_OPEN;
+    bas_init.bl_report_rd_sec = SEC_OPEN;
+
+    err_code = ble_bas_init(&m_bas, &bas_init);
+    APP_ERROR_CHECK(err_code);
+}
+
+
+void battery_level_update(uint8_t battery_level)
+{
+    ret_code_t err_code;
+
+    err_code = ble_bas_battery_level_update(&m_bas, battery_level, BLE_CONN_HANDLE_ALL);
+    if ((err_code != NRF_SUCCESS) &&
+        (err_code != NRF_ERROR_INVALID_STATE) &&
+        (err_code != NRF_ERROR_RESOURCES) &&
+        (err_code != NRF_ERROR_BUSY) &&
+        (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
+       )
+    {
+        APP_ERROR_HANDLER(err_code);
+    }
+}
 
 
 
@@ -962,8 +1005,9 @@ static void advertising_init(void)
 
     ble_advdata_t srdata;
 
-    init.srdata.uuids_more_available.uuid_cnt = 1;
+    init.srdata.uuids_more_available.uuid_cnt = 2;
     init.srdata.uuids_more_available.p_uuids = &m_adv_uuids[1];
+
 
     // m_more_adv_uuids[0].type = m_tms.uuid_type;
 
@@ -1197,6 +1241,10 @@ uint32_t usr_ble_init(void)
     err_code = usr_tms_init();
     APP_ERROR_CHECK(err_code);
     NRF_LOG_DEBUG("usr_tms_init done");
+
+    err_code = usr_bas_init();
+    APP_ERROR_CHECK(err_code);
+    NRF_LOG_DEBUG("usr_bas_init done");
 
     advertising_init();
     NRF_LOG_DEBUG("advertising_init done");
