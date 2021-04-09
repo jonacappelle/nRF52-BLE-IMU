@@ -32,5 +32,6 @@ void imu_set_bytes_available(uint32_t bytes);
 void usr_ringbuf_init(void);
 uint32_t imu_enable_sensors(IMU imu);
 void set_imu_packet_length(void);
+uint32_t IMU_buffer_bytes_available();
 
 #endif

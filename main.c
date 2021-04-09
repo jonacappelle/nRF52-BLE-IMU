@@ -200,13 +200,13 @@ int main(void)
 /////////////////////////////////////////////////////////////////////////////////
 			
 			// if NUS TX buffer isn't full and imu_bytes_available() TODO add
-			if((!nus_buffer_full) && (imu_get_bytes_available() > 0))
+			if((!nus_buffer_full) && (IMU_buffer_bytes_available()))
 			{
 				uint32_t err_code;
 				do
 				{
 						// Stop sending data when FIFO buffer is empty
-						if(imu_get_bytes_available() == 0)
+						if(IMU_buffer_bytes_available() == 0)
 						{
 							break;
 						}
@@ -215,10 +215,10 @@ int main(void)
 						{
 							IMU_data_get(send_data, &send_data_len);
 							// Decrement available bytes once a byte has been send
-							uint32_t bytes_available = imu_get_bytes_available();
-							bytes_available--;
-							imu_set_bytes_available(bytes_available);
-							NRF_LOG_INFO("B: %d", bytes_available);
+							// uint32_t bytes_available = imu_get_bytes_available();
+							// bytes_available--;
+							// imu_set_bytes_available(bytes_available);
+							// NRF_LOG_INFO("B: %d", bytes_available);
 //							NRF_LOG_INFO("%d %d %d %d", (int)(send_data[0]*1000), (int)(send_data[1]*1000), (int)(send_data[2]*1000), (int)(send_data[3]*1000));
 						}
 						// Try to send data over BLE NUS

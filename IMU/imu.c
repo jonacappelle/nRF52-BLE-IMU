@@ -1023,6 +1023,31 @@ size_t get_imu_packet_length(IMU imu)
 	return imu.packet_length;
 }
 
+uint32_t IMU_buffer_bytes_available()
+{
+	uint32_t err_code;
+	uint32_t data_len;
+	// Request number of elements in the FIFO
+	err_code = app_fifo_read(&imu_fifo, NULL, &data_len);
+	// Check if request was successful
+	if (err_code == NRF_SUCCESS)
+	{
+		// data_len contains the number of elements that can be read
+		return 1;
+	}
+	else if (err_code == NRF_ERROR_NOT_FOUND)
+	{
+		// FIFO is empty
+		return 0;
+	}
+	else
+	{
+		// API parameters incorrect, should not happen
+		NRF_LOG_INFO("Error in IMU_buffer_bytes_available()");
+	}
+}
+
+
 void IMU_data_get(uint8_t * data, uint16_t * len)
 {
 		uint32_t err_code;
