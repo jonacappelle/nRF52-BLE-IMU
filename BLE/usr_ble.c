@@ -69,7 +69,7 @@ bool nus_buffer_full = false;
 
 #define APP_BLE_CONN_CFG_TAG            1                                           /**< A tag identifying the SoftDevice BLE configuration. */
 
-#define DEVICE_NAME                     "Nordic_UART"                               /**< Name of device. Will be included in the advertising data. */
+#define DEVICE_NAME                     "IMU1"                               /**< Name of device. Will be included in the advertising data. */
 #define NUS_SERVICE_UUID_TYPE           BLE_UUID_TYPE_VENDOR_BEGIN                  /**< UUID type for the Nordic UART Service (vendor specific). */
 
 #define APP_BLE_OBSERVER_PRIO           3                                           /**< Application's BLE observer priority. You shouldn't need to modify this value. */
@@ -121,6 +121,7 @@ static void ble_tms_evt_handler(ble_tms_t        * p_tms,
                                 uint8_t          * p_data,
                                 uint16_t           length)
 {
+    NRF_LOG_DEBUG("ble_tms_evt_handler called");
     uint32_t err_code;
     
     switch (evt_type)
@@ -154,6 +155,7 @@ static void ble_tms_evt_handler(ble_tms_t        * p_tms,
             break;
 
         case BLE_TMS_EVT_NOTIF_QUAT:
+            NRF_LOG_DEBUG("BLE_TMS_EVT_NOTIF_QUAT");
             NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_QUAT - %d\r\n", p_tms->is_quat_notif_enabled);
             // if (p_tms->is_quat_notif_enabled)
             // {
@@ -268,7 +270,7 @@ static void ble_tms_evt_handler(ble_tms_t        * p_tms,
 
 }
 
-static ble_tms_t              m_tms;
+ble_tms_t              m_tms;
 static ble_tms_config_t     * m_config;
 
 uint32_t usr_tms_init(void)
@@ -278,7 +280,14 @@ uint32_t usr_tms_init(void)
 
     memset(&tms_init, 0, sizeof(tms_init));
 
-    tms_init.p_init_config = m_config;
+    // tms_init.p_init_config = m_config;
+    tms_init.p_init_config->compass_interval_ms = 20;
+    tms_init.p_init_config->motion_freq_hz = 50;
+    tms_init.p_init_config->pedo_interval_ms = 1000;
+    tms_init.p_init_config->temp_interval_ms = 1000;
+    tms_init.p_init_config->wake_on_motion = 0;
+
+
     tms_init.evt_handler = ble_tms_evt_handler;
 
     NRF_LOG_INFO("motion_service_init: ble_tms_init \r\n");
@@ -487,6 +496,12 @@ static void nus_data_handler(ble_nus_evt_t * p_evt)
 						nus_buffer_full = false;
 //						NRF_LOG_INFO("BLE_NUS_EVT_TX_RDY");
 					break;
+            case BLE_NUS_EVT_COMM_STARTED:
+                    NRF_LOG_DEBUG("BLE_NUS_EVT_COMM_STARTED");
+                    break;
+            case BLE_NUS_EVT_COMM_STOPPED:
+                    NRF_LOG_DEBUG("BLE_NUS_EVT_COMM_STOPPED");
+                    break;
 
 			default:
 					break;
@@ -607,10 +622,12 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
     switch (ble_adv_evt)
     {
         case BLE_ADV_EVT_FAST:
+            NRF_LOG_DEBUG("Fast Advertising");
             err_code = bsp_indication_set(BSP_INDICATE_ADVERTISING);
             APP_ERROR_CHECK(err_code);
             break;
         case BLE_ADV_EVT_IDLE:
+            NRF_LOG_DEBUG("Advertising idle");
             sleep_mode_enter();
             break;
         default:
@@ -927,6 +944,9 @@ static void advertising_init(void)
 
     memset(&init, 0, sizeof(init));
 
+    // CHANGES
+    // m_more_adv_uuids[0].type = m_tms.uuid_type;
+
     init.advdata.name_type          = BLE_ADVDATA_FULL_NAME;
     init.advdata.include_appearance = false;
     init.advdata.flags              = BLE_GAP_ADV_FLAGS_LE_ONLY_LIMITED_DISC_MODE;
@@ -940,8 +960,15 @@ static void advertising_init(void)
     init.advdata.uuids_more_available.uuid_cnt = 1;
     init.advdata.uuids_more_available.p_uuids = &m_adv_uuids[0];
 
+    ble_advdata_t srdata;
+
     init.srdata.uuids_more_available.uuid_cnt = 1;
     init.srdata.uuids_more_available.p_uuids = &m_adv_uuids[1];
+
+    // m_more_adv_uuids[0].type = m_tms.uuid_type;
+
+    // init.srdata.uuids_more_available.uuid_cnt = sizeof(m_more_adv_uuids)/ sizeof(m_more_adv_uuids[0]);
+    // init.srdata.uuids_more_available.p_uuids = m_more_adv_uuids;
     // End Costum
 
     init.config.ble_adv_fast_enabled  = true;

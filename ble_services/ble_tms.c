@@ -40,6 +40,10 @@
 #include "ble_srv_common.h"
 #include "sdk_common.h"
 
+#include "nrf_log.h"
+#include "nrf_log_ctrl.h"
+#include "nrf_log_default_backends.h"
+
 #define BLE_UUID_TMS_CONFIG_CHAR      0x0401                      /**< The UUID of the config Characteristic. */
 #define BLE_UUID_TMS_TAP_CHAR         0x0402                      /**< The UUID of the tap Characteristic. */
 #define BLE_UUID_TMS_ORIENTATION_CHAR 0x0403                      /**< The UUID of the orientation Characteristic. */
@@ -923,6 +927,8 @@ static uint32_t config_char_add(ble_tms_t * p_tms, const ble_tms_init_t * p_tms_
 
 void ble_tms_on_ble_evt(ble_tms_t * p_tms, ble_evt_t * p_ble_evt)
 {
+    NRF_LOG_DEBUG("ble_tms_on_ble_evt called");
+
     if ((p_tms == NULL) || (p_ble_evt == NULL))
     {
         return;

@@ -88,6 +88,9 @@
 // IMU params
 #include "imu_params.h"
 
+// TMS Service
+#include "ble_tms.h"
+
 
 ////////////////
 //  DEFINES   //
@@ -153,7 +156,7 @@ float temp[4] = {0.01, 0.02, 0.03, 0.04};
 
 
 
-
+extern ble_tms_t m_tms;
 
 
 /**@brief Application main function.
@@ -196,7 +199,17 @@ int main(void)
 		////////////////////////////////////////////////////////////////		
 		while(1)
 		{
-		
+			// Test TMS data transmission
+			ble_tms_quat_t data;
+			data.w = 1;
+            data.x = 2;
+            data.y = 3;
+            data.z = 4;
+			(void)ble_tms_quat_set(&m_tms, &data);
+			NRF_LOG_DEBUG("ble_tms_quat_set");
+
+
+
 			// App scheduler: handle event in buffer
 			app_sched_execute();
 			
@@ -262,7 +275,9 @@ int main(void)
 			nrf_gpio_pin_clear(18);
 			
 			/* Enter low power mode when idle */
-			idle_state_handle();
+			// idle_state_handle();
+
+			nrf_delay_ms(100);
 			
 			// Check for activity of CPU
 			nrf_gpio_pin_set(18);
