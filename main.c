@@ -205,7 +205,6 @@ int main(void)
 		while(1)
 		{
 			tms_test();
-			NRF_LOG_DEBUG("Loop");
 
 			battery_level_update(bat);
 			bat--;
@@ -275,9 +274,9 @@ int main(void)
 			nrf_gpio_pin_clear(18);
 			
 			/* Enter low power mode when idle */
-			// idle_state_handle();
+			idle_state_handle();
 
-			nrf_delay_ms(1000);
+			// nrf_delay_ms(1000);
 			
 			// Check for activity of CPU
 			nrf_gpio_pin_set(18);

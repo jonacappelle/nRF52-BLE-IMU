@@ -927,7 +927,6 @@ static uint32_t config_char_add(ble_tms_t * p_tms, const ble_tms_init_t * p_tms_
 
 void ble_tms_on_ble_evt(ble_tms_t * p_tms, ble_evt_t * p_ble_evt)
 {
-    NRF_LOG_DEBUG("ble_tms_on_ble_evt called");
 
     if ((p_tms == NULL) || (p_ble_evt == NULL))
     {

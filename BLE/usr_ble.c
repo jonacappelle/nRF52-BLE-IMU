@@ -274,7 +274,7 @@ static void ble_tms_evt_handler(ble_tms_t        * p_tms,
 
 }
 
-BLE_TMS_DEF(m_tms);
+ble_tms_t              m_tms;
 
 static ble_tms_config_t     * m_config;
 
@@ -314,6 +314,7 @@ void tms_test(void)
     data.y = 3;
     data.z = 4;
     (void)ble_tms_quat_set(&m_tms, &data);
+    NRF_LOG_INFO("TMS Send!");
 }
 
 
@@ -702,6 +703,9 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
 static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
 {
     uint32_t err_code;
+
+    // Pass softdevice calls back to TMS handler
+    ble_tms_on_ble_evt(&m_tms, p_ble_evt);
 
     switch (p_ble_evt->header.evt_id)
     {
