@@ -4,8 +4,27 @@
 #include "stdio.h"
 #include <stdint.h>
 
-// void float_to_uint8_t( float *input, uint8_t *out );
-// void uint8_t_to_float( uint8_t *input, float *out );
+
+/// Fixed-point Format: 11.5 (16-bit)
+typedef int32_t fixed_point_t;
+
+#define FIXED_POINT_FRACTIONAL_BITS_EULER       16
+#define FIXED_POINT_FRACTIONAL_BITS_QUAT        30
+#define FIXED_POINT_FRACTIONAL_BITS             0
+
+double fixed_to_float(fixed_point_t input);
+fixed_point_t float_to_fixed_euler(float input);
+fixed_point_t float_to_fixed_quat(float input);
+
+
+#define FRACT_BITS 16
+#define FRACT_BITS_D2 8
+#define FIXED_ONE (1 << FRACT_BITS)
+#define INT2FIXED(x) ((x) << FRACT_BITS)
+#define FLOAT2FIXED(x) ((int)((x) * (1 << FRACT_BITS))) 
+#define FIXED2INT(x) ((x) >> FRACT_BITS)
+#define FIXED2DOUBLE(x) (((double)(x)) / (1 << FRACT_BITS))
+#define MULT(x, y) ( ((x) >> FRACT_BITS_D2) * ((y)>> FRACT_BITS_D2) )
 
 
 #endif

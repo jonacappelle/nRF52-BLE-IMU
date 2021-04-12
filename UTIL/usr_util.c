@@ -1,33 +1,27 @@
 #include "usr_util.h"
 
-// void float_to_uint8_t( float *input, uint8_t *out )
-// {
-//     union{
-//         float in;
-//         uint8_t bytes[sizeof(float)];
-//     }thing;
-//  
-//     thing.in = input[0];
-//  
-//     for( int i=0; i<sizeof(float); i++)
-//     {
-//         out[i] = thing.bytes[i];
-//     }
-// }
-// 
-//void uint8_t_to_float( uint8_t *input, float *out )
-// {
-//     union{
-//         float in;
-//         uint8_t bytes[sizeof(float)];
-//     }thing;
-//  
-//			for( int i=0; i<sizeof(float); i++)
-//     {
-//         thing.bytes[i] = input[i];
-//     }
-//		 
-//     out[0] = thing.in;
-//  
 
+
+double fixed_to_float(fixed_point_t input)
+{
+    return ((double)input / (double)(1 << FIXED_POINT_FRACTIONAL_BITS));
+}
+
+fixed_point_t float_to_fixed_euler(float input)
+{
+    return (fixed_point_t)(input * (1 << FIXED_POINT_FRACTIONAL_BITS_EULER));
+    // return (fixed_point_t)(round(input * (1 << FIXED_POINT_FRACTIONAL_BITS)));
+}
+
+fixed_point_t float_to_fixed_quat(float input)
+{
+    return (fixed_point_t)(input * (1 << FIXED_POINT_FRACTIONAL_BITS_QUAT));
+    // return (fixed_point_t)(round(input * (1 << FIXED_POINT_FRACTIONAL_BITS)));
+}
+
+// If round() is not supported (may lose some accuracy)
+// inline fixed_point_t float_to_fixed(double input)
+// {
+//     return (fixed_point_t)(input * (1 << FIXED_POINT_FRACTIONAL_BITS));
 // }
+

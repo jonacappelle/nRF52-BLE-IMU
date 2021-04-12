@@ -78,9 +78,13 @@ app_fifo_t imu_fifo;
 // Create a buffer for the IMU FIFO
 uint8_t imu_buffer[2048];
 
+#include "ble_tms.h"
 
+#include "usr_util.h"
 
 extern IMU imu;
+
+extern ble_tms_t m_tms;
 
 
 /* Define msg level */
@@ -342,6 +346,10 @@ uint8_t test_troughput_array[132];
 
 
 
+
+
+
+
 /*
  * Callback called upon sensor event reception
  * This function is called in the same function than inv_device_poll()
@@ -368,48 +376,13 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 		
 		counterr++;
 		
-nrf_gpio_pin_set(19);
+nrf_gpio_pin_set(19);	
 
-		
-		
-//			// Convert data to string over ble nus
-//		sprintf(stringsend, "%d	- %f	%f	%f	%f - %f	%f	%f - %f	%f	%f - %f	%f	%f \n",
-////					(inv_sensor_str(event->sensor)),
-////					inv_icm20948_get_dataready_interrupt_time_us(),
-////					(event->timestamp),
-//					(counterr),
-////					(ts_timestamp_get_ticks_u64(0)),
-////					NRF_RTC1->COUNTER,
-//					(event->data.quaternion.quat[0]),
-//					(event->data.quaternion.quat[1]),
-//					(event->data.quaternion.quat[2]),
-//					(event->data.quaternion.quat[3]),
-////					(event->data.quaternion.accuracy_flag),
-////					(event->data.quaternion.accuracy),
-//					
-//					(event->data.gyr.vect[0]),
-//					(event->data.gyr.vect[1]),
-//					(event->data.gyr.vect[2]),
-//					
-//					(event->data.acc.vect[0]),
-//					(event->data.acc.vect[1]),
-//					(event->data.acc.vect[2]),
-//					
-//					(event->data.mag.vect[0]),
-//					(event->data.mag.vect[1]),
-//					(event->data.mag.vect[2])
-//					
-////					(dummy_data),(dummy_data),(dummy_data),(dummy_data),(dummy_data),(dummy_data),(dummy_data),(dummy_data),(dummy_data),
-////					(dummy_data),(dummy_data),(dummy_data),(dummy_data),(dummy_data),(dummy_data),(dummy_data),(dummy_data),(dummy_data)
-////					
-//					);
-					
+	switch(INV_SENSOR_ID_TO_TYPE(event->sensor)) {
 
-					
+		NRF_LOG_INFO("IMU Callback");
+		NRF_LOG_FLUSH();
 
-//	nus_printf_custom(stringsend);	
-
-		switch(INV_SENSOR_ID_TO_TYPE(event->sensor)) {
 		case INV_SENSOR_TYPE_RAW_ACCELEROMETER:
 		case INV_SENSOR_TYPE_RAW_GYROSCOPE:
 		{
@@ -435,6 +408,7 @@ nrf_gpio_pin_set(19);
 				// New IMU data is available: count how many bytes are available
 				bytes_available++;
 					
+				#ifdef USE_NUS
 				// Put data in the ringbuffer
 				config_data[0] = ENABLE_ACCEL;
 				len_in = sizeof(config_data);
@@ -456,6 +430,7 @@ nrf_gpio_pin_set(19);
 				{
 					NRF_LOG_INFO("OK");
 				}
+				#endif
 					
 			break;
 		}
@@ -470,6 +445,7 @@ nrf_gpio_pin_set(19);
 				// New IMU data is available: count how many bytes are available
 				bytes_available++;
 					
+				#ifdef USE_NUS
 				// Put data in the ringbuffer
 				config_data[0] = ENABLE_GYRO;
 				len_in = sizeof(config_data);
@@ -491,6 +467,24 @@ nrf_gpio_pin_set(19);
 				{
 					NRF_LOG_INFO("OK");
 				}
+				#endif
+
+				ble_tms_raw_t data;
+
+				data.accel.x =      (int16_t)((event->data.acc.vect[0]) * (1 << RAW_Q_FORMAT_ACC_COMMA_BITS));
+				data.accel.y =      (int16_t)((event->data.acc.vect[1]) * (1 << RAW_Q_FORMAT_ACC_COMMA_BITS));
+				data.accel.z =      (int16_t)((event->data.acc.vect[2]) * (1 << RAW_Q_FORMAT_ACC_COMMA_BITS));
+
+				data.gyro.x =       (int16_t)((event->data.gyr.vect[0]) * (1 << RAW_Q_FORMAT_GYR_COMMA_BITS));
+				data.gyro.y =       (int16_t)((event->data.gyr.vect[1]) * (1 << RAW_Q_FORMAT_GYR_COMMA_BITS));
+				data.gyro.z =       (int16_t)((event->data.gyr.vect[2]) * (1 << RAW_Q_FORMAT_GYR_COMMA_BITS));
+
+				data.compass.y =   -(int16_t)((event->data.mag.vect[0]) * (1 << RAW_Q_FORMAT_CMP_COMMA_BITS)); // Changed axes and inverted. Corrected for rotation of axes.
+				data.compass.x =    (int16_t)((event->data.mag.vect[1]) * (1 << RAW_Q_FORMAT_CMP_COMMA_BITS)); // Changed axes. Corrected for rotation of axes.
+				data.compass.z =    (int16_t)((event->data.mag.vect[2]) * (1 << RAW_Q_FORMAT_CMP_COMMA_BITS));
+
+
+				(void)ble_tms_raw_set(&m_tms, &data);				
 
 			break;
 		}
@@ -505,6 +499,7 @@ nrf_gpio_pin_set(19);
 				// New IMU data is available: count how many bytes are available
 				bytes_available++;
 					
+				#ifdef USE_NUS
 				// Put data in the ringbuffer
 				config_data[0] = ENABLE_MAG;
 				len_in = sizeof(config_data);
@@ -526,6 +521,7 @@ nrf_gpio_pin_set(19);
 				{
 					NRF_LOG_INFO("OK");
 				}
+				#endif
 					
 			break;
 		}
@@ -559,16 +555,20 @@ nrf_gpio_pin_set(19);
 				bytes_available++;
 //			NRF_LOG_INFO("Bytes: %d", bytes_available);
 			
-//			NRF_LOG_INFO("%s:	%d %d %d %d", inv_sensor_str(event->sensor),
-//					(int)(event->data.quaternion.quat[0]*1000),
-//					(int)(event->data.quaternion.quat[1]*1000),
-//					(int)(event->data.quaternion.quat[2]*1000),
-//					(int)(event->data.quaternion.quat[3]*1000));
+			NRF_LOG_INFO("%s:	%d %d %d %d", inv_sensor_str(event->sensor),
+					(int)(event->data.quaternion.quat[0]*1000),
+					(int)(event->data.quaternion.quat[1]*1000),
+					(int)(event->data.quaternion.quat[2]*1000),
+					(int)(event->data.quaternion.quat[3]*1000));
 //					(int)(event->data.gyr.accuracy_flag),
 //					(int)(event->data.acc.accuracy_flag),	
 //					(int)(event->data.mag.accuracy_flag), // 0 - 3: not calibrated - fully calibrated
 //					(int)(event->data.quaternion.accuracy_flag));
 				
+
+
+
+				#ifdef USE_NUS
 				// Put data in the ringbuffer
 				config_data[0] = ENABLE_QUAT6;
 				len_in = sizeof(config_data);
@@ -579,6 +579,7 @@ nrf_gpio_pin_set(19);
 				// Copy data into buffer
 				memcpy(buffer, config_data, sizeof(config_data));
 				memcpy(&buffer[1], (event->data.quaternion.quat), sizeof(event->data.quaternion.quat));
+				
 
 				// // err_code = nrf_ringbuf_cpy_put(&m_ringbuf, config_data, &len_in);
 				// // len_in = sizeof(event->data.quaternion.quat);	
@@ -596,6 +597,26 @@ nrf_gpio_pin_set(19);
 				{
 					NRF_LOG_INFO("OK");
 				}
+				#endif
+
+				ble_tms_quat_t data;
+
+				float quat[4];
+				memcpy(quat, (event->data.quaternion.quat), sizeof(event->data.quaternion.quat));
+
+				fixed_point_t p_quat[4];
+				p_quat[0] = float_to_fixed_quat(quat[0]);
+				p_quat[1] = float_to_fixed_quat(quat[1]);
+				p_quat[2] = float_to_fixed_quat(quat[2]);
+				p_quat[3] = float_to_fixed_quat(quat[3]);
+
+				data.w = p_quat[0];
+				data.x = p_quat[1];
+				data.y = p_quat[2];
+				data.z = p_quat[3];
+
+				// Send data
+				(void)ble_tms_quat_set(&m_tms, &data);
 
 				break;
 			}
@@ -606,15 +627,18 @@ nrf_gpio_pin_set(19);
 //					(int)(event->data.orientation.y*1000),
 //					(int)(event->data.orientation.z*1000),
 //					(int)(event->data.orientation.accuracy_flag*1000)); // 0 - 3: not calibrated - fully calibrated
-		NRF_LOG_INFO("%d, %d, %d, %d, %d, %d", // rewritten write funtion to allow easier plotting
+		NRF_LOG_INFO("%s:	%d %d %d", // rewritten write funtion to allow easier plotting
+					inv_sensor_str(event->sensor),
 					(int)(event->data.orientation.x),
 					(int)(event->data.orientation.y),
-					(int)(event->data.orientation.z),
+					(int)(event->data.orientation.z));
 //					(int)(event->data.orientation.accuracy_flag),
-					(int)(event->data.gyr.accuracy_flag),
-					(int)(event->data.acc.accuracy_flag),	
-					(int)(event->data.mag.accuracy_flag)); // 0 - 3: not calibrated - fully calibrated
+					// (int)(event->data.gyr.accuracy_flag),
+					// (int)(event->data.acc.accuracy_flag),	
+					// (int)(event->data.mag.accuracy_flag)); // 0 - 3: not calibrated - fully calibrated
 					
+
+			#ifdef USE_NUS		
 					float buffer_orientation[3];
 					buffer_orientation[0] = event->data.orientation.x;
 					buffer_orientation[1] = event->data.orientation.y;
@@ -624,6 +648,26 @@ nrf_gpio_pin_set(19);
 				len_in = sizeof(buffer_orientation);					
 				err_code = nrf_ringbuf_cpy_put(&m_ringbuf, (uint8_t *)(buffer_orientation), &len_in); //(uint8_t *)(event->data.quaternion.quat)
 				APP_ERROR_CHECK(err_code);
+			#endif
+
+
+			ble_tms_euler_t data;
+			fixed_point_t p_euler[3];
+
+			float euler[3];
+			euler[0] = event->data.orientation.x;
+			euler[1] = event->data.orientation.y;
+			euler[2] = event->data.orientation.z;
+
+			p_euler[0] = float_to_fixed_euler(euler[0]);
+			p_euler[1] = float_to_fixed_euler(euler[1]);
+			p_euler[2] = float_to_fixed_euler(euler[2]);
+
+            data.roll   = p_euler[0];
+            data.pitch  = p_euler[1];
+            data.yaw    = p_euler[2];
+
+			(void)ble_tms_euler_set(&m_tms, &data);
 					
 			break;
 		}
@@ -855,6 +899,12 @@ uint32_t imu_enable_sensors(IMU imu)
 		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_GAME_ROTATION_VECTOR);
 		check_rc(rc);
 		}
+		else if(!imu.quat6_enabled)
+		{
+		NRF_LOG_INFO("Stop QUAT6");
+		rc += inv_device_stop_sensor(device, INV_SENSOR_TYPE_GAME_ROTATION_VECTOR);
+		check_rc(rc);
+		}
 		// If enabled: Start 9DoF quaternion output
 		if(imu.quat9_enabled)
 		{
@@ -864,6 +914,12 @@ uint32_t imu_enable_sensors(IMU imu)
 		rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_ROTATION_VECTOR, imu.period);
 		check_rc(rc);
 		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_ROTATION_VECTOR);
+		check_rc(rc);
+		}
+		if(!imu.quat9_enabled)
+		{
+		NRF_LOG_INFO("Stop QUAT9");
+		rc += inv_device_stop_sensor(device, INV_SENSOR_TYPE_ROTATION_VECTOR);
 		check_rc(rc);
 		}
 		// If enabled: Start Euler angles
@@ -877,6 +933,12 @@ uint32_t imu_enable_sensors(IMU imu)
 		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_ORIENTATION);
 		check_rc(rc);
 		}
+		if(!imu.euler_enabled)
+		{
+		NRF_LOG_INFO("Stop 9DoF EULER");
+		rc += inv_device_stop_sensor(device, INV_SENSOR_TYPE_ORIENTATION);
+		check_rc(rc);
+		}
 		// If enabled: Start Calibrated Gyroscope output
 		if(imu.gyro_enabled)
 		{
@@ -886,6 +948,12 @@ uint32_t imu_enable_sensors(IMU imu)
 		rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_GYROSCOPE, imu.period);
 		check_rc(rc);
 		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_GYROSCOPE);
+		check_rc(rc);
+		}
+		if(!imu.gyro_enabled)
+		{
+		NRF_LOG_INFO("Stop GYRO");
+		rc += inv_device_stop_sensor(device, INV_SENSOR_TYPE_GYROSCOPE);
 		check_rc(rc);
 		}
 		// If enabled: Start Calibrated Accelerometer output
@@ -899,6 +967,12 @@ uint32_t imu_enable_sensors(IMU imu)
 		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_ACCELEROMETER);
 		check_rc(rc);
 		}
+		if(!imu.accel_enabled)
+		{
+		NRF_LOG_INFO("Stop ACCEL");
+		rc += inv_device_stop_sensor(device, INV_SENSOR_TYPE_ACCELEROMETER);
+		check_rc(rc);
+		}
 		// If enabled: Start Calibrated Accelerometer output
 		if(imu.mag_enabled)
 		{
@@ -908,6 +982,12 @@ uint32_t imu_enable_sensors(IMU imu)
 		rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_MAGNETOMETER, imu.period);
 		check_rc(rc);
 		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_MAGNETOMETER);
+		check_rc(rc);
+		}
+		if(!imu.mag_enabled)
+		{
+		NRF_LOG_INFO("Stop MAG");
+		rc += inv_device_stop_sensor(device, INV_SENSOR_TYPE_MAGNETOMETER);
 		check_rc(rc);
 		}
 		
@@ -923,7 +1003,7 @@ uint32_t imu_enable_sensors(IMU imu)
 		
 //		inv_device_set_sensor_timeout(device, INV_SENSOR_TYPE_GAME_ROTATION_VECTOR, 5);
 		
-			return NRF_SUCCESS;
+		return NRF_SUCCESS;
 }
 
 
@@ -1001,7 +1081,7 @@ uint32_t imu_init(void)
 		rc += inv_device_load(device, NULL, dmp3_image, sizeof(dmp3_image), true /* verify */, NULL);
 		check_rc(rc);
 
-		imu_enable_sensors(imu);
+		// imu_enable_sensors(imu);
 
 
 

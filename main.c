@@ -155,6 +155,7 @@ uint16_t send_data_len;
 IMU imu;
 
 
+
 float temp[4] = {0.01, 0.02, 0.03, 0.04};
 
 
@@ -198,16 +199,18 @@ int main(void)
 		nrf_delay_ms(2000);
 
 		uint8_t bat = 100;
+
+		uint32_t c = 0;
 		
 		////////////////////////////////////////////////////////////////	
 		// Loop: IMU gives interrupt -> bool interrupt = true -> poll device for data
 		////////////////////////////////////////////////////////////////		
 		while(1)
 		{
-			tms_test();
+			// tms_test();
 
-			battery_level_update(bat);
-			bat--;
+			// battery_level_update(bat);
+			// bat--;
 
 			// App scheduler: handle event in buffer
 			app_sched_execute();
@@ -216,52 +219,52 @@ int main(void)
 //// Send data over BLE as fast as possible			
 /////////////////////////////////////////////////////////////////////////////////
 			
-			// if NUS TX buffer isn't full and imu_bytes_available() TODO add
-			if((!nus_buffer_full) && (IMU_buffer_bytes_available()))
-			{
-				uint32_t err_code;
-				do
-				{
-						// Stop sending data when FIFO buffer is empty
-						if(IMU_buffer_bytes_available() == 0)
-						{
-							break;
-						}
-						// Load new data into buffer after NRF_SUCCESS (previous data has successfully been queued)
-						if(NUS_send_OK)
-						{
-							IMU_data_get(send_data, &send_data_len);
-							// Decrement available bytes once a byte has been send
-							// uint32_t bytes_available = imu_get_bytes_available();
-							// bytes_available--;
-							// imu_set_bytes_available(bytes_available);
-							// NRF_LOG_INFO("B: %d", bytes_available);
-//							NRF_LOG_INFO("%d %d %d %d", (int)(send_data[0]*1000), (int)(send_data[1]*1000), (int)(send_data[2]*1000), (int)(send_data[3]*1000));
-						}
-						// Try to send data over BLE NUS
-//						err_code = nus_printf_custom("2	Test 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789\n\0");
-						err_code = nus_send(send_data, send_data_len);
-						NRF_LOG_INFO("send_data: %X %X %X %X", send_data[0], send_data[1], send_data[2], send_data[3]);
-						NRF_LOG_INFO("send_data_len: %d", send_data_len);
+// 			// if NUS TX buffer isn't full and imu_bytes_available() TODO add
+// 			if((!nus_buffer_full) && (IMU_buffer_bytes_available()))
+// 			{
+// 				uint32_t err_code;
+// 				do
+// 				{
+// 						// Stop sending data when FIFO buffer is empty
+// 						if(IMU_buffer_bytes_available() == 0)
+// 						{
+// 							break;
+// 						}
+// 						// Load new data into buffer after NRF_SUCCESS (previous data has successfully been queued)
+// 						if(NUS_send_OK)
+// 						{
+// 							IMU_data_get(send_data, &send_data_len);
+// 							// Decrement available bytes once a byte has been send
+// 							// uint32_t bytes_available = imu_get_bytes_available();
+// 							// bytes_available--;
+// 							// imu_set_bytes_available(bytes_available);
+// 							// NRF_LOG_INFO("B: %d", bytes_available);
+// //							NRF_LOG_INFO("%d %d %d %d", (int)(send_data[0]*1000), (int)(send_data[1]*1000), (int)(send_data[2]*1000), (int)(send_data[3]*1000));
+// 						}
+// 						// Try to send data over BLE NUS
+// //						err_code = nus_printf_custom("2	Test 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789\n\0");
+// 						err_code = nus_send(send_data, send_data_len);
+// 						NRF_LOG_INFO("send_data: %X %X %X %X", send_data[0], send_data[1], send_data[2], send_data[3]);
+// 						NRF_LOG_INFO("send_data_len: %d", send_data_len);
 						
-						// Packet has successfully been queued and send correctly
-						// If this happens, load new data into buffer
-						if(err_code == NRF_SUCCESS)
-						{
-							NUS_send_OK = true; // Ok, buffer is not full yet, buffer next data
-							countrrr++; // Increment send counter
-//							NRF_LOG_INFO("NUS SUCCESS! %d", countrrr);
-						}
-						// If NUS send buffer is full, do not load new data into buffer 
-						// + stop queue of data until BLE_NUS_EVT_TX_RDY
-						if (err_code == NRF_ERROR_RESOURCES)
-						{
-							NUS_send_OK = false; // NUS send buffer is full
-							nus_buffer_full = true; // NUS send buffer is full
-//							NRF_LOG_INFO("NUS TX Buffer full!");
-						}
-				} while ((err_code == NRF_SUCCESS));
-			}
+// 						// Packet has successfully been queued and send correctly
+// 						// If this happens, load new data into buffer
+// 						if(err_code == NRF_SUCCESS)
+// 						{
+// 							NUS_send_OK = true; // Ok, buffer is not full yet, buffer next data
+// 							countrrr++; // Increment send counter
+// //							NRF_LOG_INFO("NUS SUCCESS! %d", countrrr);
+// 						}
+// 						// If NUS send buffer is full, do not load new data into buffer 
+// 						// + stop queue of data until BLE_NUS_EVT_TX_RDY
+// 						if (err_code == NRF_ERROR_RESOURCES)
+// 						{
+// 							NUS_send_OK = false; // NUS send buffer is full
+// 							nus_buffer_full = true; // NUS send buffer is full
+// //							NRF_LOG_INFO("NUS TX Buffer full!");
+// 						}
+// 				} while ((err_code == NRF_SUCCESS));
+// 			}
 			
 
 			

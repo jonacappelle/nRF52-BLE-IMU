@@ -13,4 +13,6 @@ uint32_t nus_send(uint8_t * data, uint16_t len);
 void battery_level_update(uint8_t battery_level);
 void tms_test(void);
 
+void imu_config_evt_sceduled(void * p_event_data, uint16_t event_size);
+
 #endif
