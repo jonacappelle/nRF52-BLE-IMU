@@ -12,7 +12,8 @@
 			"invexport.h": "c",
 			"app_fifo.h": "c",
 			"ble_srv_common.h": "c",
-			"ble_bas.h": "c"
+			"ble_bas.h": "c",
+			"nrf_log_default_backends.h": "c"
 		}
 	}
 }

@@ -375,6 +375,8 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 		uint8_t config_data[1];
 		
 		counterr++;
+
+		NRF_LOG_INFO("%d", counterr);
 		
 nrf_gpio_pin_set(19);	
 

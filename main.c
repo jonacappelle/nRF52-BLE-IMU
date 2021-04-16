@@ -243,7 +243,7 @@ int main(void)
 // 						}
 // 						// Try to send data over BLE NUS
 // //						err_code = nus_printf_custom("2	Test 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789\n\0");
-// 						err_code = nus_send(send_data, send_data_len);
+						// err_code = nus_send(send_data, send_data_len);
 // 						NRF_LOG_INFO("send_data: %X %X %X %X", send_data[0], send_data[1], send_data[2], send_data[3]);
 // 						NRF_LOG_INFO("send_data_len: %d", send_data_len);
 						
@@ -274,15 +274,15 @@ int main(void)
 			NRF_LOG_FLUSH();
 			
 			// Check for activity of CPU
-			nrf_gpio_pin_clear(18);
+			nrf_gpio_pin_toggle(18);
 			
 			/* Enter low power mode when idle */
-			idle_state_handle();
+			// idle_state_handle();
 
 			// nrf_delay_ms(1000);
 			
 			// Check for activity of CPU
-			nrf_gpio_pin_set(18);
+			// nrf_gpio_pin_set(18);
 			
 		}// while(1)
 }// main
