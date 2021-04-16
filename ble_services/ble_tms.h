@@ -58,6 +58,7 @@
 #ifndef BLE_TMS_H__
 #define BLE_TMS_H__
 
+#include "sdk_common.h"
 #include "ble.h"
 #include "ble_srv_common.h"
 #include "app_util_platform.h"
@@ -81,7 +82,17 @@
 
 
 #define BLE_UUID_TMS_SERVICE 0x0400                      /**< The UUID of the Motion Service. */
-#define BLE_TMS_MAX_DATA_LEN (BLE_GATT_ATT_MTU_DEFAULT - 3) /**< Maximum length of data (in bytes) that can be transmitted to the peer by the Motion service module. */
+// #define BLE_TMS_MAX_DATA_LEN (BLE_GATT_ATT_MTU_DEFAULT - 3) /**< Maximum length of data (in bytes) that can be transmitted to the peer by the Motion service module. */
+
+#define OPCODE_LENGTH        1
+#define HANDLE_LENGTH        2
+
+#if defined(NRF_SDH_BLE_GATT_MAX_MTU_SIZE) && (NRF_SDH_BLE_GATT_MAX_MTU_SIZE != 0)
+    #define BLE_TMS_MAX_DATA_LEN (NRF_SDH_BLE_GATT_MAX_MTU_SIZE - OPCODE_LENGTH - HANDLE_LENGTH)
+#else
+    #define BLE_TMS_MAX_DATA_LEN (BLE_GATT_ATT_MTU_DEFAULT - OPCODE_LENGTH - HANDLE_LENGTH)
+    #warning NRF_SDH_BLE_GATT_MAX_MTU_SIZE is not defined.
+#endif
 
 #ifdef __GNUC__
     #ifdef PACKED
@@ -125,7 +136,51 @@ typedef PACKED( struct
     uint8_t cnt;
 }) ble_tms_tap_t;
 
-typedef uint8_t ble_tms_orientation_t;
+
+
+typedef PACKED( struct
+{
+    uint32_t adc_1;
+    uint32_t adc_2;
+    uint32_t adc_3;
+    uint32_t adc_4;
+    uint32_t adc_5;
+    uint32_t adc_6;
+    uint32_t adc_7;
+    uint32_t adc_8;
+    uint32_t adc_9;
+    uint32_t adc_10;
+    uint32_t adc_11;
+    uint32_t adc_12;
+    uint32_t adc_13;
+    uint32_t adc_14;
+    uint32_t adc_15;
+    uint32_t adc_16;
+    uint32_t adc_17;
+    uint32_t adc_18;
+    uint32_t adc_19;
+    uint32_t adc_20;
+    uint32_t adc_21;
+    uint32_t adc_22;
+    uint32_t adc_23;
+    uint32_t adc_24;
+    uint32_t adc_25;
+    uint32_t adc_26;
+    uint32_t adc_27;
+    uint32_t adc_28;
+    uint32_t adc_29;
+    uint32_t adc_30;
+    uint32_t adc_31;
+    uint32_t adc_32;
+    uint32_t adc_33;
+    uint32_t adc_34;
+    uint32_t adc_35;
+    uint32_t adc_36;
+    uint32_t adc_37;
+    uint32_t adc_38;
+    uint32_t adc_39;
+    uint32_t adc_40;
+})ble_tms_orientation_t;
 
 typedef PACKED( struct
 {

@@ -140,10 +140,6 @@ extern bool nus_buffer_full;
 extern int countrrr;
 
 
-/// Timer at 100 Hz
-bool timer_datasend_int = false;
-
-
 // Event handler for scheduler
 void my_app_sched_event_handler(void *data, uint16_t size);
 

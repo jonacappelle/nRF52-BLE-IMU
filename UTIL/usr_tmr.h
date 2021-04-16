@@ -18,7 +18,9 @@ void timers_init(void);
 void timer_init (void);
 void timer_event_handler(nrf_timer_event_t event_type, void* p_context);
 
-void timer_datasend_init (void);
-void timer_datasend_event_handler(nrf_timer_event_t event_type, void* p_context);
+void timer_datasend_1_init (void);
+void timer_datasend_2_init (void);
+void timer_datasend_1_event_handler(nrf_timer_event_t event_type, void* p_context);
+void timer_datasend_2_event_handler(nrf_timer_event_t event_type, void* p_context);
 
 #endif

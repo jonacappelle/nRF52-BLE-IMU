@@ -617,8 +617,15 @@ nrf_gpio_pin_set(19);
 				data.y = p_quat[2];
 				data.z = p_quat[3];
 
+				uint32_t err_code;
 				// Send data
-				(void)ble_tms_quat_set(&m_tms, &data);
+				err_code = ble_tms_quat_set(&m_tms, &data);
+				if(err_code != NRF_SUCCESS)
+				{
+					NRF_LOG_INFO("ble_tms_quat_set err_code: %d", err_code);
+				}
+
+
 
 				break;
 			}

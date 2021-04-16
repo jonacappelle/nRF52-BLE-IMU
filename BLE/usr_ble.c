@@ -147,14 +147,22 @@ static void ble_tms_evt_handler(ble_tms_t        * p_tms,
             NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_ORIENTATION - %d\r\n", p_tms->is_orientation_notif_enabled);
             // if (p_tms->is_orientation_notif_enabled)
             // {
-            //     err_code = drv_motion_enable(DRV_MOTION_FEATURE_MASK_ORIENTATION);
-            //     APP_ERROR_CHECK(err_code);
+            //     imu.quat6_enabled = 1;
+                
+            //     // err_code = drv_motion_enable(DRV_MOTION_FEATURE_MASK_ORIENTATION);
+            //     // APP_ERROR_CHECK(err_code);
             // }
             // else
             // {
-            //     err_code = drv_motion_disable(DRV_MOTION_FEATURE_MASK_ORIENTATION);
-            //     APP_ERROR_CHECK(err_code);
+            //     imu.quat6_enabled = 0;
+
+            //     // err_code = drv_motion_disable(DRV_MOTION_FEATURE_MASK_ORIENTATION);
+            //     // APP_ERROR_CHECK(err_code);
             // }
+
+            // // Pass change IMU settings to event handler
+            // err_code = app_sched_event_put(0, 0, imu_config_evt_sceduled);
+            // APP_ERROR_CHECK(err_code);
             break;
 
         case BLE_TMS_EVT_NOTIF_QUAT:

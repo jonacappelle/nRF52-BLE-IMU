@@ -13,7 +13,12 @@
 			"app_fifo.h": "c",
 			"ble_srv_common.h": "c",
 			"ble_bas.h": "c",
-			"nrf_log_default_backends.h": "c"
+			"nrf_log_default_backends.h": "c",
+			"nordic_common.h": "c",
+			"nrf.h": "c",
+			"ble_nus.h": "c",
+			"sdk_common.h": "c",
+			"sdk_config.h": "c"
 		}
 	}
 }
