@@ -6,7 +6,7 @@
 /* Timer instance for us timer (TIMER 0)*/
 //const nrf_drv_timer_t TIMER_MICROS = NRF_DRV_TIMER_INSTANCE(0);
 // temp
-const nrf_drv_timer_t TIMER_MICROS = NRF_DRV_TIMER_INSTANCE(4);
+const nrf_drv_timer_t TIMER_MICROS = NRF_DRV_TIMER_INSTANCE(1);
 
 
 
@@ -189,6 +189,6 @@ void timers_init(void)
 		timer_init();
 	
 		/* Initialize timer: Generates interrupt at 100 Hz and 50 Hz */
-		timer_datasend_1_init();
-		timer_datasend_2_init();
+		// timer_datasend_1_init();
+		// timer_datasend_2_init();
 }
