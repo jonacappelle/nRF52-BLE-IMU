@@ -376,7 +376,7 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 		
 		counterr++;
 
-		NRF_LOG_INFO("%d", counterr);
+		// NRF_LOG_INFO("%d", counterr);
 		
 nrf_gpio_pin_set(19);	
 
@@ -557,11 +557,11 @@ nrf_gpio_pin_set(19);
 				bytes_available++;
 //			NRF_LOG_INFO("Bytes: %d", bytes_available);
 			
-			NRF_LOG_INFO("%s:	%d %d %d %d", inv_sensor_str(event->sensor),
-					(int)(event->data.quaternion.quat[0]*1000),
-					(int)(event->data.quaternion.quat[1]*1000),
-					(int)(event->data.quaternion.quat[2]*1000),
-					(int)(event->data.quaternion.quat[3]*1000));
+			// NRF_LOG_INFO("%s:	%d %d %d %d", inv_sensor_str(event->sensor),
+			// 		(int)(event->data.quaternion.quat[0]*1000),
+			// 		(int)(event->data.quaternion.quat[1]*1000),
+			// 		(int)(event->data.quaternion.quat[2]*1000),
+			// 		(int)(event->data.quaternion.quat[3]*1000));
 //					(int)(event->data.gyr.accuracy_flag),
 //					(int)(event->data.acc.accuracy_flag),	
 //					(int)(event->data.mag.accuracy_flag), // 0 - 3: not calibrated - fully calibrated

@@ -120,7 +120,7 @@ void timer_datasend_1_event_handler(nrf_timer_event_t event_type, void* p_contex
     {
 		case NRF_TIMER_EVENT_COMPARE0:
 		{
-			NRF_LOG_INFO("Timer 100 Hz");
+			// NRF_LOG_INFO("Timer 100 Hz");
 		}
 		break;
 				// Pass event to event handler
@@ -153,13 +153,16 @@ void timer_datasend_2_event_handler(nrf_timer_event_t event_type, void* p_contex
     {
 		case NRF_TIMER_EVENT_COMPARE0:
 		{
-			NRF_LOG_INFO("Timer 50 Hz");
+			// NRF_LOG_INFO("Timer 50 Hz");
 
-			ble_tms_orientation_t adc;	
-			adc.adc_1 = 5;
+			ble_tms_adc_t adc;	
+			for(uint8_t i=0; i<40; i++)
+			{
+				adc.raw[i] = i;
+			}
 
 			uint32_t err_code;
-			err_code = ble_tms_orientation_set(&m_tms, &adc);
+			err_code = ble_tms_adc_set(&m_tms, &adc);
 			if(err_code != NRF_SUCCESS)
 			{
 				NRF_LOG_INFO("ble_tms_orientation_set err_code: %d", err_code);		

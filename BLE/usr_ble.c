@@ -143,8 +143,8 @@ static void ble_tms_evt_handler(ble_tms_t        * p_tms,
             // }
             break;
 
-        case BLE_TMS_EVT_NOTIF_ORIENTATION:
-            NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_ORIENTATION - %d\r\n", p_tms->is_orientation_notif_enabled);
+        case BLE_TMS_EVT_NOTIF_ADC:
+            NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_ADC - %d\r\n", p_tms->is_adc_notif_enabled);
             // if (p_tms->is_orientation_notif_enabled)
             // {
             //     imu.quat6_enabled = 1;

@@ -46,7 +46,7 @@
 
 #define BLE_UUID_TMS_CONFIG_CHAR      0x0401                      /**< The UUID of the config Characteristic. */
 #define BLE_UUID_TMS_TAP_CHAR         0x0402                      /**< The UUID of the tap Characteristic. */
-#define BLE_UUID_TMS_ORIENTATION_CHAR 0x0403                      /**< The UUID of the orientation Characteristic. */
+#define BLE_UUID_TMS_ADC_CHAR 0x0403                      /**< The UUID of the adc Characteristic. */
 #define BLE_UUID_TMS_QUATERNION_CHAR  0x0404                      /**< The UUID of the quaternion Characteristic. */
 #define BLE_UUID_TMS_PEDOMETER_CHAR   0x0405                      /**< The UUID of the pedometer Characteristic. */
 #define BLE_UUID_TMS_RAW_CHAR         0x0406                      /**< The UUID of the raw data Characteristic. */
@@ -57,7 +57,11 @@
 
 
 // EF68xxxx-9B35-4933-9B10-52FFA9740042
-#define TMS_BASE_UUID                  {{0x42, 0x00, 0x74, 0xA9, 0xFF, 0x52, 0x10, 0x9B, 0x33, 0x49, 0x35, 0x9B, 0x00, 0x00, 0x68, 0xEF}} /**< Used vendor specific UUID. */
+// #define TMS_BASE_UUID                  {{0x42, 0x00, 0x74, 0xA9, 0xFF, 0x52, 0x10, 0x9B, 0x33, 0x49, 0x35, 0x9B, 0x00, 0x00, 0x68, 0xEF}} /**< Used vendor specific UUID. */
+#define TMS_BASE_UUID                  {{0x5d, 0x82, 0x7d, 0x69, 0x83, 0xd1, 0x7c, 0x96, 0x2e, 0x43, 0xfb, 0x95, 0x54, 0x03, 0xaa, 0xcb}}
+
+
+
 
 /**@brief Function for handling the @ref BLE_GAP_EVT_CONNECTED event from the S132 SoftDevice.
  *
@@ -109,20 +113,20 @@ static void on_write(ble_tms_t * p_tms, ble_evt_t * p_ble_evt)
             }
         }
     }
-    else if ( (p_evt_write->handle == p_tms->orientation_handles.cccd_handle) &&
+    else if ( (p_evt_write->handle == p_tms->adc_handles.cccd_handle) &&
          (p_evt_write->len == 2) )
     {
         bool notif_enabled;
 
         notif_enabled = ble_srv_is_notification_enabled(p_evt_write->data);
 
-        if (p_tms->is_orientation_notif_enabled != notif_enabled)
+        if (p_tms->is_adc_notif_enabled != notif_enabled)
         {
-            p_tms->is_orientation_notif_enabled = notif_enabled;
+            p_tms->is_adc_notif_enabled = notif_enabled;
 
             if (p_tms->evt_handler != NULL)
             {
-                p_tms->evt_handler(p_tms, BLE_TMS_EVT_NOTIF_ORIENTATION, p_evt_write->data, p_evt_write->len);
+                p_tms->evt_handler(p_tms, BLE_TMS_EVT_NOTIF_ADC, p_evt_write->data, p_evt_write->len);
             }
         }
     }
@@ -381,21 +385,21 @@ static uint32_t tap_char_add(ble_tms_t * p_tms, const ble_tms_init_t * p_tms_ini
 }
 
 
-/**@brief Function for adding orientation characteristic.
+/**@brief Function for adding adc characteristic.
  *
  * @param[in] p_tms       Motion Service structure.
  * @param[in] p_tms_init  Information needed to initialize the service.
  *
  * @return NRF_SUCCESS on success, otherwise an error code.
  */
-static uint32_t orientation_char_add(ble_tms_t * p_tms, const ble_tms_init_t * p_tms_init)
+static uint32_t adc_char_add(ble_tms_t * p_tms, const ble_tms_init_t * p_tms_init)
 {
     ble_gatts_char_md_t   char_md;
     ble_gatts_attr_md_t   cccd_md;
     ble_gatts_attr_t      attr_char_value;
     ble_uuid_t            ble_uuid;
     ble_gatts_attr_md_t   attr_md;
-    ble_tms_orientation_t orientation_init = {0};
+    ble_tms_adc_t adc_init = {0};
 
     memset(&cccd_md, 0, sizeof(cccd_md));
 
@@ -414,7 +418,7 @@ static uint32_t orientation_char_add(ble_tms_t * p_tms, const ble_tms_init_t * p
     char_md.p_sccd_md         = NULL;
 
     ble_uuid.type = p_tms->uuid_type;
-    ble_uuid.uuid = BLE_UUID_TMS_ORIENTATION_CHAR;
+    ble_uuid.uuid = BLE_UUID_TMS_ADC_CHAR;
 
     memset(&attr_md, 0, sizeof(attr_md));
 
@@ -430,15 +434,15 @@ static uint32_t orientation_char_add(ble_tms_t * p_tms, const ble_tms_init_t * p
 
     attr_char_value.p_uuid    = &ble_uuid;
     attr_char_value.p_attr_md = &attr_md;
-    attr_char_value.init_len  = sizeof(ble_tms_orientation_t);
+    attr_char_value.init_len  = sizeof(ble_tms_adc_t);
     attr_char_value.init_offs = 0;
-    attr_char_value.p_value   = (uint8_t *)&orientation_init;
-    attr_char_value.max_len   = sizeof(ble_tms_orientation_t);
+    attr_char_value.p_value   = (uint8_t *)&adc_init;
+    attr_char_value.max_len   = sizeof(ble_tms_adc_t);
 
     return sd_ble_gatts_characteristic_add(p_tms->service_handle,
                                            &char_md,
                                            &attr_char_value,
-                                           &p_tms->orientation_handles);
+                                           &p_tms->adc_handles);
 }
 
 
@@ -975,7 +979,7 @@ uint32_t ble_tms_init(ble_tms_t * p_tms, const ble_tms_init_t * p_tms_init)
     p_tms->conn_handle                  = BLE_CONN_HANDLE_INVALID;
     p_tms->evt_handler                  = p_tms_init->evt_handler;
     p_tms->is_tap_notif_enabled         = false;
-    p_tms->is_orientation_notif_enabled = false;
+    p_tms->is_adc_notif_enabled = false;
     p_tms->is_quat_notif_enabled        = false;
     p_tms->is_pedo_notif_enabled        = false;
     p_tms->is_raw_notif_enabled         = false;
@@ -1003,17 +1007,17 @@ uint32_t ble_tms_init(ble_tms_t * p_tms, const ble_tms_init_t * p_tms_init)
     err_code = config_char_add(p_tms, p_tms_init);
     VERIFY_SUCCESS(err_code);
     // Add the tap characteristic.
-    err_code = tap_char_add(p_tms, p_tms_init);
-    VERIFY_SUCCESS(err_code);
-    // Add the orientation characteristic.
-    err_code = orientation_char_add(p_tms, p_tms_init);
+    // err_code = tap_char_add(p_tms, p_tms_init);
+    // VERIFY_SUCCESS(err_code);
+    // Add the adc characteristic.
+    err_code = adc_char_add(p_tms, p_tms_init);
     VERIFY_SUCCESS(err_code);
     // Add the quaternion characteristic.
     err_code = quat_char_add(p_tms, p_tms_init);
     VERIFY_SUCCESS(err_code);
     // Add the pedometer characteristic.
-    err_code = pedo_char_add(p_tms, p_tms_init);
-    VERIFY_SUCCESS(err_code);
+    // err_code = pedo_char_add(p_tms, p_tms_init);
+    // VERIFY_SUCCESS(err_code);
     // Add the raw data characteristic.
     err_code = raw_char_add(p_tms, p_tms_init);
     VERIFY_SUCCESS(err_code);
@@ -1021,14 +1025,14 @@ uint32_t ble_tms_init(ble_tms_t * p_tms, const ble_tms_init_t * p_tms_init)
     err_code = euler_char_add(p_tms, p_tms_init);
     VERIFY_SUCCESS(err_code);
     // Add the rotation matrix characteristic.
-    err_code = rot_mat_char_add(p_tms, p_tms_init);
-    VERIFY_SUCCESS(err_code);
+    // err_code = rot_mat_char_add(p_tms, p_tms_init);
+    // VERIFY_SUCCESS(err_code);
     // Add the compass heading characteristic.
-    err_code = heading_char_add(p_tms, p_tms_init);
-    VERIFY_SUCCESS(err_code);
+    // err_code = heading_char_add(p_tms, p_tms_init);
+    // VERIFY_SUCCESS(err_code);
     // Add the gravity vector characteristic.
-    err_code = gravity_char_add(p_tms, p_tms_init);
-    VERIFY_SUCCESS(err_code);
+    // err_code = gravity_char_add(p_tms, p_tms_init);
+    // VERIFY_SUCCESS(err_code);
 
     return NRF_SUCCESS;
 }
@@ -1062,14 +1066,14 @@ uint32_t ble_tms_tap_set(ble_tms_t * p_tms, ble_tms_tap_t * p_data)
 }
 
 
-uint32_t ble_tms_orientation_set(ble_tms_t * p_tms, ble_tms_orientation_t * p_data)
+uint32_t ble_tms_adc_set(ble_tms_t * p_tms, ble_tms_adc_t * p_data)
 {
     ble_gatts_hvx_params_t hvx_params;
-    uint16_t               length = sizeof(ble_tms_orientation_t);
+    uint16_t               length = sizeof(ble_tms_adc_t);
 
     VERIFY_PARAM_NOT_NULL(p_tms);
 
-    if ((p_tms->conn_handle == BLE_CONN_HANDLE_INVALID) || (!p_tms->is_orientation_notif_enabled))
+    if ((p_tms->conn_handle == BLE_CONN_HANDLE_INVALID) || (!p_tms->is_adc_notif_enabled))
     {
         return NRF_ERROR_INVALID_STATE;
     }
@@ -1081,7 +1085,7 @@ uint32_t ble_tms_orientation_set(ble_tms_t * p_tms, ble_tms_orientation_t * p_da
 
     memset(&hvx_params, 0, sizeof(hvx_params));
 
-    hvx_params.handle = p_tms->orientation_handles.value_handle;
+    hvx_params.handle = p_tms->adc_handles.value_handle;
     hvx_params.p_data = (uint8_t *)p_data;
     hvx_params.p_len  = &length;
     hvx_params.type   = BLE_GATT_HVX_NOTIFICATION;

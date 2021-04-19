@@ -140,47 +140,8 @@ typedef PACKED( struct
 
 typedef PACKED( struct
 {
-    uint32_t adc_1;
-    uint32_t adc_2;
-    uint32_t adc_3;
-    uint32_t adc_4;
-    uint32_t adc_5;
-    uint32_t adc_6;
-    uint32_t adc_7;
-    uint32_t adc_8;
-    uint32_t adc_9;
-    uint32_t adc_10;
-    uint32_t adc_11;
-    uint32_t adc_12;
-    uint32_t adc_13;
-    uint32_t adc_14;
-    uint32_t adc_15;
-    uint32_t adc_16;
-    uint32_t adc_17;
-    uint32_t adc_18;
-    uint32_t adc_19;
-    uint32_t adc_20;
-    uint32_t adc_21;
-    uint32_t adc_22;
-    uint32_t adc_23;
-    uint32_t adc_24;
-    uint32_t adc_25;
-    uint32_t adc_26;
-    uint32_t adc_27;
-    uint32_t adc_28;
-    uint32_t adc_29;
-    uint32_t adc_30;
-    uint32_t adc_31;
-    uint32_t adc_32;
-    uint32_t adc_33;
-    uint32_t adc_34;
-    uint32_t adc_35;
-    uint32_t adc_36;
-    uint32_t adc_37;
-    uint32_t adc_38;
-    uint32_t adc_39;
-    uint32_t adc_40;
-})ble_tms_orientation_t;
+    uint32_t raw[40];
+})ble_tms_adc_t;
 
 typedef PACKED( struct
 {
@@ -241,7 +202,7 @@ typedef enum
 {
     BLE_TMS_EVT_CONFIG_RECEIVED,
     BLE_TMS_EVT_NOTIF_TAP,
-    BLE_TMS_EVT_NOTIF_ORIENTATION,
+    BLE_TMS_EVT_NOTIF_ADC,
     BLE_TMS_EVT_NOTIF_QUAT,
     BLE_TMS_EVT_NOTIF_PEDOMETER,
     BLE_TMS_EVT_NOTIF_RAW,
@@ -281,7 +242,7 @@ struct ble_tms_s
     uint16_t                 service_handle;               /**< Handle of Motion Service (as provided by the S110 SoftDevice). */
     ble_gatts_char_handles_t config_handles;               /**< Handles related to the config characteristic (as provided by the S132 SoftDevice). */
     ble_gatts_char_handles_t tap_handles;                  /**< Handles related to the tap characteristic (as provided by the S132 SoftDevice). */
-    ble_gatts_char_handles_t orientation_handles;          /**< Handles related to the orientation characteristic (as provided by the S132 SoftDevice). */
+    ble_gatts_char_handles_t adc_handles;          /**< Handles related to the adc characteristic (as provided by the S132 SoftDevice). */
     ble_gatts_char_handles_t quat_handles;                 /**< Handles related to the quaternion characteristic (as provided by the S132 SoftDevice). */
     ble_gatts_char_handles_t pedo_handles;                 /**< Handles related to the pedometer characteristic (as provided by the S132 SoftDevice). */
     ble_gatts_char_handles_t raw_handles;                  /**< Handles related to the raw data characteristic (as provided by the S132 SoftDevice). */
@@ -291,7 +252,7 @@ struct ble_tms_s
     ble_gatts_char_handles_t gravity_handles;              /**< Handles related to the gravity vector characteristic (as provided by the S132 SoftDevice). */
     uint16_t                 conn_handle;                  /**< Handle of the current connection (as provided by the S110 SoftDevice). BLE_CONN_HANDLE_INVALID if not in a connection. */
     bool                     is_tap_notif_enabled;         /**< Variable to indicate if the peer has enabled notification of the characteristic.*/
-    bool                     is_orientation_notif_enabled; /**< Variable to indicate if the peer has enabled notification of the characteristic.*/
+    bool                     is_adc_notif_enabled; /**< Variable to indicate if the peer has enabled notification of the characteristic.*/
     bool                     is_quat_notif_enabled;        /**< Variable to indicate if the peer has enabled notification of the characteristic.*/
     bool                     is_pedo_notif_enabled;        /**< Variable to indicate if the peer has enabled notification of the characteristic.*/
     bool                     is_raw_notif_enabled;         /**< Variable to indicate if the peer has enabled notification of the characteristic.*/
@@ -337,16 +298,16 @@ void ble_tms_on_ble_evt(ble_tms_t * p_wss, ble_evt_t * p_ble_evt);
  */
 uint32_t ble_tms_tap_set(ble_tms_t * p_tms, ble_tms_tap_t * p_data);
 
-/**@brief Function for sending orientation data.
+/**@brief Function for sending adc data.
  *
- * @details This function sends the input orientation as an orientation characteristic notification to the peer.
+ * @details This function sends the input adc as an adc characteristic notification to the peer.
  *
  * @param[in] p_tms       Pointer to the Motion Service structure.
- * @param[in] p_data      Pointer to the orientation data.
+ * @param[in] p_data      Pointer to the adc data.
  *
  * @retval NRF_SUCCESS If the string was sent successfully. Otherwise, an error code is returned.
  */
-uint32_t ble_tms_orientation_set(ble_tms_t * p_tms, ble_tms_orientation_t * p_data);
+uint32_t ble_tms_adc_set(ble_tms_t * p_tms, ble_tms_adc_t * p_data);
 
 /**@brief Function for sending quaternion data.
  *
