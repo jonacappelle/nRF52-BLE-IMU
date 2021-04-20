@@ -68,6 +68,7 @@ bool nus_buffer_full = false;
 ///////////////////////////////////////////////
 #define SYNC_FREQ	2 // Hz
 static bool m_gpio_trigger_enabled;
+static bool m_imu_trigger_enabled;
 
 
 ///////////////////////////////////////////////
@@ -893,14 +894,14 @@ static void ts_gpio_trigger_enable(void)
         return;
     }
 
-    // Round up to nearest second to next 250 ms to start toggling.
+    // Round up to nearest second to next 2000 ms to start toggling.
     // If the receiver has received a valid sync packet within this time, the GPIO toggling polarity will be the same.
 
     time_now_ticks = ts_timestamp_get_ticks_u64();
     time_now_msec = TIME_SYNC_TIMESTAMP_TO_USEC(time_now_ticks) / 1000;
 
-    time_target = TIME_SYNC_MSEC_TO_TICK(time_now_msec) + (250 * 2);
-    time_target = (time_target / 250) * 250;
+    time_target = TIME_SYNC_MSEC_TO_TICK(time_now_msec) + (2000 * 2);
+    time_target = (time_target / 2000) * 2000;
 
     err_code = ts_set_trigger(time_target, nrf_gpiote_task_addr_get(NRF_GPIOTE_TASKS_OUT_3));
     APP_ERROR_CHECK(err_code);
@@ -915,36 +916,91 @@ static void ts_gpio_trigger_disable(void)
     m_gpio_trigger_enabled = false;
 }
 
+
+static void ts_imu_trigger_enable(void)
+{
+    uint64_t time_now_ticks;
+    uint32_t time_now_msec;
+    uint32_t time_target;
+    uint32_t err_code;
+
+    if (m_imu_trigger_enabled)
+    {
+        return;
+    }
+
+    // Round up to nearest second to next 2000 ms to start toggling.
+    // If the receiver has received a valid sync packet within this time, the GPIO toggling polarity will be the same.
+
+    time_now_ticks = ts_timestamp_get_ticks_u64();
+    time_now_msec = TIME_SYNC_TIMESTAMP_TO_USEC(time_now_ticks) / 1000;
+
+    time_target = TIME_SYNC_MSEC_TO_TICK(time_now_msec) + (1000 * 2);
+    time_target = (time_target / 1000) * 1000;
+
+    err_code = ts_set_trigger(time_target, nrf_gpiote_task_addr_get(NRF_GPIOTE_TASKS_OUT_3));
+    APP_ERROR_CHECK(err_code);
+
+    nrf_gpiote_task_set(NRF_GPIOTE_TASKS_CLR_3);
+
+    m_imu_trigger_enabled = true;
+}
+
+static void ts_imu_trigger_disable(void)
+{
+    m_imu_trigger_enabled = false;
+}
+
 static void ts_evt_callback(const ts_evt_t* evt)
 {
+    NRF_LOG_INFO("ts_evt_callback");
+
     APP_ERROR_CHECK_BOOL(evt != NULL);
 
     switch (evt->type)
     {
         case TS_EVT_SYNCHRONIZED:
             NRF_LOG_INFO("TS_EVT_SYNCHRONIZED");
-            ts_gpio_trigger_enable();
+            // ts_gpio_trigger_enable();
+            ts_imu_trigger_enable();
             break;
         case TS_EVT_DESYNCHRONIZED:
             NRF_LOG_INFO("TS_EVT_DESYNCHRONIZED");
-            ts_gpio_trigger_disable();
+            // ts_gpio_trigger_disable();
+            ts_imu_trigger_disable();
             break;
         case TS_EVT_TRIGGERED:
             // NRF_LOG_INFO("TS_EVT_TRIGGERED");
-            if (m_gpio_trigger_enabled)
+            if (m_imu_trigger_enabled)//if (m_gpio_trigger_enabled)
             {
                 uint32_t tick_target;
 
-                tick_target = evt->params.triggered.tick_target + 2;
+                tick_target = evt->params.triggered.tick_target + 200;
+
+                uint32_t time;
+                time = TIME_SYNC_TIMESTAMP_TO_USEC(tick_target) / 1000;
+
+                NRF_LOG_INFO("tick_target %d", tick_target);
 
                 uint32_t err_code = ts_set_trigger(tick_target, nrf_gpiote_task_addr_get(NRF_GPIOTE_TASKS_OUT_3));
+                if(err_code != NRF_SUCCESS)
+                {
+                    NRF_LOG_INFO("err_code: %d", err_code);
+                }
                 APP_ERROR_CHECK(err_code);
             }
             else
             {
                 // Ensure pin is low when triggering is stopped
                 nrf_gpiote_task_set(NRF_GPIOTE_TASKS_CLR_3);
+                NRF_LOG_INFO("Triggering stopped");
             }
+            uint64_t time_now_ticks;
+            uint32_t time_now_msec;
+            time_now_ticks = ts_timestamp_get_ticks_u64();
+            time_now_msec = TIME_SYNC_TIMESTAMP_TO_USEC(time_now_ticks) / 1000;
+            NRF_LOG_INFO("Time: %d", time_now_msec);
+            
             break;
         default:
             APP_ERROR_CHECK_BOOL(false);
