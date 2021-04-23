@@ -94,6 +94,9 @@
 // BLE Battery service
 #include "ble_bas.h"
 
+// EMG
+#include "emg.h"
+
 
 ////////////////
 //  DEFINES   //
@@ -192,7 +195,27 @@ int main(void)
 		usr_ringbuf_init();
 		
 		// Delay before starting
-		nrf_delay_ms(2000);
+		// nrf_delay_ms(2000);
+
+		// err_code = spi_init();
+		// NRF_LOG_INFO("spi err_code; %d", err_code);
+		// NRF_LOG_FLUSH();
+
+		// nrf_delay_ms(100);
+
+		// spi_write(0x0A, 0x12);
+
+		// nrf_delay_ms(2000);
+
+		// for(int i=0; i<1000; i++)
+		// {
+		// 	spi_read(0x04);
+		// }
+
+
+		nrf_delay_ms(100);
+
+		NRF_LOG_FLUSH();
 
 		uint8_t bat = 100;
 

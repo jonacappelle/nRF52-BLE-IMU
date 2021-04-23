@@ -18,7 +18,10 @@
 			"nrf.h": "c",
 			"ble_nus.h": "c",
 			"sdk_common.h": "c",
-			"sdk_config.h": "c"
+			"sdk_config.h": "c",
+			"usr_twi.h": "c",
+			"nrf_drv_twi.h": "c",
+			"nrf_drv_spi.h": "c"
 		}
 	}
 }

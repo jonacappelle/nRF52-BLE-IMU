@@ -26,6 +26,7 @@ SRC_FILES += $(wildcard $(PROJ_DIR)/Invn/VSensor/*.c)
 
 # Source files common to all targets
 SRC_FILES += \
+  $(PROJ_DIR)/EMG/emg.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_ppi.c \
   $(SDK_ROOT)/components/ble/ble_services/ble_bas/ble_bas.c \
   $(PROJ_DIR)/ble_services/ble_tms.c \
@@ -104,7 +105,8 @@ SRC_FILES += \
   $(SDK_ROOT)/integration/nrfx/legacy/nrf_drv_twi.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_twim.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_timer.c \
-  
+  $(SDK_ROOT)/integration/nrfx/legacy/nrf_drv_spi.c \
+  $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_spim.c \
 
 
 
@@ -260,7 +262,7 @@ INC_FOLDERS += \
   $(SDK_ROOT)/components/libraries/fifo \
   $(PROJ_DIR)/ble_services \
   $(SDK_ROOT)/components/ble/ble_services/ble_bas \
-
+  $(PROJ_DIR)/EMG \
 
 
 # Libraries common to all targets
