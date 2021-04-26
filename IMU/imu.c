@@ -82,6 +82,9 @@ uint8_t imu_buffer[2048];
 
 #include "usr_util.h"
 
+
+imu_data_t imu_data;
+
 extern IMU imu;
 
 extern ble_tms_t m_tms;
@@ -401,11 +404,11 @@ nrf_gpio_pin_set(19);
 		case INV_SENSOR_TYPE_LINEAR_ACCELERATION:
 		case INV_SENSOR_TYPE_GRAVITY:
 		{
-			NRF_LOG_INFO("data event %s (mg): %d %d %d %d", inv_sensor_str(event->sensor),
-					(int)(event->data.acc.vect[0]*1000),
-					(int)(event->data.acc.vect[1]*1000),
-					(int)(event->data.acc.vect[2]*1000),
-					(int)(event->data.acc.accuracy_flag));
+			// NRF_LOG_INFO("data event %s (mg): %d %d %d %d", inv_sensor_str(event->sensor),
+			// 		(int)(event->data.acc.vect[0]*1000),
+			// 		(int)(event->data.acc.vect[1]*1000),
+			// 		(int)(event->data.acc.vect[2]*1000),
+			// 		(int)(event->data.acc.accuracy_flag));
 					
 				// New IMU data is available: count how many bytes are available
 				bytes_available++;
@@ -433,7 +436,12 @@ nrf_gpio_pin_set(19);
 					NRF_LOG_INFO("OK");
 				}
 				#endif
-					
+
+				// Save latest data in buffer
+				imu_data.accel.x =      (int16_t)((event->data.acc.vect[0]) * (1 << RAW_Q_FORMAT_ACC_COMMA_BITS));
+				imu_data.accel.y =      (int16_t)((event->data.acc.vect[1]) * (1 << RAW_Q_FORMAT_ACC_COMMA_BITS));
+				imu_data.accel.z =      (int16_t)((event->data.acc.vect[2]) * (1 << RAW_Q_FORMAT_ACC_COMMA_BITS));
+
 			break;
 		}
 		case INV_SENSOR_TYPE_GYROSCOPE:
@@ -471,32 +479,20 @@ nrf_gpio_pin_set(19);
 				}
 				#endif
 
-				ble_tms_raw_t data;
-
-				data.accel.x =      (int16_t)((event->data.acc.vect[0]) * (1 << RAW_Q_FORMAT_ACC_COMMA_BITS));
-				data.accel.y =      (int16_t)((event->data.acc.vect[1]) * (1 << RAW_Q_FORMAT_ACC_COMMA_BITS));
-				data.accel.z =      (int16_t)((event->data.acc.vect[2]) * (1 << RAW_Q_FORMAT_ACC_COMMA_BITS));
-
-				data.gyro.x =       (int16_t)((event->data.gyr.vect[0]) * (1 << RAW_Q_FORMAT_GYR_COMMA_BITS));
-				data.gyro.y =       (int16_t)((event->data.gyr.vect[1]) * (1 << RAW_Q_FORMAT_GYR_COMMA_BITS));
-				data.gyro.z =       (int16_t)((event->data.gyr.vect[2]) * (1 << RAW_Q_FORMAT_GYR_COMMA_BITS));
-
-				data.compass.y =   -(int16_t)((event->data.mag.vect[0]) * (1 << RAW_Q_FORMAT_CMP_COMMA_BITS)); // Changed axes and inverted. Corrected for rotation of axes.
-				data.compass.x =    (int16_t)((event->data.mag.vect[1]) * (1 << RAW_Q_FORMAT_CMP_COMMA_BITS)); // Changed axes. Corrected for rotation of axes.
-				data.compass.z =    (int16_t)((event->data.mag.vect[2]) * (1 << RAW_Q_FORMAT_CMP_COMMA_BITS));
-
-
-				(void)ble_tms_raw_set(&m_tms, &data);				
+				// Save latest data in buffer
+				imu_data.gyro.x =       (int16_t)((event->data.gyr.vect[0]) * (1 << RAW_Q_FORMAT_GYR_COMMA_BITS));
+				imu_data.gyro.y =       (int16_t)((event->data.gyr.vect[1]) * (1 << RAW_Q_FORMAT_GYR_COMMA_BITS));
+				imu_data.gyro.z =       (int16_t)((event->data.gyr.vect[2]) * (1 << RAW_Q_FORMAT_GYR_COMMA_BITS));
 
 			break;
 		}
 		case INV_SENSOR_TYPE_MAGNETOMETER:
 		{
-			NRF_LOG_INFO("data event %s (nT): %d %d %d %d", inv_sensor_str(event->sensor),
-					(int)(event->data.mag.vect[0]*1000),
-					(int)(event->data.mag.vect[1]*1000),
-					(int)(event->data.mag.vect[2]*1000),
-					(int)(event->data.mag.accuracy_flag));
+			// NRF_LOG_INFO("data event %s (nT): %d %d %d %d", inv_sensor_str(event->sensor),
+			// 		(int)(event->data.mag.vect[0]*1000),
+			// 		(int)(event->data.mag.vect[1]*1000),
+			// 		(int)(event->data.mag.vect[2]*1000),
+			// 		(int)(event->data.mag.accuracy_flag));
 					
 				// New IMU data is available: count how many bytes are available
 				bytes_available++;
@@ -524,6 +520,11 @@ nrf_gpio_pin_set(19);
 					NRF_LOG_INFO("OK");
 				}
 				#endif
+
+				// Save latest data in buffer
+				imu_data.mag.y =   -(int16_t)((event->data.mag.vect[0]) * (1 << RAW_Q_FORMAT_CMP_COMMA_BITS)); // Changed axes and inverted. Corrected for rotation of axes.
+				imu_data.mag.x =    (int16_t)((event->data.mag.vect[1]) * (1 << RAW_Q_FORMAT_CMP_COMMA_BITS)); // Changed axes. Corrected for rotation of axes.
+				imu_data.mag.z =    (int16_t)((event->data.mag.vect[2]) * (1 << RAW_Q_FORMAT_CMP_COMMA_BITS));
 					
 			break;
 		}
@@ -601,8 +602,6 @@ nrf_gpio_pin_set(19);
 				}
 				#endif
 
-				ble_tms_quat_t data;
-
 				float quat[4];
 				memcpy(quat, (event->data.quaternion.quat), sizeof(event->data.quaternion.quat));
 
@@ -612,20 +611,10 @@ nrf_gpio_pin_set(19);
 				p_quat[2] = float_to_fixed_quat(quat[2]);
 				p_quat[3] = float_to_fixed_quat(quat[3]);
 
-				data.w = p_quat[0];
-				data.x = p_quat[1];
-				data.y = p_quat[2];
-				data.z = p_quat[3];
-
-				uint32_t err_code;
-				// Send data
-				err_code = ble_tms_quat_set(&m_tms, &data);
-				if(err_code != NRF_SUCCESS)
-				{
-					NRF_LOG_INFO("ble_tms_quat_set err_code: %d", err_code);
-				}
-
-
+				imu_data.quat.w = p_quat[0];
+				imu_data.quat.x = p_quat[1];
+				imu_data.quat.y = p_quat[2];
+				imu_data.quat.z = p_quat[3];
 
 				break;
 			}
@@ -659,8 +648,6 @@ nrf_gpio_pin_set(19);
 				APP_ERROR_CHECK(err_code);
 			#endif
 
-
-			ble_tms_euler_t data;
 			fixed_point_t p_euler[3];
 
 			float euler[3];
@@ -672,11 +659,9 @@ nrf_gpio_pin_set(19);
 			p_euler[1] = float_to_fixed_euler(euler[1]);
 			p_euler[2] = float_to_fixed_euler(euler[2]);
 
-            data.roll   = p_euler[0];
-            data.pitch  = p_euler[1];
-            data.yaw    = p_euler[2];
-
-			(void)ble_tms_euler_set(&m_tms, &data);
+            imu_data.euler.yaw   = p_euler[0];
+            imu_data.euler.pitch  = p_euler[1];
+            imu_data.euler.roll    = p_euler[2];
 					
 			break;
 		}
@@ -1170,3 +1155,65 @@ void usr_ringbuf_init(void)
 	nrf_ringbuf_init(&m_ringbuf);
 }
 
+
+void imu_send_data()
+{
+	uint32_t err_code;
+
+	if(imu.quat6_enabled || imu.quat9_enabled)
+	{
+		ble_tms_quat_t data;
+
+		// Get last data from buffer
+		data.w = imu_data.quat.w;
+		data.x = imu_data.quat.x;
+		data.y = imu_data.quat.y;
+		data.z = imu_data.quat.z;
+
+		// Send data
+		err_code = ble_tms_quat_set(&m_tms, &data);
+		if(err_code != NRF_SUCCESS)
+		{
+			NRF_LOG_INFO("ble_tms_quat_set err_code: %d", err_code);
+		}
+	}
+	if(imu.gyro_enabled || imu.accel_enabled || imu.mag_enabled)
+	{
+		ble_tms_raw_t data;
+
+		// Get last gyro data from buffer
+		data.gyro.x = imu_data.gyro.x;
+		data.gyro.y = imu_data.gyro.y;
+		data.gyro.z = imu_data.gyro.z;
+
+		// Get last accel data from buffer
+		data.accel.x = imu_data.accel.x;
+		data.accel.y = imu_data.accel.y;
+		data.accel.z = imu_data.accel.z;
+
+		// Get last mag data from buffer
+		data.compass.x = imu_data.mag.x;
+		data.compass.y = imu_data.mag.y;
+		data.compass.z = imu_data.mag.z;
+
+		err_code = ble_tms_raw_set(&m_tms, &data);	
+		if(err_code != NRF_SUCCESS)
+		{
+			NRF_LOG_INFO("ble_tms_raw_set err_code: %d", err_code);
+		}
+	}
+	if(imu.euler_enabled)
+	{
+		ble_tms_euler_t data;
+
+		data.yaw = imu_data.euler.yaw;
+		data.pitch = imu_data.euler.pitch;
+		data.roll = imu_data.euler.roll;
+
+		err_code = ble_tms_euler_set(&m_tms, &data);
+		if(err_code != NRF_SUCCESS)
+		{
+			NRF_LOG_INFO("ble_tms_raw_set err_code: %d", err_code);
+		}
+	}
+}

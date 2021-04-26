@@ -47,6 +47,7 @@
 #include "imu_params.h"
 #include "imu.h"
 extern IMU imu;
+extern imu_data_t imu_data;
 
 // Application scheduler
 #include "app_scheduler.h"
@@ -953,7 +954,7 @@ static void ts_imu_trigger_disable(void)
 
 static void ts_evt_callback(const ts_evt_t* evt)
 {
-    NRF_LOG_INFO("ts_evt_callback");
+    // NRF_LOG_INFO("ts_evt_callback");
 
     APP_ERROR_CHECK_BOOL(evt != NULL);
 
@@ -977,7 +978,7 @@ static void ts_evt_callback(const ts_evt_t* evt)
 
                 uint32_t time;
                 time = TIME_SYNC_TIMESTAMP_TO_USEC(tick_target) / 1000;
-                NRF_LOG_INFO("target   %d", tick_target);
+                // NRF_LOG_INFO("target   %d", tick_target);
 
                 uint32_t err_code = ts_set_trigger(tick_target, nrf_gpiote_task_addr_get(NRF_GPIOTE_TASKS_OUT_3));
                 if(err_code != NRF_SUCCESS)
@@ -985,6 +986,10 @@ static void ts_evt_callback(const ts_evt_t* evt)
                     NRF_LOG_INFO("err_code: %d", err_code);
                 }
                 APP_ERROR_CHECK(err_code);
+
+
+                // Process IMU BLE packet for sending
+                imu_send_data();
             }
             else
             {
@@ -997,7 +1002,7 @@ static void ts_evt_callback(const ts_evt_t* evt)
             uint32_t time_now_msec;
             time_now_ticks = ts_timestamp_get_ticks_u64();
             time_now_msec = TIME_SYNC_TIMESTAMP_TO_USEC(time_now_ticks) / 1000;
-            NRF_LOG_INFO("now  %d", TIME_SYNC_MSEC_TO_TICK(time_now_msec));
+            // NRF_LOG_INFO("now  %d", TIME_SYNC_MSEC_TO_TICK(time_now_msec));
             
             break;
         default:

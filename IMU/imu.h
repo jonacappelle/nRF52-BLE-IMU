@@ -69,6 +69,50 @@ typedef struct imu
 }IMU;
 
 
+typedef struct
+{
+    int32_t w;
+    int32_t x;
+    int32_t y;
+    int32_t z;
+} imu_quat_t;
+
+typedef struct
+{
+    int16_t x;
+    int16_t y;
+    int16_t z;
+} imu_gyro_t;
+
+typedef struct
+{
+    int16_t x;
+    int16_t y;
+    int16_t z;
+} imu_accel_t;
+
+typedef struct
+{
+    int16_t x;
+    int16_t y;
+    int16_t z;
+} imu_mag_t;
+
+typedef struct
+{
+    int32_t roll;
+    int32_t pitch;
+    int32_t yaw;
+} imu_euler_t;
+
+typedef struct
+{
+    imu_quat_t   quat;
+    imu_gyro_t gyro;
+    imu_accel_t accel;
+    imu_mag_t mag;
+    imu_euler_t euler;
+} imu_data_t;
 
 
 uint32_t imu_init(void);
@@ -79,5 +123,6 @@ void usr_ringbuf_init(void);
 uint32_t imu_enable_sensors(IMU imu);
 void set_imu_packet_length(void);
 uint32_t IMU_buffer_bytes_available();
+void imu_send_data();
 
 #endif
