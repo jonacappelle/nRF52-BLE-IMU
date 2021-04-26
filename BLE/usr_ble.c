@@ -929,7 +929,7 @@ static void ts_imu_trigger_enable(void)
         return;
     }
 
-    // Round up to nearest second to next 2000 ms to start toggling.
+    // Round up to nearest second to next 1000 ms to start toggling.
     // If the receiver has received a valid sync packet within this time, the GPIO toggling polarity will be the same.
 
     time_now_ticks = ts_timestamp_get_ticks_u64();
@@ -961,26 +961,23 @@ static void ts_evt_callback(const ts_evt_t* evt)
     {
         case TS_EVT_SYNCHRONIZED:
             NRF_LOG_INFO("TS_EVT_SYNCHRONIZED");
-            // ts_gpio_trigger_enable();
             ts_imu_trigger_enable();
             break;
         case TS_EVT_DESYNCHRONIZED:
             NRF_LOG_INFO("TS_EVT_DESYNCHRONIZED");
-            // ts_gpio_trigger_disable();
             ts_imu_trigger_disable();
             break;
         case TS_EVT_TRIGGERED:
             // NRF_LOG_INFO("TS_EVT_TRIGGERED");
-            if (m_imu_trigger_enabled)//if (m_gpio_trigger_enabled)
+            if (m_imu_trigger_enabled)
             {
                 uint32_t tick_target;
 
-                tick_target = evt->params.triggered.tick_target + 200;
+                tick_target = evt->params.triggered.tick_target + 4;
 
                 uint32_t time;
                 time = TIME_SYNC_TIMESTAMP_TO_USEC(tick_target) / 1000;
-
-                NRF_LOG_INFO("tick_target %d", tick_target);
+                NRF_LOG_INFO("target   %d", tick_target);
 
                 uint32_t err_code = ts_set_trigger(tick_target, nrf_gpiote_task_addr_get(NRF_GPIOTE_TASKS_OUT_3));
                 if(err_code != NRF_SUCCESS)
@@ -995,11 +992,12 @@ static void ts_evt_callback(const ts_evt_t* evt)
                 nrf_gpiote_task_set(NRF_GPIOTE_TASKS_CLR_3);
                 NRF_LOG_INFO("Triggering stopped");
             }
+
             uint64_t time_now_ticks;
             uint32_t time_now_msec;
             time_now_ticks = ts_timestamp_get_ticks_u64();
             time_now_msec = TIME_SYNC_TIMESTAMP_TO_USEC(time_now_ticks) / 1000;
-            NRF_LOG_INFO("Time: %d", time_now_msec);
+            NRF_LOG_INFO("now  %d", TIME_SYNC_MSEC_TO_TICK(time_now_msec));
             
             break;
         default:
@@ -1008,7 +1006,6 @@ static void ts_evt_callback(const ts_evt_t* evt)
     }
 }
 
-// TimeSync
 static void sync_timer_init(void)
 {
     uint32_t err_code;

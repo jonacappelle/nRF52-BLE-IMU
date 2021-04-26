@@ -29,6 +29,7 @@ void gpio_init(void)
 		nrf_gpio_cfg_output(18);
 		nrf_gpio_cfg_output(19);
 		nrf_gpio_cfg_output(20);
+		nrf_gpio_cfg_output(17); // Timing TS_evt handler
 	////////////////////////////////
 		nrf_gpio_cfg_output(25);
 		nrf_gpio_pin_set(25);
