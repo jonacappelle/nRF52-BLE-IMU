@@ -68,6 +68,10 @@ bool nus_buffer_full = false;
 
 ///////////////////////////////////////////////
 #define SYNC_FREQ	2 // Hz
+
+// In increments of 2.5 ms
+#define SYNC_INTERVAL_INT_TIME	4
+
 static bool m_gpio_trigger_enabled;
 static bool m_imu_trigger_enabled;
 
@@ -974,11 +978,11 @@ static void ts_evt_callback(const ts_evt_t* evt)
             {
                 uint32_t tick_target;
 
-                tick_target = evt->params.triggered.tick_target + 4;
+                tick_target = evt->params.triggered.tick_target + SYNC_INTERVAL_INT_TIME;
 
                 uint32_t time;
                 time = TIME_SYNC_TIMESTAMP_TO_USEC(tick_target) / 1000;
-                // NRF_LOG_INFO("target   %d", tick_target);
+                NRF_LOG_INFO("target   %d", tick_target);
 
                 uint32_t err_code = ts_set_trigger(tick_target, nrf_gpiote_task_addr_get(NRF_GPIOTE_TASKS_OUT_3));
                 if(err_code != NRF_SUCCESS)

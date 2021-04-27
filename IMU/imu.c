@@ -1176,6 +1176,7 @@ void imu_send_data()
 		{
 			NRF_LOG_INFO("ble_tms_quat_set err_code: %d", err_code);
 		}
+		NRF_LOG_INFO("quat set");
 	}
 	if(imu.gyro_enabled || imu.accel_enabled || imu.mag_enabled)
 	{
