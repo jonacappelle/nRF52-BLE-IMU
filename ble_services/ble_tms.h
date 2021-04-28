@@ -180,11 +180,14 @@ typedef PACKED( struct
 
 typedef PACKED( struct
 {
-    uint16_t                  pedo_interval_ms;
-    uint16_t                  temp_interval_ms;
-    uint16_t                  compass_interval_ms;
+    bool                      gyro_enabled;
+    bool                      accel_enabled;
+    bool                      mag_enabled;
+    bool                      euler_enabled;
+    bool                      quat6_enabled;
+    bool                      quat9_enabled;
     uint16_t                  motion_freq_hz;
-    uint8_t                   wake_on_motion;
+    bool                      wom_enabled;
 }) ble_tms_config_t;
 
 #define BLE_TMS_CONFIG_PEDO_INT_MIN   100   ///< Minimum pedometer interval [ms].

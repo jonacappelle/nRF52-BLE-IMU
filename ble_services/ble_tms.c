@@ -263,6 +263,8 @@ static void on_authorize_req(ble_tms_t * p_tms, ble_evt_t * p_ble_evt)
 
     if (p_evt_rw_authorize_request->type  == BLE_GATTS_AUTHORIZE_TYPE_WRITE)
     {
+        NRF_LOG_DEBUG("BLE_GATTS_AUTHORIZE_TYPE_WRITE");
+
         if (p_evt_rw_authorize_request->request.write.handle == p_tms->config_handles.value_handle)
         {
             ble_gatts_rw_authorize_reply_params_t rw_authorize_reply;
@@ -277,16 +279,8 @@ static void on_authorize_req(ble_tms_t * p_tms, ble_evt_t * p_ble_evt)
             {
                 ble_tms_config_t * p_config = (ble_tms_config_t *)p_evt_rw_authorize_request->request.write.data;
 
-                if ( (p_config->pedo_interval_ms    < BLE_TMS_CONFIG_PEDO_INT_MIN)      ||
-                     (p_config->pedo_interval_ms    > BLE_TMS_CONFIG_PEDO_INT_MAX)      ||
-                     (p_config->temp_interval_ms    < BLE_TMS_CONFIG_TEMP_INT_MIN)      ||
-                     (p_config->temp_interval_ms    > BLE_TMS_CONFIG_TEMP_INT_MAX)      ||
-                     (p_config->compass_interval_ms < BLE_TMS_CONFIG_COMP_INT_MIN)      ||
-                     (p_config->compass_interval_ms > BLE_TMS_CONFIG_COMP_INT_MAX)      ||
-                     (p_config->motion_freq_hz      < BLE_TMS_CONFIG_MPUF_MIN)          ||
-                     (p_config->motion_freq_hz      > BLE_TMS_CONFIG_MPUF_MAX)          ||
-                  /* (p_config->wake_on_motion      < BLE_TMS_CONFIG_WOM_MIN)           || */
-                     (p_config->wake_on_motion      > BLE_TMS_CONFIG_WOM_MAX) )
+                if ( (p_config->motion_freq_hz      < BLE_TMS_CONFIG_MPUF_MIN)          ||
+                     (p_config->motion_freq_hz      > BLE_TMS_CONFIG_MPUF_MAX) )
                 {
                     valid_data = false;
                 }
@@ -319,6 +313,8 @@ static void on_authorize_req(ble_tms_t * p_tms, ble_evt_t * p_ble_evt)
                                    p_evt_rw_authorize_request->request.write.data,
                                    p_evt_rw_authorize_request->request.write.len);
             }
+
+            NRF_LOG_DEBUG("valid_data %d", valid_data);
         }
     }
 }

@@ -299,7 +299,26 @@ static void ble_tms_evt_handler(ble_tms_t        * p_tms,
 
         case BLE_TMS_EVT_CONFIG_RECEIVED:
             NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_CONFIG_RECEIVED - %d\r\n", length);
-            // APP_ERROR_CHECK_BOOL(length == sizeof(ble_tms_config_t));
+            APP_ERROR_CHECK_BOOL(length == sizeof(ble_tms_config_t));
+
+            ble_tms_config_t received_config;
+            memcpy(&received_config, p_data, length);
+
+            NRF_LOG_INFO("FREQUENCY %d Hz", received_config.motion_freq_hz);
+
+            imu.gyro_enabled = received_config.gyro_enabled;
+            imu.accel_enabled = received_config.accel_enabled;
+            imu.mag_enabled = received_config.mag_enabled;
+            imu.quat6_enabled = received_config.quat6_enabled;
+            imu.quat9_enabled = received_config.quat9_enabled;
+            imu.euler_enabled = received_config.euler_enabled;
+            imu.period = received_config.motion_freq_hz; //TODO change frequency to period
+
+
+
+            // Pass change IMU settings to event handler
+            err_code = app_sched_event_put(0, 0, imu_config_evt_sceduled);
+            APP_ERROR_CHECK(err_code);
 
             // err_code = m_motion_flash_config_store((ble_tms_config_t *)p_data);
             // APP_ERROR_CHECK(err_code);
@@ -326,11 +345,16 @@ uint32_t usr_tms_init(void)
     memset(&tms_init, 0, sizeof(tms_init));
 
     // tms_init.p_init_config = m_config;
-    tms_init.p_init_config->compass_interval_ms = 20;
-    tms_init.p_init_config->motion_freq_hz = 50;
-    tms_init.p_init_config->pedo_interval_ms = 1000;
-    tms_init.p_init_config->temp_interval_ms = 1000;
-    tms_init.p_init_config->wake_on_motion = 0;
+
+    // Init with all parameters to default value
+    tms_init.p_init_config->gyro_enabled = 0;
+    tms_init.p_init_config->accel_enabled = 0;
+    tms_init.p_init_config->mag_enabled = 0;
+    tms_init.p_init_config->euler_enabled = 0;
+    tms_init.p_init_config->quat6_enabled = 0;
+    tms_init.p_init_config->quat9_enabled = 0;
+    tms_init.p_init_config->wom_enabled = 1;
+    tms_init.p_init_config->motion_freq_hz = 100;
 
 
     tms_init.evt_handler = ble_tms_evt_handler;
