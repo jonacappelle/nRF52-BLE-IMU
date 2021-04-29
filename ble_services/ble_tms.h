@@ -178,7 +178,7 @@ typedef PACKED( struct
     uint32_t time_ms;
 }) ble_tms_pedo_t;
 
-typedef PACKED( struct
+typedef struct
 {
     bool                      gyro_enabled;
     bool                      accel_enabled;
@@ -188,7 +188,7 @@ typedef PACKED( struct
     bool                      quat9_enabled;
     uint16_t                  motion_freq_hz;
     bool                      wom_enabled;
-}) ble_tms_config_t;
+} ble_tms_config_t;
 
 #define BLE_TMS_CONFIG_PEDO_INT_MIN   100   ///< Minimum pedometer interval [ms].
 #define BLE_TMS_CONFIG_PEDO_INT_MAX  5000   ///< Maximum pedometer interval [ms].
