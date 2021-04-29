@@ -188,6 +188,7 @@ typedef struct
     bool                      quat9_enabled;
     uint16_t                  motion_freq_hz;
     bool                      wom_enabled;
+    bool                      sync_enabled;
 } ble_tms_config_t;
 
 #define BLE_TMS_CONFIG_PEDO_INT_MIN   100   ///< Minimum pedometer interval [ms].

@@ -64,6 +64,7 @@ typedef struct imu
 	bool quat9_enabled;
 	bool euler_enabled;
 	bool stop;
+    bool sync;
 	uint32_t period; // period in milliseconds (ms)
 	uint16_t packet_length;
 }IMU;

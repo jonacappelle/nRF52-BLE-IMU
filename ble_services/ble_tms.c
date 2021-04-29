@@ -275,16 +275,16 @@ static void on_authorize_req(ble_tms_t * p_tms, ble_evt_t * p_ble_evt)
             {
                 valid_data = false;
             }
-            else
-            {
-                ble_tms_config_t * p_config = (ble_tms_config_t *)p_evt_rw_authorize_request->request.write.data;
+            // else
+            // {
+            //     ble_tms_config_t * p_config = (ble_tms_config_t *)p_evt_rw_authorize_request->request.write.data;
 
-                if ( (p_config->motion_freq_hz      < BLE_TMS_CONFIG_MPUF_MIN)          ||
-                     (p_config->motion_freq_hz      > BLE_TMS_CONFIG_MPUF_MAX) )
-                {
-                    valid_data = false;
-                }
-            }
+            //     if ( (p_config->motion_freq_hz      < BLE_TMS_CONFIG_MPUF_MIN)          ||
+            //          (p_config->motion_freq_hz      > BLE_TMS_CONFIG_MPUF_MAX) )
+            //     {
+            //         valid_data = false;
+            //     }
+            // }
 
             rw_authorize_reply.type = BLE_GATTS_AUTHORIZE_TYPE_WRITE;
 

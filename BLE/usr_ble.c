@@ -64,13 +64,15 @@ extern imu_data_t imu_data;
 int countrrr = 0;
 bool nus_buffer_full = false;
 
+#define FREQ_TO_MS(x) ((1.000/x)*1000)
+
 
 
 ///////////////////////////////////////////////
 #define SYNC_FREQ	2 // Hz
 
 // In increments of 2.5 ms
-#define SYNC_INTERVAL_INT_TIME	4
+#define SYNC_INTERVAL_INT_TIME	10
 
 static bool m_gpio_trigger_enabled;
 static bool m_imu_trigger_enabled;
@@ -80,7 +82,7 @@ static bool m_imu_trigger_enabled;
 
 #define APP_BLE_CONN_CFG_TAG            1                                           /**< A tag identifying the SoftDevice BLE configuration. */
 
-#define DEVICE_NAME                     "IMU1"                               /**< Name of device. Will be included in the advertising data. */
+#define DEVICE_NAME                     "IMU2"                               /**< Name of device. Will be included in the advertising data. */
 #define NUS_SERVICE_UUID_TYPE           BLE_UUID_TYPE_VENDOR_BEGIN                  /**< UUID type for the Nordic UART Service (vendor specific). */
 
 #define APP_BLE_OBSERVER_PRIO           3                                           /**< Application's BLE observer priority. You shouldn't need to modify this value. */
@@ -174,24 +176,24 @@ static void ble_tms_evt_handler(ble_tms_t        * p_tms,
 
         case BLE_TMS_EVT_NOTIF_QUAT:
             NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_QUAT - %d\r\n", p_tms->is_quat_notif_enabled);
-            if (p_tms->is_quat_notif_enabled)
-            {
-                imu.quat6_enabled = 1;
+            // if (p_tms->is_quat_notif_enabled)
+            // {
+            //     imu.quat6_enabled = 1;
                 
-                // err_code = drv_motion_enable(DRV_MOTION_FEATURE_MASK_QUAT);
-                // APP_ERROR_CHECK(err_code);
-            }
-            else
-            {
-                imu.quat6_enabled = 0;
+            //     // err_code = drv_motion_enable(DRV_MOTION_FEATURE_MASK_QUAT);
+            //     // APP_ERROR_CHECK(err_code);
+            // }
+            // else
+            // {
+            //     imu.quat6_enabled = 0;
 
-                // err_code = drv_motion_disable(DRV_MOTION_FEATURE_MASK_QUAT);
-                // APP_ERROR_CHECK(err_code);
-            }
+            //     // err_code = drv_motion_disable(DRV_MOTION_FEATURE_MASK_QUAT);
+            //     // APP_ERROR_CHECK(err_code);
+            // }
 
-            // Pass change IMU settings to event handler
-            err_code = app_sched_event_put(0, 0, imu_config_evt_sceduled);
-            APP_ERROR_CHECK(err_code);
+            // // Pass change IMU settings to event handler
+            // err_code = app_sched_event_put(0, 0, imu_config_evt_sceduled);
+            // APP_ERROR_CHECK(err_code);
 
             break;
 
@@ -211,47 +213,47 @@ static void ble_tms_evt_handler(ble_tms_t        * p_tms,
 
         case BLE_TMS_EVT_NOTIF_RAW:
             NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_RAW - %d\r\n", p_tms->is_raw_notif_enabled);
-            if (p_tms->is_raw_notif_enabled)
-            {
-                imu.gyro_enabled = 1;
-                imu.accel_enabled = 1;
-                imu.mag_enabled = 1;
-                // err_code = drv_motion_enable(DRV_MOTION_FEATURE_MASK_RAW);
-                // APP_ERROR_CHECK(err_code);
-            }
-            else
-            {
-                imu.gyro_enabled = 0;
-                imu.accel_enabled = 0;
-                imu.mag_enabled = 0;
-                // err_code = drv_motion_disable(DRV_MOTION_FEATURE_MASK_RAW);
-                // APP_ERROR_CHECK(err_code);
-            }
+            // if (p_tms->is_raw_notif_enabled)
+            // {
+            //     imu.gyro_enabled = 1;
+            //     imu.accel_enabled = 1;
+            //     imu.mag_enabled = 1;
+            //     // err_code = drv_motion_enable(DRV_MOTION_FEATURE_MASK_RAW);
+            //     // APP_ERROR_CHECK(err_code);
+            // }
+            // else
+            // {
+            //     imu.gyro_enabled = 0;
+            //     imu.accel_enabled = 0;
+            //     imu.mag_enabled = 0;
+            //     // err_code = drv_motion_disable(DRV_MOTION_FEATURE_MASK_RAW);
+            //     // APP_ERROR_CHECK(err_code);
+            // }
 
-            // Pass change IMU settings to event handler
-            err_code = app_sched_event_put(0, 0, imu_config_evt_sceduled);
-            APP_ERROR_CHECK(err_code);
+            // // Pass change IMU settings to event handler
+            // err_code = app_sched_event_put(0, 0, imu_config_evt_sceduled);
+            // APP_ERROR_CHECK(err_code);
 
             break;
 
         case BLE_TMS_EVT_NOTIF_EULER:
             NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_EULER - %d\r\n", p_tms->is_euler_notif_enabled);
-            if (p_tms->is_euler_notif_enabled)
-            {
-                imu.euler_enabled = 1;
-                // err_code = drv_motion_enable(DRV_MOTION_FEATURE_MASK_EULER);
-                // APP_ERROR_CHECK(err_code);
-            }
-            else
-            {
-                imu.euler_enabled = 0;
-                // err_code = drv_motion_disable(DRV_MOTION_FEATURE_MASK_EULER);
-                // APP_ERROR_CHECK(err_code);
-            }
+            // if (p_tms->is_euler_notif_enabled)
+            // {
+            //     imu.euler_enabled = 1;
+            //     // err_code = drv_motion_enable(DRV_MOTION_FEATURE_MASK_EULER);
+            //     // APP_ERROR_CHECK(err_code);
+            // }
+            // else
+            // {
+            //     imu.euler_enabled = 0;
+            //     // err_code = drv_motion_disable(DRV_MOTION_FEATURE_MASK_EULER);
+            //     // APP_ERROR_CHECK(err_code);
+            // }
 
-            // Pass change IMU settings to event handler
-            err_code = app_sched_event_put(0, 0, imu_config_evt_sceduled);
-            APP_ERROR_CHECK(err_code);
+            // // Pass change IMU settings to event handler
+            // err_code = app_sched_event_put(0, 0, imu_config_evt_sceduled);
+            // APP_ERROR_CHECK(err_code);
 
             break;
 
@@ -312,19 +314,13 @@ static void ble_tms_evt_handler(ble_tms_t        * p_tms,
             imu.quat6_enabled = received_config.quat6_enabled;
             imu.quat9_enabled = received_config.quat9_enabled;
             imu.euler_enabled = received_config.euler_enabled;
-            imu.period = received_config.motion_freq_hz; //TODO change frequency to period
-
-
+            imu.period = FREQ_TO_MS(received_config.motion_freq_hz);
+            imu.sync = received_config.sync_enabled;
 
             // Pass change IMU settings to event handler
             err_code = app_sched_event_put(0, 0, imu_config_evt_sceduled);
             APP_ERROR_CHECK(err_code);
 
-            // err_code = m_motion_flash_config_store((ble_tms_config_t *)p_data);
-            // APP_ERROR_CHECK(err_code);
-
-            // err_code = m_motion_configuration_apply((ble_tms_config_t *)p_data);
-            // APP_ERROR_CHECK(err_code);
             break;
 
         default:
