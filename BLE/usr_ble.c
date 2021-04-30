@@ -66,13 +66,15 @@ bool nus_buffer_full = false;
 
 #define FREQ_TO_MS(x) ((1.000/x)*1000)
 
+uint32_t led_blink_tick = 0;
+
 
 
 ///////////////////////////////////////////////
 #define SYNC_FREQ	2 // Hz
 
 // In increments of 2.5 ms
-#define SYNC_INTERVAL_INT_TIME	10
+#define SYNC_INTERVAL_INT_TIME	4
 
 static bool m_gpio_trigger_enabled;
 static bool m_imu_trigger_enabled;
@@ -993,7 +995,7 @@ static void ts_evt_callback(const ts_evt_t* evt)
             ts_imu_trigger_disable();
             break;
         case TS_EVT_TRIGGERED:
-            // NRF_LOG_INFO("TS_EVT_TRIGGERED");
+            NRF_LOG_INFO("TS_EVT_TRIGGERED");
             if (m_imu_trigger_enabled)
             {
                 uint32_t tick_target;
@@ -1011,6 +1013,11 @@ static void ts_evt_callback(const ts_evt_t* evt)
                 }
                 APP_ERROR_CHECK(err_code);
 
+                if( (tick_target % 100) == 0)
+                {
+                    NRF_LOG_INFO("Multiple of 100 detected");
+                    nrf_gpio_pin_toggle(17);
+                }
 
                 // Process IMU BLE packet for sending
                 imu_send_data();
