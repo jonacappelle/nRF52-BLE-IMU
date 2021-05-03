@@ -184,9 +184,11 @@ int main(void)
 		timers_init();
 	
 		// Initialize IMU
+		#if IMU_ENABLED == 1
 		err_code = imu_init();
 		APP_ERROR_CHECK(err_code);
-		
+		#endif
+
 		// Initialize ringbuffer
 		usr_ringbuf_init();
 		

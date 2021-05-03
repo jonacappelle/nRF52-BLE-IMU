@@ -74,7 +74,7 @@ uint32_t led_blink_tick = 0;
 #define SYNC_FREQ	2 // Hz
 
 // In increments of 2.5 ms
-#define SYNC_INTERVAL_INT_TIME	4
+uint32_t sync_interval_int_time = 4; // Default 100 Hz transmission rate
 
 static bool m_gpio_trigger_enabled;
 static bool m_imu_trigger_enabled;
@@ -491,8 +491,20 @@ void imu_config_evt_sceduled(void * p_event_data, uint16_t event_size)
 {
 		// Enable sensor parameters based on received configuration
 		uint32_t err_code;
+
+        #if IMU_ENABLED == 1
 		err_code =  imu_enable_sensors(imu);
 		APP_ERROR_CHECK(err_code);
+        #endif
+
+
+        if(imu.period != 0)
+        {
+            sync_interval_int_time = (imu.period / 2.5);
+        }
+        
+
+        NRF_LOG_INFO("sync_interval_int_time: %d", sync_interval_int_time);
 
         // TODO
         // adc_enable(imu);
@@ -866,6 +878,11 @@ static void ble_stack_init(void)
     err_code = nrf_sdh_ble_default_cfg_set(APP_BLE_CONN_CFG_TAG, &ram_start);
     APP_ERROR_CHECK(err_code);
 
+    ble_cfg_t ble_cfg;
+    memset(&ble_cfg, 0, sizeof(ble_cfg));
+    ble_cfg.conn_cfg.conn_cfg_tag = APP_BLE_CONN_CFG_TAG;
+    ble_cfg.conn_cfg.params.gatts_conn_cfg.hvn_tx_queue_size = 30; // Number of packets in queue
+
     // Enable BLE stack.
     err_code = nrf_sdh_ble_enable(&ram_start);
     APP_ERROR_CHECK(err_code);
@@ -1009,7 +1026,7 @@ static void ts_evt_callback(const ts_evt_t* evt)
             {
                 
 
-                tick_target = evt->params.triggered.tick_target + SYNC_INTERVAL_INT_TIME;
+                tick_target = evt->params.triggered.tick_target + sync_interval_int_time;
 
                 uint32_t time;
                 time = TIME_SYNC_TIMESTAMP_TO_USEC(tick_target) / 1000;
@@ -1029,7 +1046,7 @@ static void ts_evt_callback(const ts_evt_t* evt)
 
                 if(tick_target <= (time_now_ticks/1000))
                 {
-                    tick_target = evt->params.triggered.tick_target + SYNC_INTERVAL_INT_TIME;
+                    tick_target = evt->params.triggered.tick_target + sync_interval_int_time;
                     NRF_LOG_INFO("TimeSync tick_target <= ticks_now");
                 }
                 // NRF_LOG_INFO("now   %d  tick_start   %d  tick_target  %d  last_sync   %d", time_now_ticks/1000, evt->params.triggered.tick_start, evt->params.triggered.tick_target, evt->params.triggered.last_sync);

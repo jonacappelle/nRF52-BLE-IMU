@@ -7,6 +7,8 @@
 /* Interrupt pin number */
 #define INT_PIN	8
 
+#define IMU_ENABLED 0
+
 #define COSTUM_BOARD    0
 #define NRF_DEV_BOARD   1
 
