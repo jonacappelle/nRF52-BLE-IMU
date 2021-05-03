@@ -878,10 +878,18 @@ static void ble_stack_init(void)
     err_code = nrf_sdh_ble_default_cfg_set(APP_BLE_CONN_CFG_TAG, &ram_start);
     APP_ERROR_CHECK(err_code);
 
+    // CHANGES
+    // Configure BLE buffer: store more packets than usable in one connection interval in BLE buffer.
     ble_cfg_t ble_cfg;
-    memset(&ble_cfg, 0, sizeof(ble_cfg));
-    ble_cfg.conn_cfg.conn_cfg_tag = APP_BLE_CONN_CFG_TAG;
-    ble_cfg.conn_cfg.params.gatts_conn_cfg.hvn_tx_queue_size = 30; // Number of packets in queue
+
+    memset(&ble_cfg, 0, sizeof ble_cfg);
+    ble_cfg.conn_cfg.conn_cfg_tag                     = APP_BLE_CONN_CFG_TAG;
+    ble_cfg.conn_cfg.params.gatts_conn_cfg.hvn_tx_queue_size = 20;
+    err_code = sd_ble_cfg_set(BLE_CONN_CFG_GATTS, &ble_cfg, ram_start);
+    APP_ERROR_CHECK(err_code);
+    NRF_LOG_INFO("sd_ble_cfg_set err_code: %d", err_code);
+
+
 
     // Enable BLE stack.
     err_code = nrf_sdh_ble_enable(&ram_start);

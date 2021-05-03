@@ -15,7 +15,7 @@ void gpio_init(void)
 //    APP_ERROR_CHECK(err_code);
 
 
-	#ifdef IMU_ENABLED == 1
+	#if IMU_ENABLED == 1
     nrf_drv_gpiote_in_config_t in_config = GPIOTE_CONFIG_IN_SENSE_LOTOHI(true); // Low to high trigger
     in_config.pull = NRF_GPIO_PIN_PULLUP;
 
