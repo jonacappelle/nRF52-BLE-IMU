@@ -290,6 +290,8 @@ int main(void)
 			
 			// Check for activity of CPU
 			nrf_gpio_pin_toggle(18);
+
+			// sleep_mode_enter();
 			
 			/* Enter low power mode when idle */
 			// idle_state_handle();

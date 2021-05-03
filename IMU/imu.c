@@ -385,8 +385,6 @@ nrf_gpio_pin_set(19);
 
 	switch(INV_SENSOR_ID_TO_TYPE(event->sensor)) {
 
-		NRF_LOG_INFO("IMU Callback");
-		NRF_LOG_FLUSH();
 
 		case INV_SENSOR_TYPE_RAW_ACCELEROMETER:
 		case INV_SENSOR_TYPE_RAW_GYROSCOPE:
@@ -1077,6 +1075,7 @@ uint32_t imu_init(void)
 
 		// imu_enable_sensors(imu);
 
+		NRF_LOG_INFO("DMP Image loaded");
 
 
 		return NRF_SUCCESS;
@@ -1216,5 +1215,18 @@ void imu_send_data()
 		{
 			NRF_LOG_INFO("ble_tms_raw_set err_code: %d", err_code);
 		}
+	}
+	if(imu.adc)
+	{
+		ble_tms_adc_t data;
+
+		data.raw[0] = 1;
+
+		err_code = ble_tms_adc_set(&m_tms, &data);
+		if(err_code != NRF_SUCCESS)
+		{
+			NRF_LOG_INFO("ble_tms_adc_set err_code: %d", err_code);
+		}
+
 	}
 }

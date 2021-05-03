@@ -5,7 +5,25 @@
 #include <stdbool.h>
 
 /* Interrupt pin number */
-#define INT_PIN	2
+#define INT_PIN	8
+
+#define COSTUM_BOARD    0
+#define NRF_DEV_BOARD   1
+
+#if COSTUM_BOARD == 1
+#define USR_TWI_SCL 15
+#define USR_TWI_SDA 14
+#define USR_RX_PIN_NUMBER   26
+#define USR_TX_PIN_NUMBER   27
+#endif
+#if NRF_DEV_BOARD == 1
+#define USR_TWI_SCL 27
+#define USR_TWI_SDA 26
+#define USR_RX_PIN_NUMBER  8
+#define USR_TX_PIN_NUMBER  6
+#endif
+
+
 
 #include "usr_util.h"
 
@@ -67,6 +85,7 @@ typedef struct imu
     bool sync;
 	uint32_t period; // period in milliseconds (ms)
 	uint16_t packet_length;
+    bool adc;
 }IMU;
 
 

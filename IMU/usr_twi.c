@@ -1,5 +1,5 @@
 #include "usr_twi.h"
-
+#include "imu.h"
 
 /* TWI instance. */
 //#define MAX_PENDING_TRANSACTIONS    5
@@ -26,8 +26,8 @@ uint32_t twi_open (void)
 
 	
     const nrf_drv_twi_config_t twi_imu_config = {
-       .scl                = ARDUINO_SCL_PIN,		// PIN 27
-       .sda                = ARDUINO_SDA_PIN,		// PIN 26
+       .scl                = USR_TWI_SCL,		// PIN 27
+       .sda                = USR_TWI_SDA,		// PIN 26
        .frequency          = NRF_DRV_TWI_FREQ_400K,
        .interrupt_priority = APP_IRQ_PRIORITY_LOWEST,
        .clear_bus_init     = false

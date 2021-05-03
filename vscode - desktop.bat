@@ -18,7 +18,8 @@ set JAVA=C:/Program Files/Java/jre1.8.0_281/bin/java.exe
 
 rem Serial numbers of nRF development boards
 set PCA10056_SN=000000000
-set PCA10040_SN=682896763
+set PCA10040_SN=682242161
+set PCA10040_SN=261004954
 
 start "C:/Users/JonaCappelle/AppData/Local/Programs/Microsoft VS Code/Code.exe" workspace.code-workspace
 exit

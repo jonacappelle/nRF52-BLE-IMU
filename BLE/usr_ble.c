@@ -318,6 +318,8 @@ static void ble_tms_evt_handler(ble_tms_t        * p_tms,
             imu.euler_enabled = received_config.euler_enabled;
             imu.period = FREQ_TO_MS(received_config.motion_freq_hz);
             imu.sync = received_config.sync_enabled;
+            imu.stop = received_config.stop;
+            imu.adc = received_config.adc_enabled;
 
             // Pass change IMU settings to event handler
             err_code = app_sched_event_put(0, 0, imu_config_evt_sceduled);
@@ -491,6 +493,9 @@ void imu_config_evt_sceduled(void * p_event_data, uint16_t event_size)
 		uint32_t err_code;
 		err_code =  imu_enable_sensors(imu);
 		APP_ERROR_CHECK(err_code);
+
+        // TODO
+        // adc_enable(imu);
 }
 
 
@@ -958,6 +963,7 @@ static void ts_imu_trigger_enable(void)
 
     // Round up to nearest second to next 1000 ms to start toggling.
     // If the receiver has received a valid sync packet within this time, the GPIO toggling polarity will be the same.
+    // If Sync packet is received within this timestamp - the peripherals will trigger at the same time.
 
     time_now_ticks = ts_timestamp_get_ticks_u64();
     time_now_msec = TIME_SYNC_TIMESTAMP_TO_USEC(time_now_ticks) / 1000;
@@ -995,16 +1001,19 @@ static void ts_evt_callback(const ts_evt_t* evt)
             ts_imu_trigger_disable();
             break;
         case TS_EVT_TRIGGERED:
-            NRF_LOG_INFO("TS_EVT_TRIGGERED");
+            // NRF_LOG_INFO("TS_EVT_TRIGGERED");
+            {
+            uint32_t tick_target;
+
             if (m_imu_trigger_enabled)
             {
-                uint32_t tick_target;
+                
 
                 tick_target = evt->params.triggered.tick_target + SYNC_INTERVAL_INT_TIME;
 
                 uint32_t time;
                 time = TIME_SYNC_TIMESTAMP_TO_USEC(tick_target) / 1000;
-                NRF_LOG_INFO("target   %d", tick_target);
+                // NRF_LOG_INFO("target   %d", tick_target);
 
                 uint32_t err_code = ts_set_trigger(tick_target, nrf_gpiote_task_addr_get(NRF_GPIOTE_TASKS_OUT_3));
                 if(err_code != NRF_SUCCESS)
@@ -1013,13 +1022,26 @@ static void ts_evt_callback(const ts_evt_t* evt)
                 }
                 APP_ERROR_CHECK(err_code);
 
+                uint64_t time_now_ticks;
+                uint32_t time_now_msec;
+                time_now_ticks = TIME_SYNC_MSEC_TO_TICK(TIME_SYNC_TIMESTAMP_TO_USEC(ts_timestamp_get_ticks_u64()));
+                // time_now_msec = TIME_SYNC_TIMESTAMP_TO_USEC(time_now_ticks) / 1000;
+
+                if(tick_target <= (time_now_ticks/1000))
+                {
+                    tick_target = evt->params.triggered.tick_target + SYNC_INTERVAL_INT_TIME;
+                    NRF_LOG_INFO("TimeSync tick_target <= ticks_now");
+                }
+                // NRF_LOG_INFO("now   %d  tick_start   %d  tick_target  %d  last_sync   %d", time_now_ticks/1000, evt->params.triggered.tick_start, evt->params.triggered.tick_target, evt->params.triggered.last_sync);
+
                 if( (tick_target % 100) == 0)
                 {
-                    NRF_LOG_INFO("Multiple of 100 detected");
+                    // NRF_LOG_INFO("Multiple of 100 ticks detected");
                     nrf_gpio_pin_toggle(17);
                 }
 
                 // Process IMU BLE packet for sending
+                // Only send data when imu.stop is not called
                 imu_send_data();
             }
             else
@@ -1028,13 +1050,7 @@ static void ts_evt_callback(const ts_evt_t* evt)
                 nrf_gpiote_task_set(NRF_GPIOTE_TASKS_CLR_3);
                 NRF_LOG_INFO("Triggering stopped");
             }
-
-            uint64_t time_now_ticks;
-            uint32_t time_now_msec;
-            time_now_ticks = ts_timestamp_get_ticks_u64();
-            time_now_msec = TIME_SYNC_TIMESTAMP_TO_USEC(time_now_ticks) / 1000;
-            // NRF_LOG_INFO("now  %d", TIME_SYNC_MSEC_TO_TICK(time_now_msec));
-            
+            }
             break;
         default:
             APP_ERROR_CHECK_BOOL(false);
@@ -1238,8 +1254,8 @@ static void uart_init(void)
     uint32_t                     err_code;
     app_uart_comm_params_t const comm_params =
     {
-        .rx_pin_no    = RX_PIN_NUMBER,			// 26
-        .tx_pin_no    = TX_PIN_NUMBER,			// 27
+        .rx_pin_no    = USR_RX_PIN_NUMBER,			// 26
+        .tx_pin_no    = USR_TX_PIN_NUMBER,			// 27
         .rts_pin_no   = RTS_PIN_NUMBER,
         .cts_pin_no   = CTS_PIN_NUMBER,
         .flow_control = APP_UART_FLOW_CONTROL_DISABLED,
