@@ -321,6 +321,9 @@ static void ble_tms_evt_handler(ble_tms_t        * p_tms,
             imu.stop = received_config.stop;
             imu.adc = received_config.adc_enabled;
 
+            // Stop syncing
+            m_imu_trigger_enabled = imu.sync;
+
             NRF_LOG_INFO("received_config.motion_freq_hz %d", received_config.motion_freq_hz);
             NRF_LOG_INFO("imu.period %d", imu.period);
             NRF_LOG_INFO("ADC received config: %d", received_config.adc_enabled);
@@ -986,15 +989,15 @@ static void ts_imu_trigger_enable(void)
         return;
     }
 
-    // Round up to nearest second to next 1000 ms to start toggling.
+    // Round up to nearest second to next 2000 ms to start toggling.
     // If the receiver has received a valid sync packet within this time, the GPIO toggling polarity will be the same.
     // If Sync packet is received within this timestamp - the peripherals will trigger at the same time.
 
     time_now_ticks = ts_timestamp_get_ticks_u64();
     time_now_msec = TIME_SYNC_TIMESTAMP_TO_USEC(time_now_ticks) / 1000;
 
-    time_target = TIME_SYNC_MSEC_TO_TICK(time_now_msec) + (1000 * 2);
-    time_target = (time_target / 1000) * 1000;
+    time_target = TIME_SYNC_MSEC_TO_TICK(time_now_msec) + (2000 * 2);
+    time_target = (time_target / 2000) * 2000;
 
     err_code = ts_set_trigger(time_target, nrf_gpiote_task_addr_get(NRF_GPIOTE_TASKS_OUT_3));
     APP_ERROR_CHECK(err_code);
@@ -1073,6 +1076,9 @@ static void ts_evt_callback(const ts_evt_t* evt)
             {
                 // Ensure pin is low when triggering is stopped
                 nrf_gpiote_task_set(NRF_GPIOTE_TASKS_CLR_3);
+
+                nrf_gpio_pin_clear(17);
+
                 NRF_LOG_INFO("Triggering stopped");
             }
             }

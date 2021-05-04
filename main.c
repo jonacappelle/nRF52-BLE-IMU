@@ -187,6 +187,7 @@ int main(void)
 		#if IMU_ENABLED == 1
 		err_code = imu_init();
 		APP_ERROR_CHECK(err_code);
+		NRF_LOG_INFO("IMU Init");
 		#endif
 
 		// Initialize ringbuffer

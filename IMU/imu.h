@@ -5,7 +5,7 @@
 #include <stdbool.h>
 
 /* Interrupt pin number */
-#define INT_PIN	8
+
 
 #define IMU_ENABLED 1
 
@@ -13,12 +13,14 @@
 #define NRF_DEV_BOARD   1
 
 #if COSTUM_BOARD == 1
+#define INT_PIN	8
 #define USR_TWI_SCL 15
 #define USR_TWI_SDA 14
 #define USR_RX_PIN_NUMBER   26
 #define USR_TX_PIN_NUMBER   27
 #endif
 #if NRF_DEV_BOARD == 1
+#define INT_PIN	2
 #define USR_TWI_SCL 27
 #define USR_TWI_SDA 26
 #define USR_RX_PIN_NUMBER  8

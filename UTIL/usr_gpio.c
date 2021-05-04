@@ -1,6 +1,10 @@
 #include "usr_gpio.h"
 #include "imu.h"
 
+#include "nrf_log.h"
+#include "nrf_log_ctrl.h"
+#include "nrf_log_default_backends.h"
+
 
 
 /**
@@ -23,6 +27,8 @@ void gpio_init(void)
     APP_ERROR_CHECK(err_code);
 
     nrf_drv_gpiote_in_event_enable(INT_PIN, true);
+
+	NRF_LOG_INFO("IMU GPIO Init");
 	#endif
 	
 	
