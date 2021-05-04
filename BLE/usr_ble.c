@@ -316,10 +316,15 @@ static void ble_tms_evt_handler(ble_tms_t        * p_tms,
             imu.quat6_enabled = received_config.quat6_enabled;
             imu.quat9_enabled = received_config.quat9_enabled;
             imu.euler_enabled = received_config.euler_enabled;
-            imu.period = FREQ_TO_MS(received_config.motion_freq_hz);
+            if(received_config.motion_freq_hz != 0) imu.period = FREQ_TO_MS(received_config.motion_freq_hz);
             imu.sync = received_config.sync_enabled;
             imu.stop = received_config.stop;
             imu.adc = received_config.adc_enabled;
+
+            NRF_LOG_INFO("received_config.motion_freq_hz %d", received_config.motion_freq_hz);
+            NRF_LOG_INFO("imu.period %d", imu.period);
+            NRF_LOG_INFO("ADC received config: %d", received_config.adc_enabled);
+            NRF_LOG_INFO("ADC: %d", imu.adc);
 
             // Pass change IMU settings to event handler
             err_code = app_sched_event_put(0, 0, imu_config_evt_sceduled);
@@ -497,12 +502,7 @@ void imu_config_evt_sceduled(void * p_event_data, uint16_t event_size)
 		APP_ERROR_CHECK(err_code);
         #endif
 
-
-        if(imu.period != 0)
-        {
-            sync_interval_int_time = (imu.period / 2.5);
-        }
-        
+        sync_interval_int_time = (imu.period / 2.5);        
 
         NRF_LOG_INFO("sync_interval_int_time: %d", sync_interval_int_time);
 

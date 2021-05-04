@@ -1228,7 +1228,7 @@ void imu_send_data()
 			NRF_LOG_INFO("ble_tms_adc_set err_code: %d", err_code);
 		}
 
-		// NRF_LOG_INFO("ble_tms_adc_set %d", err_code);
+		NRF_LOG_INFO("ble_tms_adc_set %d", err_code);
 
 		// nrf_gpio_pin_toggle(17);
 
