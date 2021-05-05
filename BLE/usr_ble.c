@@ -507,6 +507,15 @@ void imu_config_evt_sceduled(void * p_event_data, uint16_t event_size)
 
         sync_interval_int_time = (imu.period / 2.5);        
 
+        if(m_imu_trigger_enabled) 
+        {
+            NRF_LOG_INFO("if(m_imu_trigger_enabled) is true");
+            ts_imu_trigger_enable();
+        }
+
+        // Notify TimeSync to start synchronizing again
+        ts_state_set(m_imu_trigger_enabled);
+
         NRF_LOG_INFO("sync_interval_int_time: %d", sync_interval_int_time);
 
         // TODO
@@ -977,8 +986,10 @@ static void ts_gpio_trigger_disable(void)
 }
 
 
-static void ts_imu_trigger_enable(void)
+void ts_imu_trigger_enable(void)
 {
+    NRF_LOG_INFO("ts_imu_trigger_enable()");
+
     uint64_t time_now_ticks;
     uint32_t time_now_msec;
     uint32_t time_target;
@@ -1009,6 +1020,7 @@ static void ts_imu_trigger_enable(void)
 
 static void ts_imu_trigger_disable(void)
 {
+    NRF_LOG_INFO("ts_imu_trigger_disable()");
     m_imu_trigger_enabled = false;
 }
 

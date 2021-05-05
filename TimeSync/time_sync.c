@@ -156,6 +156,17 @@ static nrf_atomic_flag_t m_invalid_tx_timing = false;
 
 static bool m_synchronized = false;
 
+///  CHANGES ////////////////////////
+bool ts_state_get(void)
+{
+    return m_synchronized;
+}
+void ts_state_set(bool state)
+{
+    m_synchronized = state;
+}
+/////////////////////////////////////
+
 static nrf_atomic_u32_t  m_master_counter = 0;
 static nrf_atomic_u32_t  m_rcv_count      = 0;
 
