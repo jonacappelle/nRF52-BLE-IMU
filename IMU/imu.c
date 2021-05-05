@@ -863,7 +863,9 @@ void set_imu_packet_length()
 uint32_t imu_enable_sensors(IMU imu)
 {
 		int rc = 0;
-	
+
+		uint32_t period = 4; // 225 Hz
+
 		if(imu.stop)
 		{
 		// Stop all sensors before enabling the new ones
@@ -886,7 +888,7 @@ uint32_t imu_enable_sensors(IMU imu)
 		NRF_LOG_INFO("Start QUAT6");
 		rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_GAME_ROTATION_VECTOR);
 		check_rc(rc);
-		rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_GAME_ROTATION_VECTOR, imu.period);
+		rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_GAME_ROTATION_VECTOR, period);
 		check_rc(rc);
 		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_GAME_ROTATION_VECTOR);
 		check_rc(rc);
@@ -903,7 +905,7 @@ uint32_t imu_enable_sensors(IMU imu)
 		NRF_LOG_INFO("Start QUAT9");
 		rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_ROTATION_VECTOR);
 		check_rc(rc);
-		rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_ROTATION_VECTOR, imu.period);
+		rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_ROTATION_VECTOR, period);
 		check_rc(rc);
 		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_ROTATION_VECTOR);
 		check_rc(rc);
@@ -920,7 +922,7 @@ uint32_t imu_enable_sensors(IMU imu)
 		NRF_LOG_INFO("Start 9DoF EULER");
 		rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_ORIENTATION);
 		check_rc(rc);
-		rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_ORIENTATION, imu.period);
+		rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_ORIENTATION, period);
 		check_rc(rc);
 		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_ORIENTATION);
 		check_rc(rc);
@@ -937,7 +939,7 @@ uint32_t imu_enable_sensors(IMU imu)
 		NRF_LOG_INFO("Start GYRO");
 		rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_GYROSCOPE);
 		check_rc(rc);
-		rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_GYROSCOPE, imu.period);
+		rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_GYROSCOPE, period);
 		check_rc(rc);
 		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_GYROSCOPE);
 		check_rc(rc);
@@ -954,7 +956,7 @@ uint32_t imu_enable_sensors(IMU imu)
 		NRF_LOG_INFO("Start ACCEL");
 		rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_ACCELEROMETER);
 		check_rc(rc);
-		rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_ACCELEROMETER, imu.period);
+		rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_ACCELEROMETER, period);
 		check_rc(rc);
 		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_ACCELEROMETER);
 		check_rc(rc);
@@ -971,7 +973,7 @@ uint32_t imu_enable_sensors(IMU imu)
 		NRF_LOG_INFO("Start MAG");
 		rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_MAGNETOMETER);
 		check_rc(rc);
-		rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_MAGNETOMETER, imu.period);
+		rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_MAGNETOMETER, period);
 		check_rc(rc);
 		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_MAGNETOMETER);
 		check_rc(rc);
