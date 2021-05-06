@@ -21,7 +21,9 @@
 			"sdk_config.h": "c",
 			"usr_twi.h": "c",
 			"nrf_drv_twi.h": "c",
-			"nrf_drv_spi.h": "c"
+			"nrf_drv_spi.h": "c",
+			"dataconverter.h": "c",
+			"imu_params.h": "c"
 		}
 	}
 }

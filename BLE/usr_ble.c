@@ -55,8 +55,13 @@ extern imu_data_t imu_data;
 // Add TMS service for transmitting IMU data
 #include "ble_tms.h"
 
+ble_tms_t m_tms;
+
 // BLE Battery service
 #include "ble_bas.h"
+
+BLE_BAS_DEF(m_bas);                                                 /**< Structure used to identify the battery service. */
+
 
 #include "usr_util.h"
 
@@ -342,71 +347,10 @@ static void ble_tms_evt_handler(ble_tms_t        * p_tms,
 
 }
 
-ble_tms_t              m_tms;
-
-static ble_tms_config_t     * m_config;
-
-uint32_t usr_tms_init(void)
-{
-    uint32_t err_code;
-    ble_tms_init_t        tms_init;
-
-    memset(&tms_init, 0, sizeof(tms_init));
-
-    // tms_init.p_init_config = m_config;
-
-    // Init with all parameters to default value
-    tms_init.p_init_config->gyro_enabled = 0;
-    tms_init.p_init_config->accel_enabled = 0;
-    tms_init.p_init_config->mag_enabled = 0;
-    tms_init.p_init_config->euler_enabled = 0;
-    tms_init.p_init_config->quat6_enabled = 0;
-    tms_init.p_init_config->quat9_enabled = 0;
-    tms_init.p_init_config->wom_enabled = 1;
-    tms_init.p_init_config->motion_freq_hz = 100;
-
-
-    tms_init.evt_handler = ble_tms_evt_handler;
-
-    NRF_LOG_INFO("motion_service_init: ble_tms_init \r\n");
-    NRF_LOG_DEBUG("ble_tms_init");
-    err_code = ble_tms_init(&m_tms, &tms_init);
-    if (err_code != NRF_SUCCESS)
-    {
-        NRF_LOG_ERROR("FAILED - %d\r\n", err_code);
-        return err_code;
-    }
-}
 
 
 
-
-BLE_BAS_DEF(m_bas);                                                 /**< Structure used to identify the battery service. */
-
-uint32_t usr_bas_init(void)
-{
-    uint32_t err_code;
-    ble_bas_init_t     bas_init;
-    
-    // Initialize Battery Service.
-    memset(&bas_init, 0, sizeof(bas_init));
-
-    bas_init.evt_handler          = NULL;
-    bas_init.support_notification = true;
-    bas_init.p_report_ref         = NULL;
-    bas_init.initial_batt_level   = 100;
-
-    // Here the sec level for the Battery Service can be changed/increased.
-    bas_init.bl_rd_sec        = SEC_OPEN;
-    bas_init.bl_cccd_wr_sec   = SEC_OPEN;
-    bas_init.bl_report_rd_sec = SEC_OPEN;
-
-    err_code = ble_bas_init(&m_bas, &bas_init);
-    APP_ERROR_CHECK(err_code);
-}
-
-
-void battery_level_update(uint8_t battery_level)
+void batt_level_update(uint8_t battery_level)
 {
     ret_code_t err_code;
 
@@ -421,11 +365,6 @@ void battery_level_update(uint8_t battery_level)
         APP_ERROR_HANDLER(err_code);
     }
 }
-
-
-
-
-
 
 
 
@@ -480,6 +419,18 @@ static void gap_params_init(void)
 }
 
 
+static void print_sync_time()
+{
+    uint64_t time_now_ticks;
+    uint32_t time_now_msec;
+    uint32_t time_ticks;
+
+    time_now_ticks = ts_timestamp_get_ticks_u64();
+    time_now_msec = TIME_SYNC_TIMESTAMP_TO_USEC(time_now_ticks) / 1000;
+    time_ticks = TIME_SYNC_MSEC_TO_TICK(time_now_msec);
+    NRF_LOG_INFO("Time: ticks %d - ms %d", time_ticks, time_now_msec);
+}
+
 // Event handler DIY
 /**@brief GPIOTE sceduled handler, executed in main-context.
  */
@@ -492,28 +443,16 @@ void imu_config_evt_sceduled(void * p_event_data, uint16_t event_size)
         imu_clear_buff();
 
         #if IMU_ENABLED == 1
-		err_code =  imu_enable_sensors(imu);
+		err_code =  imu_enable_sensors(&imu);
 		APP_ERROR_CHECK(err_code);
         #endif
 
         sync_interval_int_time = (imu.period / 2.5);        
 
-        // if(m_imu_trigger_enabled) 
-        // {
-        //     NRF_LOG_INFO("if(m_imu_trigger_enabled) is true");
-        //     ts_imu_trigger_enable();
-        // }
+        // Temp for debugging
+        print_sync_time();
 
-    uint64_t time_now_ticks;
-    uint32_t time_now_msec;
-    uint32_t time_target;
-
-    time_now_ticks = ts_timestamp_get_ticks_u64();
-    time_now_msec = TIME_SYNC_TIMESTAMP_TO_USEC(time_now_ticks) / 1000;
-    time_target = TIME_SYNC_MSEC_TO_TICK(time_now_msec);
-    NRF_LOG_INFO("Time_target (ticks) %d", time_target);
-
-    NRF_LOG_INFO("ime.sync_start_time %d", imu.sync_start_time);
+        NRF_LOG_INFO("ime.sync_start_time %d", imu.sync_start_time);
 
         if( ( imu.sync ) && ( imu.sync_start_time != 0) )
         {
@@ -524,12 +463,9 @@ void imu_config_evt_sceduled(void * p_event_data, uint16_t event_size)
             m_imu_trigger_enabled = 0;
         }
 
-        // Notify TimeSync to start synchronizing again
-        // ts_state_set(m_imu_trigger_enabled);
-
         NRF_LOG_INFO("sync_interval_int_time: %d", sync_interval_int_time);
 
-        // TODO
+        // TODO: ADC needs to be implemented
         // adc_enable(imu);
 }
 
@@ -544,139 +480,38 @@ void imu_config_evt_sceduled(void * p_event_data, uint16_t event_size)
 /**@snippet [Handling the data received over BLE] */
 static void nus_data_handler(ble_nus_evt_t * p_evt)
 {
-		uint32_t err_code;
+    uint32_t err_code;
 	
     switch (p_evt->type)
     {
-		
-			case BLE_NUS_EVT_RX_DATA:
-			{
-						uint8_t len = p_evt->params.rx_data.length;
-						uint8_t buffer[len];
-				
+        case BLE_NUS_EVT_RX_DATA:				
+                // Pass change IMU settings to event handler
+                err_code = app_sched_event_put(0, 0, imu_config_evt_sceduled);
+                APP_ERROR_CHECK(err_code);
+            break;
+                
+            // Added //
+            // When BLE NUS
+        case BLE_NUS_EVT_TX_RDY:
+                nus_buffer_full = false;
+//				NRF_LOG_INFO("BLE_NUS_EVT_TX_RDY");
+            break;
+        case BLE_NUS_EVT_COMM_STARTED:
+                NRF_LOG_DEBUG("BLE_NUS_EVT_COMM_STARTED");
+            break;
+        case BLE_NUS_EVT_COMM_STOPPED:
+                NRF_LOG_DEBUG("BLE_NUS_EVT_COMM_STOPPED");
+            break;
 
-						// Copy data into buffer
-						memcpy(buffer, p_evt->params.rx_data.p_data, len);
-				
-					NRF_LOG_INFO("BLE_NUS_EVT_RX_DATA: %X %X len: %d", buffer[0], buffer[1], len);
-				
-				
-						// Reset all params to 0 to start with
-						imu.gyro_enabled = 0;
-						imu.accel_enabled = 0;
-						imu.mag_enabled = 0;
-						imu.quat6_enabled = 0;
-						imu.quat9_enabled = 0;
-						imu.euler_enabled = 0;
-			
-						for(uint8_t i=0; i<len; i++)
-						{
-							uint8_t temp = buffer[i];
-							
-							// Set struct parameters based on what configuration is set at central
-							switch (temp)
-							{
-									case ENABLE_QUAT6:
-										imu.quat6_enabled = 1;
-										NRF_LOG_INFO("ENABLE_QUAT6 Received");
-										break;
-
-									case ENABLE_QUAT9:
-										imu.quat9_enabled = 1;
-										NRF_LOG_INFO("ENABLE_QUAT9 Received");
-										break;
-									
-									case ENABLE_EULER:
-										imu.euler_enabled = 1;
-										NRF_LOG_INFO("ENABLE_EULER Received");
-										break;
-									
-									case ENABLE_GYRO:
-										imu.gyro_enabled = 1;
-										NRF_LOG_INFO("ENABLE_GYRO Received");
-										break;
-									
-									case ENABLE_ACCEL:
-										imu.accel_enabled = 1;
-										NRF_LOG_INFO("ENABLE_ACCEL Received");
-										break;
-									
-									case ENABLE_MAG:
-										imu.mag_enabled = 1;
-										NRF_LOG_INFO("ENABLE_MAG Received");
-										break;
-									
-									case STOP_IMU:
-										imu.stop = 1;
-										NRF_LOG_INFO("STOP_IMU Received");
-										break;
-									
-									default:
-										imu.gyro_enabled = 0;
-										imu.accel_enabled = 0;
-										imu.mag_enabled = 0;
-										imu.quat6_enabled = 0;
-										imu.quat9_enabled = 0;
-										imu.euler_enabled = 0;
-										NRF_LOG_INFO("Unknown Config Received");
-										break;
-							}
-						}
-						
-						set_imu_packet_length();
-						
-						// Pass change IMU settings to event handler
-						err_code = app_sched_event_put(0, 0, imu_config_evt_sceduled);
-						APP_ERROR_CHECK(err_code);
-						
-						
-//					NRF_LOG_DEBUG("Received data from BLE NUS. Writing data on UART.");
-//					NRF_LOG_HEXDUMP_DEBUG(p_evt->params.rx_data.p_data, p_evt->params.rx_data.length);
-
-//					for (uint32_t i = 0; i < p_evt->params.rx_data.length; i++)
-//					{
-//							do
-//							{
-//									err_code = app_uart_put(p_evt->params.rx_data.p_data[i]);
-//									if ((err_code != NRF_SUCCESS) && (err_code != NRF_ERROR_BUSY))
-//									{
-//											NRF_LOG_ERROR("Failed receiving NUS message. Error 0x%x. ", err_code);
-//											APP_ERROR_CHECK(err_code);
-//									}
-//							} while (err_code == NRF_ERROR_BUSY);
-//					}
-//					if (p_evt->params.rx_data.p_data[p_evt->params.rx_data.length - 1] == '\r')
-//					{
-//							while (app_uart_put('\n') == NRF_ERROR_BUSY);
-//					}
-					break;
-				}
-				// Added //
-				// When BLE NUS
-			case BLE_NUS_EVT_TX_RDY:
-						nus_buffer_full = false;
-//						NRF_LOG_INFO("BLE_NUS_EVT_TX_RDY");
-					break;
-            case BLE_NUS_EVT_COMM_STARTED:
-                    NRF_LOG_DEBUG("BLE_NUS_EVT_COMM_STARTED");
-                    break;
-            case BLE_NUS_EVT_COMM_STOPPED:
-                    NRF_LOG_DEBUG("BLE_NUS_EVT_COMM_STOPPED");
-                    break;
-
-			default:
-					break;
-			}
+        default:
+            break;
+    }
 }
 /**@snippet [Handling the data received over BLE] */
 
-
-/**@brief Function for initializing services that will be used by the application.
- */
-static void services_init(void)
+static void usr_qwr_init()
 {
     uint32_t           err_code;
-    ble_nus_init_t     nus_init;
     nrf_ble_qwr_init_t qwr_init = {0};
 
     // Initialize Queued Write Module.
@@ -684,6 +519,12 @@ static void services_init(void)
 
     err_code = nrf_ble_qwr_init(&m_qwr, &qwr_init);
     APP_ERROR_CHECK(err_code);
+}
+
+static void usr_ble_nus_init()
+{
+    uint32_t           err_code;
+    ble_nus_init_t     nus_init;
 
     // Initialize NUS.
     memset(&nus_init, 0, sizeof(nus_init));
@@ -691,7 +532,72 @@ static void services_init(void)
     nus_init.data_handler = nus_data_handler;
 
     err_code = ble_nus_init(&m_nus, &nus_init);
+    APP_ERROR_CHECK(err_code);    
+}
+
+
+
+static void usr_tms_init(void)
+{
+    uint32_t err_code;
+    ble_tms_init_t        tms_init;
+
+    memset(&tms_init, 0, sizeof(tms_init));
+
+    // Init with all parameters to default value
+    tms_init.p_init_config->gyro_enabled = 0;
+    tms_init.p_init_config->accel_enabled = 0;
+    tms_init.p_init_config->mag_enabled = 0;
+    tms_init.p_init_config->euler_enabled = 0;
+    tms_init.p_init_config->quat6_enabled = 0;
+    tms_init.p_init_config->quat9_enabled = 0;
+    tms_init.p_init_config->wom_enabled = 1;
+    tms_init.p_init_config->motion_freq_hz = 100;
+
+    tms_init.evt_handler = ble_tms_evt_handler;
+
+    err_code = ble_tms_init(&m_tms, &tms_init);
     APP_ERROR_CHECK(err_code);
+}
+
+static void usr_bas_init(void)
+{
+    uint32_t err_code;
+    ble_bas_init_t     bas_init;
+    
+    // Initialize Battery Service.
+    memset(&bas_init, 0, sizeof(bas_init));
+
+    bas_init.evt_handler          = NULL;
+    bas_init.support_notification = true;
+    bas_init.p_report_ref         = NULL;
+    bas_init.initial_batt_level   = 100;
+
+    // Here the sec level for the Battery Service can be changed/increased.
+    bas_init.bl_rd_sec        = SEC_OPEN;
+    bas_init.bl_cccd_wr_sec   = SEC_OPEN;
+    bas_init.bl_report_rd_sec = SEC_OPEN;
+
+    err_code = ble_bas_init(&m_bas, &bas_init);
+    APP_ERROR_CHECK(err_code);
+}
+
+
+/**@brief Function for initializing services that will be used by the application.
+ */
+static void services_init(void)
+{
+    // Initialize Queued write module: for write requests (used by NUS + TMS)
+    usr_qwr_init();
+
+    // Initialize BLE NUS module
+    usr_ble_nus_init();
+
+    // Init TMS service
+    usr_tms_init();
+
+    // Initialize Battery service
+    usr_bas_init();
 }
 
 
@@ -907,12 +813,10 @@ static void ble_stack_init(void)
 
     memset(&ble_cfg, 0, sizeof ble_cfg);
     ble_cfg.conn_cfg.conn_cfg_tag                     = APP_BLE_CONN_CFG_TAG;
-    ble_cfg.conn_cfg.params.gatts_conn_cfg.hvn_tx_queue_size = 20;
+    ble_cfg.conn_cfg.params.gatts_conn_cfg.hvn_tx_queue_size = 20;              // Change hvn_tx_queue_size to 20: now we have the ability to queue up to 20 packets
     err_code = sd_ble_cfg_set(BLE_CONN_CFG_GATTS, &ble_cfg, ram_start);
     APP_ERROR_CHECK(err_code);
     NRF_LOG_INFO("sd_ble_cfg_set err_code: %d", err_code);
-
-
 
     // Enable BLE stack.
     err_code = nrf_sdh_ble_enable(&ram_start);
@@ -1348,15 +1252,9 @@ static void advertising_init(void)
     memset(&init, 0, sizeof(init));
 
     // CHANGES
-    // m_more_adv_uuids[0].type = m_tms.uuid_type;
-
     init.advdata.name_type          = BLE_ADVDATA_FULL_NAME;
     init.advdata.include_appearance = false;
     init.advdata.flags              = BLE_GAP_ADV_FLAGS_LE_ONLY_LIMITED_DISC_MODE;
-
-    // CHANGES
-    // init.srdata.uuids_complete.uuid_cnt = sizeof(m_adv_uuids) / sizeof(m_adv_uuids[0]);
-    // init.srdata.uuids_complete.p_uuids  = m_adv_uuids;
 
     // Costum added for TMS: need to use "uuids_more_available" and scan responce packet "srdata" becaus when advertising both uuids, 
     // the advertising packet length becomes more than 31 (which is the max length)
@@ -1367,12 +1265,6 @@ static void advertising_init(void)
 
     init.srdata.uuids_more_available.uuid_cnt = 2;
     init.srdata.uuids_more_available.p_uuids = &m_adv_uuids[1];
-
-
-    // m_more_adv_uuids[0].type = m_tms.uuid_type;
-
-    // init.srdata.uuids_more_available.uuid_cnt = sizeof(m_more_adv_uuids)/ sizeof(m_more_adv_uuids[0]);
-    // init.srdata.uuids_more_available.p_uuids = m_more_adv_uuids;
     // End Costum
 
     init.config.ble_adv_fast_enabled  = true;
@@ -1413,6 +1305,12 @@ static void log_init(void)
     APP_ERROR_CHECK(err_code);
 
     NRF_LOG_DEFAULT_BACKENDS_INIT();
+
+    // Display start message
+    NRF_LOG_INFO("Debug logging for UART over RTT started.");
+
+    NRF_LOG_DEBUG("DEBUG enabled in preprocessor");
+    NRF_LOG_FLUSH();
 }
 
 
@@ -1527,49 +1425,45 @@ uint32_t nus_send(uint8_t * data, uint16_t len)
 
 
 
-uint32_t usr_ble_init(void)
+void usr_ble_init(void)
 {
-    bool erase_bonds;
-    uint32_t err_code;
-
+    // UART Init - (not really necessary) -  used by BLE NUS
     uart_init();
+
+    // Logging to RTT functionality
     log_init();
+
+    // Initialize application timers
     timers_init();
+
+    // Setup buttons + Leds on NRF_DK board
+    bool erase_bonds;
     buttons_leds_init(&erase_bonds);
+
+    // Init power management
     power_management_init();
 
+    // Initialize BLE stack
     ble_stack_init();
+
+    // Init Gap connection parameters
     gap_params_init();
+
+    // Init GATT
     gatt_init();
     
-    // Init NUS services and standard services
+    // Init Queued write - NUS - Motion - Battery services
     services_init();
 
-    NRF_LOG_DEBUG("DEBUG enabled in preprocessor");
-    NRF_LOG_FLUSH();
-
-    // Init TMS service
-    err_code = usr_tms_init();
-    APP_ERROR_CHECK(err_code);
-    NRF_LOG_DEBUG("usr_tms_init done");
-
-    err_code = usr_bas_init();
-    APP_ERROR_CHECK(err_code);
-    NRF_LOG_DEBUG("usr_bas_init done");
-
+    // Init Advertising
     advertising_init();
-    NRF_LOG_DEBUG("advertising_init done");
+
+    // Init connection parameters
     conn_params_init();
-    NRF_LOG_DEBUG("conn_params_init done");
 
-    // TimeSync
+    // Initialize time synchronization functionality
     sync_timer_init();
-    NRF_LOG_DEBUG("sync_timer_button_init done");
 
+    // Start advertising
     advertising_start();
-    NRF_LOG_DEBUG("advertising_start done");
-
-    return NRF_SUCCESS;
 }
-
-

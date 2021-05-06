@@ -7,6 +7,8 @@
 
 
 
+
+
 /**
  * @brief Function for configuring: PIN_IN pin for input, PIN_OUT pin for output,
  * and configures GPIOTE to give an interrupt on pin change.
@@ -15,11 +17,12 @@ void gpio_init(void)
 {
     ret_code_t err_code;
 
+// TODO for some reason, code crashes when this is enabled, this is maybe already enabled elsewhere
 //    err_code = nrf_drv_gpiote_init();
 //    APP_ERROR_CHECK(err_code);
 
 
-	#if IMU_ENABLED == 1
+#if IMU_ENABLED == 1
     nrf_drv_gpiote_in_config_t in_config = GPIOTE_CONFIG_IN_SENSE_LOTOHI(true); // Low to high trigger
     in_config.pull = NRF_GPIO_PIN_PULLUP;
 
@@ -29,7 +32,7 @@ void gpio_init(void)
     nrf_drv_gpiote_in_event_enable(INT_PIN, true);
 
 	NRF_LOG_INFO("IMU GPIO Init");
-	#endif
+#endif
 	
 	
 		// GPIO stuff for timing purposes

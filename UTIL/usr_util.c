@@ -25,3 +25,8 @@ fixed_point_t float_to_fixed_quat(float input)
 //     return (fixed_point_t)(input * (1 << FIXED_POINT_FRACTIONAL_BITS));
 // }
 
+
+void check_cpu_activity()
+{
+    nrf_gpio_pin_set(18);
+}

@@ -1,125 +1,29 @@
-// nRF52 BLE IMU
-// Jona Cappelle
-
-
-#include <stdint.h>
-#include <string.h>
-#include "nordic_common.h"
-#include "nrf.h"
-#include "ble_hci.h"
-#include "ble_advdata.h"
-#include "ble_advertising.h"
-#include "ble_conn_params.h"
-#include "nrf_sdh.h"
-#include "nrf_sdh_soc.h"
-#include "nrf_sdh_ble.h"
-#include "nrf_ble_gatt.h"
-#include "nrf_ble_qwr.h"
-#include "app_timer.h"
-#include "ble_nus.h"
-#include "app_uart.h"
-#include "app_util_platform.h"
-#include "bsp_btn_ble.h"
-#include "nrf_pwr_mgmt.h"
-
-#if defined (UART_PRESENT)
-#include "nrf_uart.h"
-#endif
-#if defined (UARTE_PRESENT)
-#include "nrf_uarte.h"
-#endif
-
-#include "nrf_log.h"
-#include "nrf_log_ctrl.h"
-#include "nrf_log_default_backends.h"
-
-///////////////////////////////////////////////
-
-#include "nrf_delay.h"
-
-
-// IMU
-////////////////
-//  INCLUDES  //
-////////////////
-#include <stdio.h>
-#include "boards.h"
-#include "app_util_platform.h"
-#include "app_error.h"
-#include "nrf_drv_twi.h"
-#include "nrf_delay.h"
-
-#include "nrf_log.h"
-#include "nrf_log_ctrl.h"
-#include "nrf_log_default_backends.h"
-
-#include "../Devices/SerifHal.h"
-#include "../Devices/DeviceIcm20948.h"
-#include "../DynamicProtocol/DynProtocol.h"
-#include "../DynamicProtocol/DynProtocolTransportUart.h"
-#include "../EmbUtils/Message.h"
-
-// Own includes
-#include "imu.h"
-#include "string.h"
-#include "usr_twi.h"
-#include "usr_tmr.h"
-#include "usr_gpio.h"
-
-// TimeSync
-#include "time_sync.h"
-#include "nrf_gpiote.h"
-#include "nrf_ppi.h"
-#include "nrf_timer.h"
-
-// Application scheduler
-#include "app_scheduler.h"
-
-
-// User bluetooth BLE
-#include "usr_ble.h"
-
-// Utilities user
-#include "usr_util.h"
-
-// Ringbuffer
-#include "nrf_ringbuf.h"
-
-// IMU params
-#include "imu_params.h"
-
-// TMS Service
-#include "ble_tms.h"
-
-// BLE Battery service
-#include "ble_bas.h"
-
-// EMG
-#include "emg.h"
-
-
-////////////////
-//  DEFINES   //
-////////////////
-
-#define DEAD_BEEF   0xDEADBEEF          /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
-
-#define SCHED_MAX_EVENT_DATA_SIZE   APP_TIMER_SCHED_EVENT_DATA_SIZE /**< Maximum size of scheduler events. */
-#define SCHED_QUEUE_SIZE            60  /**< Maximum number of events in the scheduler queue. */
-
-/*
- * Last time at which 20948 IRQ was fired
+/*  ____  ____      _    __  __  ____ ___
+ * |  _ \|  _ \    / \  |  \/  |/ ___/ _ \
+ * | | | | |_) |  / _ \ | |\/| | |  | | | |
+ * | |_| |  _ <  / ___ \| |  | | |__| |_| |
+ * |____/|_| \_\/_/   \_\_|  |_|\____\___/
+ *                           research group
+ *                             dramco.be/
+ *
+ *  KU Leuven - Technology Campus Gent,
+ *  Gebroeders De Smetstraat 1,
+ *  B-9000 Gent, Belgium
+ *
+ *         File: main.c
+ *      Created: YYYY-MM-DD
+ *       Author: Jona Cappelle
+ *      Version: v1.0
+ *
+ *  Description: BLE Peripheral - IMU + ADC
+ *
+ *  Commissiond by Interreg NOMADe
+ * 
  */
-static volatile uint32_t last_irq_time = 0;
 
+#include "main.h"
 
-
-uint64_t inv_icm20948_get_dataready_interrupt_time_us(void)
-{
-	return last_irq_time;
-}
-
-
+// Error handling
 /**@brief Function for assert macro callback.
  *
  * @details This function will be called in case of an assert in the SoftDevice.
@@ -136,31 +40,10 @@ void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
     app_error_handler(DEAD_BEEF, line_num, p_file_name);
 }
 
-
-// Temp external imports of datasend
-extern bool NUS_send_OK;
-extern bool nus_buffer_full;
-extern int countrrr;
-
-
-// Event handler for scheduler
-void my_app_sched_event_handler(void *data, uint16_t size);
-
-// IMU data
-uint8_t send_data[200];
-uint16_t send_data_len;
-
 // Struct to keep track of which IMU function are activated
-IMU imu;
-
-
-
-float temp[4] = {0.01, 0.02, 0.03, 0.04};
-
-
-
-extern ble_tms_t m_tms;
-
+IMU imu = {
+	.evt_scheduled = 0,
+};
 
 /**@brief Application main function.
  */
@@ -168,14 +51,11 @@ int main(void)
 {
 		uint32_t err_code;
 		
+		// Initialize everything related to BLE
 		usr_ble_init();
 
 		// Application scheduler (soft interrupt like)
 		APP_SCHED_INIT(SCHED_MAX_EVENT_DATA_SIZE, SCHED_QUEUE_SIZE);
-		
-    // Start execution.
-    printf("\r\nUART started.\r\n");
-    NRF_LOG_INFO("Debug logging for UART over RTT started.");
 	
 		/* Initialize GPIO pins */
 		gpio_init();
@@ -184,129 +64,36 @@ int main(void)
 		timers_init();
 	
 		// Initialize IMU
-		#if IMU_ENABLED == 1
-		err_code = imu_init();
-		APP_ERROR_CHECK(err_code);
-		NRF_LOG_INFO("IMU Init");
-		#endif
-
-		// Initialize ringbuffer
-		usr_ringbuf_init();
+		imu_init();
 		
+		//////////////////////////////////////////
+		// SPI TODO
+		//////////////////////////////////////////
 		// Delay before starting
 		// nrf_delay_ms(2000);
-
 		// err_code = spi_init();
 		// NRF_LOG_INFO("spi err_code; %d", err_code);
 		// NRF_LOG_FLUSH();
-
 		// nrf_delay_ms(100);
-
 		// spi_write(0x0A, 0x12);
-
 		// nrf_delay_ms(2000);
-
-		// for(int i=0; i<1000; i++)
-		// {
-		// 	spi_read(0x04);
-		// }
-
-
-		nrf_delay_ms(100);
-
-		NRF_LOG_FLUSH();
-
-		uint8_t bat = 100;
-
-		uint32_t c = 0;
+		//////////////////////////////////////////
 		
-		////////////////////////////////////////////////////////////////	
-		// Loop: IMU gives interrupt -> bool interrupt = true -> poll device for data
-		////////////////////////////////////////////////////////////////		
+		// Main loop	
 		while(1)
 		{
-			// tms_test();
-
-			// battery_level_update(bat);
-			// bat--;
-
 			// App scheduler: handle event in buffer
-			app_sched_execute();
-			
-/////////////////////////////////////////////////////////////////////////////////	
-//// Send data over BLE as fast as possible			
-/////////////////////////////////////////////////////////////////////////////////
-			
-// 			// if NUS TX buffer isn't full and imu_bytes_available() TODO add
-// 			if((!nus_buffer_full) && (IMU_buffer_bytes_available()))
-// 			{
-// 				uint32_t err_code;
-// 				do
-// 				{
-// 						// Stop sending data when FIFO buffer is empty
-// 						if(IMU_buffer_bytes_available() == 0)
-// 						{
-// 							break;
-// 						}
-// 						// Load new data into buffer after NRF_SUCCESS (previous data has successfully been queued)
-// 						if(NUS_send_OK)
-// 						{
-// 							IMU_data_get(send_data, &send_data_len);
-// 							// Decrement available bytes once a byte has been send
-// 							// uint32_t bytes_available = imu_get_bytes_available();
-// 							// bytes_available--;
-// 							// imu_set_bytes_available(bytes_available);
-// 							// NRF_LOG_INFO("B: %d", bytes_available);
-// //							NRF_LOG_INFO("%d %d %d %d", (int)(send_data[0]*1000), (int)(send_data[1]*1000), (int)(send_data[2]*1000), (int)(send_data[3]*1000));
-// 						}
-// 						// Try to send data over BLE NUS
-// //						err_code = nus_printf_custom("2	Test 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789 0123456789\n\0");
-						// err_code = nus_send(send_data, send_data_len);
-// 						NRF_LOG_INFO("send_data: %X %X %X %X", send_data[0], send_data[1], send_data[2], send_data[3]);
-// 						NRF_LOG_INFO("send_data_len: %d", send_data_len);
-						
-// 						// Packet has successfully been queued and send correctly
-// 						// If this happens, load new data into buffer
-// 						if(err_code == NRF_SUCCESS)
-// 						{
-// 							NUS_send_OK = true; // Ok, buffer is not full yet, buffer next data
-// 							countrrr++; // Increment send counter
-// //							NRF_LOG_INFO("NUS SUCCESS! %d", countrrr);
-// 						}
-// 						// If NUS send buffer is full, do not load new data into buffer 
-// 						// + stop queue of data until BLE_NUS_EVT_TX_RDY
-// 						if (err_code == NRF_ERROR_RESOURCES)
-// 						{
-// 							NUS_send_OK = false; // NUS send buffer is full
-// 							nus_buffer_full = true; // NUS send buffer is full
-// //							NRF_LOG_INFO("NUS TX Buffer full!");
-// 						}
-// 				} while ((err_code == NRF_SUCCESS));
-// 			}
-			
+			// Execute everything that can't be handled in interrupts - queued operations
+			app_sched_execute();	
 
-			
-/////////////////////////////////////////////////////////////////////////////////
-			
 			// Flush all the debug info to RTT
 			NRF_LOG_FLUSH();
-			
-			// Check for activity of CPU
-			nrf_gpio_pin_toggle(18);
 
+			// Enter low power mode when idle
+			idle_state_handle();
 			// sleep_mode_enter();
 			
-			/* Enter low power mode when idle */
-			// idle_state_handle();
-
-			// nrf_delay_ms(1000);
-			
 			// Check for activity of CPU
-			// nrf_gpio_pin_set(18);
-			
-		}// while(1)
-}// main
-
-
-
-
+			// check_cpu_activity();
+		}
+}

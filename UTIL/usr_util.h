@@ -16,6 +16,8 @@ double fixed_to_float(fixed_point_t input);
 fixed_point_t float_to_fixed_euler(float input);
 fixed_point_t float_to_fixed_quat(float input);
 
+void check_cpu_activity();
+
 
 #define FRACT_BITS 16
 #define FRACT_BITS_D2 8

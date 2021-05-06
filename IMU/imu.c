@@ -1,51 +1,47 @@
+/*  ____  ____      _    __  __  ____ ___
+ * |  _ \|  _ \    / \  |  \/  |/ ___/ _ \
+ * | | | | |_) |  / _ \ | |\/| | |  | | | |
+ * | |_| |  _ <  / ___ \| |  | | |__| |_| |
+ * |____/|_| \_\/_/   \_\_|  |_|\____\___/
+ *                           research group
+ *                             dramco.be/
+ *
+ *  KU Leuven - Technology Campus Gent,
+ *  Gebroeders De Smetstraat 1,
+ *  B-9000 Gent, Belgium
+ *
+ *         File: imu.c
+ *      Created: YYYY-MM-DD
+ *       Author: Jona Cappelle
+ *      Version: v1.0
+ *
+ *  Description: IMU -> ICM20948
+ *
+ *  Commissiond by Interreg NOMADe
+ * 
+ */
+
 #include "imu.h"
 
-/*
- * ________________________________________________________________________________________________________
- * Copyright (c) 2015-2015 InvenSense Inc. All rights reserved.
- *
- * This software, related documentation and any modifications thereto (collectively �Software�) is subject
- * to InvenSense and its licensors' intellectual property rights under U.S. and international copyright
- * and other intellectual property rights laws.
- *
- * InvenSense and its licensors retain all intellectual property and proprietary rights in and to the Software
- * and any use, reproduction, disclosure or distribution of the Software without an express license agreement
- * from InvenSense is strictly prohibited.
- *
- * EXCEPT AS OTHERWISE PROVIDED IN A LICENSE AGREEMENT BETWEEN THE PARTIES, THE SOFTWARE IS
- * PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
- * TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * EXCEPT AS OTHERWISE PROVIDED IN A LICENSE AGREEMENT BETWEEN THE PARTIES, IN NO EVENT SHALL
- * INVENSENSE BE LIABLE FOR ANY DIRECT, SPECIAL, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, OR ANY
- * DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
- * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
- * OF THE SOFTWARE.
- * ________________________________________________________________________________________________________
- */
-#include "../Devices/SerifHal.h"
-#include "../Devices/HostSerif.h"
-// include to low level system driver
-// #include "MyTarget/SPI.h"
-#include "nrf_drv_twi.h"
-
+// Logging functionality
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
 
-#include "DataConverter.h"
-
+// I2C
 #include "usr_twi.h"
+#include "nrf_drv_twi.h"
 
+// GPIO
 #include "nrf_drv_gpiote.h"
 
 // Application scheduler
 #include "app_scheduler.h"
 
+// FIFO buffers
+#include "app_fifo.h"
 
 // IMU
-////////////////
-//  INCLUDES  //
-////////////////
 #include <stdio.h>
 #include "boards.h"
 #include "app_util_platform.h"
@@ -53,58 +49,52 @@
 #include "nrf_drv_twi.h"
 #include "nrf_delay.h"
 
-#include "nrf_log.h"
-#include "nrf_log_ctrl.h"
-#include "nrf_log_default_backends.h"
-
 #include "../Devices/SerifHal.h"
+#include "../Devices/HostSerif.h"
 #include "../Devices/DeviceIcm20948.h"
 #include "../DynamicProtocol/DynProtocol.h"
 #include "../DynamicProtocol/DynProtocolTransportUart.h"
 #include "../EmbUtils/Message.h"
+#include "DataConverter.h"
 
-
-// IMU params
 #include "imu_params.h"
 
-// Ringbuffer
-#include "nrf_ringbuf.h"
-// Create the ringbuffer for storing IMU data that has to be transmitted
-NRF_RINGBUF_DEF(m_ringbuf, 512);
-
-#include "app_fifo.h"
-// Create a FIFO structure
-app_fifo_t imu_fifo;
-// Create a buffer for the IMU FIFO
-uint8_t imu_buffer[1024];
-
-app_fifo_t quat_fifo;
-uint8_t quat_fifo_buff[1024];
-
-app_fifo_t raw_fifo;
-uint8_t raw_fifo_buff[1024];
-
+// BLE Motion service
 #include "ble_tms.h"
 
+// Utilities
 #include "usr_util.h"
 
 
-void imu_clear_buff()
-{
-	uint32_t err_code;
 
-	err_code = app_fifo_flush(&imu_fifo);
-	APP_ERROR_CHECK(err_code);
-	err_code = app_fifo_flush(&quat_fifo);
-	APP_ERROR_CHECK(err_code);
-	err_code = app_fifo_flush(&raw_fifo);
-	APP_ERROR_CHECK(err_code);
-}
+// Create buffer FIFO structure
+typedef struct buffer
+{
+	app_fifo_t imu_fifo;			// FIFO for IMU data - used by NUS
+	uint8_t imu_fifo_buff[1024];		// Buffer for IMU data - used by NUS
+	app_fifo_t quat_fifo;			// Buffer struct for sending QUAT in packets of 10
+	uint8_t quat_fifo_buff[1024];	// Buffer allocation for QUAT
+	app_fifo_t raw_fifo;			// Buffer struct for sending RAW in packets of 10
+	uint8_t raw_fifo_buff[1024];	// Buffer allocation for RAW
+} BUFFER;
+
+BUFFER buff;
+
+
+
+
+
+
 
 
 imu_data_t imu_data;
 
+
+// Initialisation of IMU struct
 extern IMU imu;
+
+
+
 
 extern ble_tms_t m_tms;
 
@@ -132,8 +122,8 @@ const char * activityName(int act);
 //uint32_t imu_init(void);
 static void check_rc(int rc);
 
-uint32_t evt_scheduled = 0;
-void gpiote_evt_sceduled(void * p_event_data, uint16_t event_size);
+
+void imu_evt_poll_sceduled(void * p_event_data, uint16_t event_size);
 void gpiote_evt_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action);
 
 extern volatile bool twi_tx_done ;
@@ -277,7 +267,6 @@ int my_serif_open_write_reg(uint8_t reg, const uint8_t * wbuffer, uint32_t wlen)
 #include "nrf_delay.h"
 
 extern const nrf_drv_timer_t TIMER_MICROS;
-extern uint64_t inv_icm20948_get_dataready_interrupt_time_us(void);
 
 /*
  * Time implementation for Icm20948.
@@ -321,9 +310,6 @@ void inv_icm20948_sleep_us(int us)
 // INV_MSG functionality
 #include "../EmbUtils/Message.h"
 
-#include "nrf_log.h"
-#include "nrf_log_ctrl.h"
-#include "nrf_log_default_backends.h"
 
 extern uint32_t nus_printf_custom(char* p_char);
 extern uint32_t nus_send(void);
@@ -443,7 +429,7 @@ nrf_gpio_pin_set(19);
 				memcpy(&buffer_acc[1], (event->data.acc.vect), sizeof(event->data.acc.vect));
 
 				// Put the data in FIFO buffer: APP_FIFO instead of ringbuff library
-            	err_code = app_fifo_write(&imu_fifo, buffer_acc, &buffer_acc_len);
+            	err_code = app_fifo_write(&buff.imu_fifo, buffer_acc, &buffer_acc_len);
 				if (err_code == NRF_ERROR_NO_MEM)
             	{
                 	NRF_LOG_INFO("IMU FIFO BUFFER FULL!");
@@ -485,7 +471,7 @@ nrf_gpio_pin_set(19);
 				memcpy(&buffer_gyro[1], (event->data.gyr.vect), sizeof(event->data.gyr.vect));
 
 				// Put the data in FIFO buffer: APP_FIFO instead of ringbuff library
-            	err_code = app_fifo_write(&imu_fifo, buffer_gyro, &buffer_gyro_len);
+            	err_code = app_fifo_write(&buff.imu_fifo, buffer_gyro, &buffer_gyro_len);
 				if (err_code == NRF_ERROR_NO_MEM)
             	{
                 	NRF_LOG_INFO("IMU FIFO BUFFER FULL!");
@@ -527,7 +513,7 @@ nrf_gpio_pin_set(19);
 				memcpy(&buffer_mag[1], (event->data.mag.vect), sizeof(event->data.mag.vect));
 
 				// Put the data in FIFO buffer: APP_FIFO instead of ringbuff library
-            	err_code = app_fifo_write(&imu_fifo, buffer_mag, &buffer_mag_len);
+            	err_code = app_fifo_write(&buff.imu_fifo, buffer_mag, &buffer_mag_len);
 				if (err_code == NRF_ERROR_NO_MEM)
             	{
                 	NRF_LOG_INFO("IMU FIFO BUFFER FULL!");
@@ -599,16 +585,10 @@ nrf_gpio_pin_set(19);
 				// Copy data into buffer
 				memcpy(buffer, config_data, sizeof(config_data));
 				memcpy(&buffer[1], (event->data.quaternion.quat), sizeof(event->data.quaternion.quat));
-				
-
-				// // err_code = nrf_ringbuf_cpy_put(&m_ringbuf, config_data, &len_in);
-				// // len_in = sizeof(event->data.quaternion.quat);	
-				// err_code = nrf_ringbuf_cpy_put(&m_ringbuf, buffer, &buffer_len); //(uint8_t *)(event->data.quaternion.quat)
-				// APP_ERROR_CHECK(err_code);
 
 				
 				// Put the data in FIFO buffer: APP_FIFO instead of ringbuff library
-            	err_code = app_fifo_write(&imu_fifo, buffer, &buffer_len);
+            	err_code = app_fifo_write(&buff.imu_fifo, buffer, &buffer_len);
 				if (err_code == NRF_ERROR_NO_MEM)
             	{
                 	NRF_LOG_INFO("IMU FIFO BUFFER FULL!");
@@ -654,15 +634,15 @@ nrf_gpio_pin_set(19);
 					
 
 			#ifdef USE_NUS		
-					float buffer_orientation[3];
-					buffer_orientation[0] = event->data.orientation.x;
-					buffer_orientation[1] = event->data.orientation.y;
-					buffer_orientation[2] = event->data.orientation.z;
+				// 	float buffer_orientation[3];
+				// 	buffer_orientation[0] = event->data.orientation.x;
+				// 	buffer_orientation[1] = event->data.orientation.y;
+				// 	buffer_orientation[2] = event->data.orientation.z;
 					
-				// Put data in the ringbuffer
-				len_in = sizeof(buffer_orientation);					
-				err_code = nrf_ringbuf_cpy_put(&m_ringbuf, (uint8_t *)(buffer_orientation), &len_in); //(uint8_t *)(event->data.quaternion.quat)
-				APP_ERROR_CHECK(err_code);
+				// // Put data in the ringbuffer
+				// len_in = sizeof(buffer_orientation);					
+				// err_code = nrf_ringbuf_cpy_put(&m_ringbuf, (uint8_t *)(buffer_orientation), &len_in); //(uint8_t *)(event->data.quaternion.quat)
+				// APP_ERROR_CHECK(err_code);
 			#endif
 
 			fixed_point_t p_euler[3];
@@ -804,15 +784,15 @@ void gpiote_evt_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 		if(pin == INT_PIN)
 		{
 				// If there are already events in the queue
-				if(evt_scheduled > 0)
+				if(imu.evt_scheduled > 0)
 				{
-					evt_scheduled++;
+					imu.evt_scheduled++;
 				}
 				// If there are not yet any events in the queue, schedule event. In gpiote_evt_sceduled all callbacks are called
 				else
 				{
-					evt_scheduled++;
-					err_code = app_sched_event_put(0, 0, gpiote_evt_sceduled);
+					imu.evt_scheduled++;
+					err_code = app_sched_event_put(0, 0, imu_evt_poll_sceduled);
 					APP_ERROR_CHECK(err_code);
 				}
 		}
@@ -825,15 +805,15 @@ void gpiote_evt_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 // Event handler DIY
 /**@brief GPIOTE sceduled handler, executed in main-context.
  */
-void gpiote_evt_sceduled(void * p_event_data, uint16_t event_size)
+void imu_evt_poll_sceduled(void * p_event_data, uint16_t event_size)
 {
-    while ( (evt_scheduled > 0) )//&& m_mpu9250.enabled) TODO check when IMU is enabled or not
+    while ( (imu.evt_scheduled > 0) )//&& m_mpu9250.enabled) TODO check when IMU is enabled or not
     {
 				nrf_gpio_pin_set(20);
 			// Poll all data from IMU
 				inv_device_poll(device);
 				nrf_gpio_pin_clear(20);
-				evt_scheduled--;
+				imu.evt_scheduled--;
     }
 }
 
@@ -879,13 +859,11 @@ void set_imu_packet_length()
 	NRF_LOG_INFO("Packet Len set to: %d", imu.packet_length);
 }
 
-uint32_t imu_enable_sensors(IMU imu)
+uint32_t imu_enable_sensors(IMU * imu)
 {
 		int rc = 0;
 
-		uint32_t period = 4; // 225 Hz
-
-		if(imu.stop)
+		if(imu->stop)
 		{
 		// Stop all sensors before enabling the new ones
 		rc += inv_device_stop_sensor(device, INV_SENSOR_TYPE_GAME_ROTATION_VECTOR);
@@ -902,141 +880,156 @@ uint32_t imu_enable_sensors(IMU imu)
 		check_rc(rc);
 		}
 		// If enabled: Start 6DoF quaternion output
-		if(imu.quat6_enabled)
+		if(imu->quat6_enabled)
 		{
 		NRF_LOG_INFO("Start QUAT6");
 		rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_GAME_ROTATION_VECTOR);
 		check_rc(rc);
-		rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_GAME_ROTATION_VECTOR, period);
+		rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_GAME_ROTATION_VECTOR, IMU_DEFAULT_SAMPL_FREQ);
 		check_rc(rc);
 		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_GAME_ROTATION_VECTOR);
 		check_rc(rc);
 		}
-		else if(!imu.quat6_enabled)
+		else if(!imu->quat6_enabled)
 		{
 		NRF_LOG_INFO("Stop QUAT6");
 		rc += inv_device_stop_sensor(device, INV_SENSOR_TYPE_GAME_ROTATION_VECTOR);
 		check_rc(rc);
 		}
 		// If enabled: Start 9DoF quaternion output
-		if(imu.quat9_enabled)
+		if(imu->quat9_enabled)
 		{
 		NRF_LOG_INFO("Start QUAT9");
 		rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_ROTATION_VECTOR);
 		check_rc(rc);
-		rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_ROTATION_VECTOR, period);
+		rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_ROTATION_VECTOR, IMU_DEFAULT_SAMPL_FREQ);
 		check_rc(rc);
 		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_ROTATION_VECTOR);
 		check_rc(rc);
 		}
-		if(!imu.quat9_enabled)
+		if(!imu->quat9_enabled)
 		{
 		NRF_LOG_INFO("Stop QUAT9");
 		rc += inv_device_stop_sensor(device, INV_SENSOR_TYPE_ROTATION_VECTOR);
 		check_rc(rc);
 		}
 		// If enabled: Start Euler angles
-		if(imu.euler_enabled)
+		if(imu->euler_enabled)
 		{
 		NRF_LOG_INFO("Start 9DoF EULER");
 		rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_ORIENTATION);
 		check_rc(rc);
-		rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_ORIENTATION, period);
+		rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_ORIENTATION, IMU_DEFAULT_SAMPL_FREQ);
 		check_rc(rc);
 		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_ORIENTATION);
 		check_rc(rc);
 		}
-		if(!imu.euler_enabled)
+		if(!imu->euler_enabled)
 		{
 		NRF_LOG_INFO("Stop 9DoF EULER");
 		rc += inv_device_stop_sensor(device, INV_SENSOR_TYPE_ORIENTATION);
 		check_rc(rc);
 		}
 		// If enabled: Start Calibrated Gyroscope output
-		if(imu.gyro_enabled)
+		if(imu->gyro_enabled)
 		{
 		NRF_LOG_INFO("Start GYRO");
 		rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_GYROSCOPE);
 		check_rc(rc);
-		rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_GYROSCOPE, period);
+		rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_GYROSCOPE, IMU_DEFAULT_SAMPL_FREQ);
 		check_rc(rc);
 		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_GYROSCOPE);
 		check_rc(rc);
 		}
-		if(!imu.gyro_enabled)
+		if(!imu->gyro_enabled)
 		{
 		NRF_LOG_INFO("Stop GYRO");
 		rc += inv_device_stop_sensor(device, INV_SENSOR_TYPE_GYROSCOPE);
 		check_rc(rc);
 		}
 		// If enabled: Start Calibrated Accelerometer output
-		if(imu.accel_enabled)
+		if(imu->accel_enabled)
 		{
 		NRF_LOG_INFO("Start ACCEL");
 		rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_ACCELEROMETER);
 		check_rc(rc);
-		rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_ACCELEROMETER, period);
+		rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_ACCELEROMETER, IMU_DEFAULT_SAMPL_FREQ);
 		check_rc(rc);
 		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_ACCELEROMETER);
 		check_rc(rc);
 		}
-		if(!imu.accel_enabled)
+		if(!imu->accel_enabled)
 		{
 		NRF_LOG_INFO("Stop ACCEL");
 		rc += inv_device_stop_sensor(device, INV_SENSOR_TYPE_ACCELEROMETER);
 		check_rc(rc);
 		}
 		// If enabled: Start Calibrated Accelerometer output
-		if(imu.mag_enabled)
+		if(imu->mag_enabled)
 		{
 		NRF_LOG_INFO("Start MAG");
 		rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_MAGNETOMETER);
 		check_rc(rc);
-		rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_MAGNETOMETER, period);
+		rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_MAGNETOMETER, IMU_DEFAULT_SAMPL_FREQ);
 		check_rc(rc);
 		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_MAGNETOMETER);
 		check_rc(rc);
 		}
-		if(!imu.mag_enabled)
+		if(!imu->mag_enabled)
 		{
 		NRF_LOG_INFO("Stop MAG");
 		rc += inv_device_stop_sensor(device, INV_SENSOR_TYPE_MAGNETOMETER);
 		check_rc(rc);
 		}
 		
-		/* Activity classification */
-//		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_BAC);
-//		check_rc(rc);
-		
-		/* Step Counter */
-//		rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_STEP_COUNTER);
-//		check_rc(rc);
-//		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_STEP_COUNTER);
-//		check_rc(rc);
-		
-//		inv_device_set_sensor_timeout(device, INV_SENSOR_TYPE_GAME_ROTATION_VECTOR, 5);
-		
 		return NRF_SUCCESS;
 }
 
-
-uint32_t imu_init(void)
+static void imu_buff_init()
 {
+	uint32_t err_code;
 
-		// Initialize IMU FIFO structure
-		uint32_t err_code = app_fifo_init(&imu_fifo, imu_buffer, (uint16_t)sizeof(imu_buffer));
+	// Initialize IMU FIFO structure
+	err_code = app_fifo_init(&buff.imu_fifo, buff.imu_fifo_buff, (uint16_t)sizeof(buff.imu_fifo_buff));
+	APP_ERROR_CHECK(err_code);
 
-		// Initialize QUAT FIFO structure
-		err_code = app_fifo_init(&quat_fifo, quat_fifo_buff, (uint16_t)sizeof(quat_fifo_buff));
+	// Initialize QUAT FIFO structure
+	err_code = app_fifo_init(&buff.quat_fifo, buff.quat_fifo_buff, (uint16_t)sizeof(buff.quat_fifo_buff));
+	APP_ERROR_CHECK(err_code);
 
-		// Initialize RAW FIFO structure
-		err_code = app_fifo_init(&raw_fifo, raw_fifo_buff, (uint16_t)sizeof(raw_fifo_buff));
+	// Initialize RAW FIFO structure
+	err_code = app_fifo_init(&buff.raw_fifo, buff.raw_fifo_buff, (uint16_t)sizeof(buff.raw_fifo_buff));
+	APP_ERROR_CHECK(err_code);
+}
 
+void imu_clear_buff()
+{
+	uint32_t err_code;
+
+	// Clear all data in buffers
+	err_code = app_fifo_flush(&buff.imu_fifo);
+	APP_ERROR_CHECK(err_code);
+
+	err_code = app_fifo_flush(&buff.quat_fifo);
+	APP_ERROR_CHECK(err_code);
+
+	err_code = app_fifo_flush(&buff.raw_fifo);
+	APP_ERROR_CHECK(err_code);
+}
+
+
+void imu_init(void)
+{
+#if IMU_ENABLED == 1
+
+		NRF_LOG_INFO("IMU Init");
+
+		// Initialize necessary buffers for data transmission
+		imu_buff_init();
 
 		/*
 		 * Setup message facility to see internal traces from IDD
 		 */
-
 		INV_MSG_SETUP(MSG_LEVEL, msg_printer);
 
 		INV_MSG(INV_MSG_LEVEL_INFO, "###################################");
@@ -1047,21 +1040,17 @@ uint32_t imu_init(void)
 		/* To keep track of errors */
 		int rc = 0;
 		
-		
 		uint8_t whoami;
 		
 		/* Open serial interface (SPI or I2C) before playing with the device */
 		// Not needed anymore - this is implemented in the inv_host_serif_open(&my_serif_instance)
 //		twi_init();
-		
 		rc = inv_host_serif_open(&my_serif_instance);
 		check_rc(rc);
 		
 		NRF_LOG_INFO("i2c init");
 		NRF_LOG_FLUSH();
 		
-		NRF_LOG_INFO("icm20948 init");
-		NRF_LOG_FLUSH();
 		/*
 		 * Create ICM20948 Device 
 		 * Pass to the driver:
@@ -1069,11 +1058,7 @@ uint32_t imu_init(void)
 		 * - reference to listener that will catch sensor events,
 		 */
 		inv_device_icm20948_init(&device_icm20948, &my_serif_instance, &sensor_listener, dmp3_image, sizeof(dmp3_image));
-//		inv_device_icm20948_init2(&device_icm20948, &my_serif_instance, &sensor_listener, dmp3_image, sizeof(dmp3_image));
-		NRF_LOG_FLUSH();
 		
-		NRF_LOG_INFO("icm20948 get base");
-		NRF_LOG_FLUSH();
 		/*
 		 * Simply get generic device handle from Icm20948 Device
 		 */
@@ -1086,26 +1071,18 @@ uint32_t imu_init(void)
 		NRF_LOG_INFO("Data: 0x%x", whoami);
 		NRF_LOG_FLUSH();
 		
-		nrf_delay_ms(500);
-		
 		/* Configure and initialize the Icm20948 device */
 		NRF_LOG_INFO("Setting up ICM20948");
 		NRF_LOG_FLUSH();
 		rc += inv_device_setup(device);
 		check_rc(rc);
 		
-		// Load DMP
-		NRF_LOG_INFO("Load DMP Image");
-		NRF_LOG_FLUSH();
 		rc += inv_device_load(device, NULL, dmp3_image, sizeof(dmp3_image), true /* verify */, NULL);
 		check_rc(rc);
 
-		// imu_enable_sensors(imu);
-
 		NRF_LOG_INFO("DMP Image loaded");
-
-
-		return NRF_SUCCESS;
+		NRF_LOG_FLUSH();
+#endif
 }
 
 uint32_t imu_get_bytes_available(void)
@@ -1128,7 +1105,7 @@ uint32_t IMU_buffer_bytes_available()
 	uint32_t err_code;
 	uint32_t data_len;
 	// Request number of elements in the FIFO
-	err_code = app_fifo_read(&imu_fifo, NULL, &data_len);
+	err_code = app_fifo_read(&buff.imu_fifo, NULL, &data_len);
 	// Check if request was successful
 	if (err_code == NRF_SUCCESS)
 	{
@@ -1157,10 +1134,8 @@ void IMU_data_get(uint8_t * data, uint16_t * len)
 		NRF_LOG_INFO("len_out: %d   %d", *len, packet_length_temp);
 	
 		uint8_t temp[*len];
-		// err_code = nrf_ringbuf_cpy_get(&m_ringbuf, temp, (size_t *) len);
-		// APP_ERROR_CHECK(err_code);
 
-		if( (err_code = app_fifo_read(&imu_fifo, temp, len)) == NRF_SUCCESS )
+		if( (err_code = app_fifo_read(&buff.imu_fifo, temp, len)) == NRF_SUCCESS )
 		{
 			memcpy(data, temp, *len);
 			NRF_LOG_INFO("OKK");
@@ -1174,11 +1149,6 @@ void IMU_data_get(uint8_t * data, uint16_t * len)
 //		NRF_LOG_INFO("%d %d %d %d", (int)(quat[0]*1000),(int)(quat[1]*1000),(int)(quat[2]*1000),(int)(quat[3]*1000));
 //		NRF_LOG_INFO("%d %d %d", (int)(temp[0]*1000),(int)(temp[1]*1000),(int)(temp[2]*1000));
 		// memcpy(data, temp, *len);
-}
-
-void usr_ringbuf_init(void)
-{
-	nrf_ringbuf_init(&m_ringbuf);
 }
 
 uint8_t number_of_quat_packets = 0;
@@ -1206,7 +1176,7 @@ void imu_send_data()
 		single_quat.z = imu_data.quat.z;
 
 		// Put data in send buffer
-		err_code = app_fifo_write(&quat_fifo, (uint8_t *) &single_quat, &single_quat_len);
+		err_code = app_fifo_write(&buff.quat_fifo, (uint8_t *) &single_quat, &single_quat_len);
 		if (err_code == NRF_ERROR_NO_MEM)
 		{
 			NRF_LOG_INFO("QUAT FIFO BUFFER FULL!");
@@ -1218,7 +1188,7 @@ void imu_send_data()
 			ble_tms_quat_t data;
 			uint32_t data_len = sizeof(data);
 
-			err_code = app_fifo_read(&quat_fifo, (uint8_t *) &data, &data_len);
+			err_code = app_fifo_read(&buff.quat_fifo, (uint8_t *) &data, &data_len);
 			if (err_code == NRF_ERROR_NO_MEM)
 			{
 				NRF_LOG_INFO("QUAT FIFO BUFFER FULL!");
@@ -1261,7 +1231,7 @@ void imu_send_data()
 		single_raw.compass.z = imu_data.mag.z;
 
 		// Put data in send buffer
-		err_code = app_fifo_write(&raw_fifo, (uint8_t *) &single_raw, &single_raw_len);
+		err_code = app_fifo_write(&buff.raw_fifo, (uint8_t *) &single_raw, &single_raw_len);
 		if (err_code == NRF_ERROR_NO_MEM)
 		{
 			NRF_LOG_INFO("QUAT FIFO BUFFER FULL!");
@@ -1273,7 +1243,7 @@ void imu_send_data()
 			ble_tms_raw_t data;
 			uint32_t data_len = sizeof(data);
 
-			err_code = app_fifo_read(&raw_fifo, (uint8_t *) &data, &data_len);
+			err_code = app_fifo_read(&buff.raw_fifo, (uint8_t *) &data, &data_len);
 			if (err_code == NRF_ERROR_NO_MEM)
 			{
 				NRF_LOG_INFO("QUAT FIFO BUFFER FULL!");
