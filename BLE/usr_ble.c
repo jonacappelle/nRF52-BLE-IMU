@@ -76,8 +76,8 @@ uint32_t led_blink_tick = 0;
 // In increments of 2.5 ms
 uint32_t sync_interval_int_time = 4; // Default 100 Hz transmission rate
 
-static bool m_gpio_trigger_enabled;
-static bool m_imu_trigger_enabled;
+static bool m_gpio_trigger_enabled = 0;
+static bool m_imu_trigger_enabled = 0;
 
 
 ///////////////////////////////////////////////
@@ -320,6 +320,7 @@ static void ble_tms_evt_handler(ble_tms_t        * p_tms,
             imu.sync = received_config.sync_enabled;
             imu.stop = received_config.stop;
             imu.adc = received_config.adc_enabled;
+            imu.sync_start_time = received_config.sync_start_time;
 
             // Stop syncing
             m_imu_trigger_enabled = imu.sync;
@@ -507,14 +508,34 @@ void imu_config_evt_sceduled(void * p_event_data, uint16_t event_size)
 
         sync_interval_int_time = (imu.period / 2.5);        
 
-        if(m_imu_trigger_enabled) 
+        // if(m_imu_trigger_enabled) 
+        // {
+        //     NRF_LOG_INFO("if(m_imu_trigger_enabled) is true");
+        //     ts_imu_trigger_enable();
+        // }
+
+    uint64_t time_now_ticks;
+    uint32_t time_now_msec;
+    uint32_t time_target;
+
+    time_now_ticks = ts_timestamp_get_ticks_u64();
+    time_now_msec = TIME_SYNC_TIMESTAMP_TO_USEC(time_now_ticks) / 1000;
+    time_target = TIME_SYNC_MSEC_TO_TICK(time_now_msec);
+    NRF_LOG_INFO("Time_target (ticks) %d", time_target);
+
+    NRF_LOG_INFO("ime.sync_start_time %d", imu.sync_start_time);
+
+        if( ( imu.sync ) && ( imu.sync_start_time != 0) )
         {
-            NRF_LOG_INFO("if(m_imu_trigger_enabled) is true");
-            ts_imu_trigger_enable();
+        err_code = ts_set_trigger(imu.sync_start_time, nrf_gpiote_task_addr_get(NRF_GPIOTE_TASKS_OUT_3));
+        APP_ERROR_CHECK(err_code);
+        m_imu_trigger_enabled = 1 ;
+        }else{
+            m_imu_trigger_enabled = 0;
         }
 
         // Notify TimeSync to start synchronizing again
-        ts_state_set(m_imu_trigger_enabled);
+        // ts_state_set(m_imu_trigger_enabled);
 
         NRF_LOG_INFO("sync_interval_int_time: %d", sync_interval_int_time);
 
@@ -1034,20 +1055,24 @@ static void ts_evt_callback(const ts_evt_t* evt)
     {
         case TS_EVT_SYNCHRONIZED:
             NRF_LOG_INFO("TS_EVT_SYNCHRONIZED");
-            ts_imu_trigger_enable();
+            // ts_imu_trigger_enable();
+            m_gpio_trigger_enabled = true;
             break;
         case TS_EVT_DESYNCHRONIZED:
             NRF_LOG_INFO("TS_EVT_DESYNCHRONIZED");
             ts_imu_trigger_disable();
+            m_gpio_trigger_enabled = false;
             break;
         case TS_EVT_TRIGGERED:
-            // NRF_LOG_INFO("TS_EVT_TRIGGERED");
+            NRF_LOG_INFO("TS_EVT_TRIGGERED");
             {
             uint32_t tick_target;
 
-            if (m_imu_trigger_enabled)
+            NRF_LOG_INFO("State; %d", ts_state_get());
+
+            if (m_imu_trigger_enabled && m_gpio_trigger_enabled)
             {
-                
+                NRF_LOG_INFO("TS_EVT_TRIGGERED && m_imu_trigger_enabled");
 
                 tick_target = evt->params.triggered.tick_target + sync_interval_int_time;
 
@@ -1072,12 +1097,14 @@ static void ts_evt_callback(const ts_evt_t* evt)
                     tick_target = evt->params.triggered.tick_target + sync_interval_int_time;
                     NRF_LOG_INFO("TimeSync tick_target <= ticks_now");
                 }
-                // NRF_LOG_INFO("now   %d  tick_start   %d  tick_target  %d  last_sync   %d", time_now_ticks/1000, evt->params.triggered.tick_start, evt->params.triggered.tick_target, evt->params.triggered.last_sync);
+                NRF_LOG_INFO("now   %d  tick_start   %d  tick_target  %d  last_sync   %d", time_now_ticks/1000, evt->params.triggered.tick_start, evt->params.triggered.tick_target, evt->params.triggered.last_sync);
 
+                NRF_LOG_INFO("tick_target:  %d", tick_target);
                 if( (tick_target % 100) == 0)
                 {
-                    // NRF_LOG_INFO("Multiple of 100 ticks detected");
-                    nrf_gpio_pin_toggle(17);
+                    NRF_LOG_INFO("Multiple of 100 ticks detected");
+                    nrf_gpio_pin_toggle(TIMESYNC_PIN);
+                    // NRF_LOG_INFO("Sync pin toggle");
                 }
 
                 // Process IMU BLE packet for sending
@@ -1089,7 +1116,7 @@ static void ts_evt_callback(const ts_evt_t* evt)
                 // Ensure pin is low when triggering is stopped
                 nrf_gpiote_task_set(NRF_GPIOTE_TASKS_CLR_3);
 
-                nrf_gpio_pin_clear(17);
+                nrf_gpio_pin_clear(TIMESYNC_PIN);
 
                 NRF_LOG_INFO("Triggering stopped");
             }

@@ -6,6 +6,7 @@
 
 /* Interrupt pin number */
 
+#define TIMESYNC_PIN    17
 
 #define IMU_ENABLED 1
 
@@ -87,6 +88,7 @@ typedef struct imu
 	bool euler_enabled;
 	bool stop;
     bool sync;
+    uint64_t sync_start_time;
 	uint32_t period; // period in milliseconds (ms)
 	uint16_t packet_length;
     bool adc;
