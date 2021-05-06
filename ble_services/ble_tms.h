@@ -145,10 +145,16 @@ typedef PACKED( struct
 
 typedef PACKED( struct
 {
+    
     int32_t w;
     int32_t x;
     int32_t y;
     int32_t z;
+}) ble_tms_single_quat_t;
+
+typedef PACKED( struct
+{ 
+    ble_tms_single_quat_t quat[10];
 }) ble_tms_quat_t;
 
 typedef PACKED( struct

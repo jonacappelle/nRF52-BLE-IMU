@@ -78,6 +78,9 @@ app_fifo_t imu_fifo;
 // Create a buffer for the IMU FIFO
 uint8_t imu_buffer[2048];
 
+app_fifo_t quat_fifo;
+uint8_t quat_fifo_buff[1024];
+
 #include "ble_tms.h"
 
 #include "usr_util.h"
@@ -1007,6 +1010,9 @@ uint32_t imu_init(void)
 		// Initialize IMU FIFO structure
 		uint32_t err_code = app_fifo_init(&imu_fifo, imu_buffer, (uint16_t)sizeof(imu_buffer));
 
+		// Initialize QUAT FIFO structure
+		err_code = app_fifo_init(&quat_fifo, quat_fifo_buff, (uint16_t)sizeof(quat_fifo_buff));
+
 
 		/*
 		 * Setup message facility to see internal traces from IDD
@@ -1156,6 +1162,10 @@ void usr_ringbuf_init(void)
 	nrf_ringbuf_init(&m_ringbuf);
 }
 
+uint8_t number_of_quat_packets = 0;
+
+
+
 
 void imu_send_data()
 {
@@ -1163,21 +1173,48 @@ void imu_send_data()
 
 	if(imu.quat6_enabled || imu.quat9_enabled)
 	{
-		ble_tms_quat_t data;
+		ble_tms_single_quat_t single_quat;
+		uint32_t single_quat_len = sizeof(single_quat);
 
-		// Get last data from buffer
-		data.w = imu_data.quat.w;
-		data.x = imu_data.quat.x;
-		data.y = imu_data.quat.y;
-		data.z = imu_data.quat.z;
+		// Put data in send buffer + increment packet counter
+		number_of_quat_packets++;
 
-		// Send data
-		err_code = ble_tms_quat_set(&m_tms, &data);
-		if(err_code != NRF_SUCCESS)
+		// Get latest available data
+		single_quat.w = imu_data.quat.w;
+		single_quat.x = imu_data.quat.x;
+		single_quat.y = imu_data.quat.y;
+		single_quat.z = imu_data.quat.z;
+
+		// Put data in send buffer
+		err_code = app_fifo_write(&imu_fifo, (uint8_t *) &single_quat, &single_quat_len);
+		if (err_code == NRF_ERROR_NO_MEM)
 		{
-			NRF_LOG_INFO("ble_tms_quat_set err_code: %d", err_code);
+			NRF_LOG_INFO("QUAT FIFO BUFFER FULL!");
 		}
-		// NRF_LOG_INFO("quat set");
+
+		// If 10 packets are queued, send them out
+		if( number_of_quat_packets >= 10)
+		{		
+			ble_tms_quat_t data;
+			uint32_t data_len = sizeof(data);
+
+			err_code = app_fifo_read(&imu_fifo, (uint8_t *) &data, &data_len);
+			if (err_code == NRF_ERROR_NO_MEM)
+			{
+				NRF_LOG_INFO("QUAT FIFO BUFFER FULL!");
+			}
+
+			// Send data
+			err_code = ble_tms_quat_set(&m_tms, &data);
+			if(err_code != NRF_SUCCESS)
+			{
+				NRF_LOG_INFO("ble_tms_quat_set err_code: %d", err_code);
+			}
+
+			number_of_quat_packets = 0;
+			// NRF_LOG_INFO("quat set");
+		}
+
 	}
 	if(imu.gyro_enabled || imu.accel_enabled || imu.mag_enabled)
 	{

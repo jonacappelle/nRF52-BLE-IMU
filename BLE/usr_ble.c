@@ -378,19 +378,6 @@ uint32_t usr_tms_init(void)
     }
 }
 
-void tms_test(void)
-{
-    // Test TMS data transmission
-    ble_tms_quat_t data;
-    data.w = 1;
-    data.x = 2;
-    data.y = 3;
-    data.z = 4;
-    (void)ble_tms_quat_set(&m_tms, &data);
-    // NRF_LOG_INFO("TMS Send!");
-}
-
-
 
 
 
@@ -1064,15 +1051,15 @@ static void ts_evt_callback(const ts_evt_t* evt)
             m_gpio_trigger_enabled = false;
             break;
         case TS_EVT_TRIGGERED:
-            NRF_LOG_INFO("TS_EVT_TRIGGERED");
+            // NRF_LOG_INFO("TS_EVT_TRIGGERED");
             {
             uint32_t tick_target;
 
-            NRF_LOG_INFO("State; %d", ts_state_get());
+            // NRF_LOG_INFO("State; %d", ts_state_get());
 
             if (m_imu_trigger_enabled && m_gpio_trigger_enabled)
             {
-                NRF_LOG_INFO("TS_EVT_TRIGGERED && m_imu_trigger_enabled");
+                // NRF_LOG_INFO("TS_EVT_TRIGGERED && m_imu_trigger_enabled");
 
                 tick_target = evt->params.triggered.tick_target + sync_interval_int_time;
 
@@ -1097,12 +1084,12 @@ static void ts_evt_callback(const ts_evt_t* evt)
                     tick_target = evt->params.triggered.tick_target + sync_interval_int_time;
                     NRF_LOG_INFO("TimeSync tick_target <= ticks_now");
                 }
-                NRF_LOG_INFO("now   %d  tick_start   %d  tick_target  %d  last_sync   %d", time_now_ticks/1000, evt->params.triggered.tick_start, evt->params.triggered.tick_target, evt->params.triggered.last_sync);
+                // NRF_LOG_INFO("now   %d  tick_start   %d  tick_target  %d  last_sync   %d", time_now_ticks/1000, evt->params.triggered.tick_start, evt->params.triggered.tick_target, evt->params.triggered.last_sync);
 
-                NRF_LOG_INFO("tick_target:  %d", tick_target);
+                // NRF_LOG_INFO("tick_target:  %d", tick_target);
                 if( (tick_target % 100) == 0)
                 {
-                    NRF_LOG_INFO("Multiple of 100 ticks detected");
+                    // NRF_LOG_INFO("Multiple of 100 ticks detected");
                     nrf_gpio_pin_toggle(TIMESYNC_PIN);
                     // NRF_LOG_INFO("Sync pin toggle");
                 }
