@@ -488,6 +488,9 @@ void imu_config_evt_sceduled(void * p_event_data, uint16_t event_size)
 		// Enable sensor parameters based on received configuration
 		uint32_t err_code;
 
+        // Clear all buffers before starting a new measurement
+        imu_clear_buff();
+
         #if IMU_ENABLED == 1
 		err_code =  imu_enable_sensors(imu);
 		APP_ERROR_CHECK(err_code);

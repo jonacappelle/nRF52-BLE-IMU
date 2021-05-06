@@ -76,14 +76,30 @@ NRF_RINGBUF_DEF(m_ringbuf, 512);
 // Create a FIFO structure
 app_fifo_t imu_fifo;
 // Create a buffer for the IMU FIFO
-uint8_t imu_buffer[2048];
+uint8_t imu_buffer[1024];
 
 app_fifo_t quat_fifo;
 uint8_t quat_fifo_buff[1024];
 
+app_fifo_t raw_fifo;
+uint8_t raw_fifo_buff[1024];
+
 #include "ble_tms.h"
 
 #include "usr_util.h"
+
+
+void imu_clear_buff()
+{
+	uint32_t err_code;
+
+	err_code = app_fifo_flush(&imu_fifo);
+	APP_ERROR_CHECK(err_code);
+	err_code = app_fifo_flush(&quat_fifo);
+	APP_ERROR_CHECK(err_code);
+	err_code = app_fifo_flush(&raw_fifo);
+	APP_ERROR_CHECK(err_code);
+}
 
 
 imu_data_t imu_data;
@@ -1013,6 +1029,9 @@ uint32_t imu_init(void)
 		// Initialize QUAT FIFO structure
 		err_code = app_fifo_init(&quat_fifo, quat_fifo_buff, (uint16_t)sizeof(quat_fifo_buff));
 
+		// Initialize RAW FIFO structure
+		err_code = app_fifo_init(&raw_fifo, raw_fifo_buff, (uint16_t)sizeof(raw_fifo_buff));
+
 
 		/*
 		 * Setup message facility to see internal traces from IDD
@@ -1163,6 +1182,7 @@ void usr_ringbuf_init(void)
 }
 
 uint8_t number_of_quat_packets = 0;
+uint8_t number_of_raw_packets = 0;
 
 
 
@@ -1186,7 +1206,7 @@ void imu_send_data()
 		single_quat.z = imu_data.quat.z;
 
 		// Put data in send buffer
-		err_code = app_fifo_write(&imu_fifo, (uint8_t *) &single_quat, &single_quat_len);
+		err_code = app_fifo_write(&quat_fifo, (uint8_t *) &single_quat, &single_quat_len);
 		if (err_code == NRF_ERROR_NO_MEM)
 		{
 			NRF_LOG_INFO("QUAT FIFO BUFFER FULL!");
@@ -1198,7 +1218,7 @@ void imu_send_data()
 			ble_tms_quat_t data;
 			uint32_t data_len = sizeof(data);
 
-			err_code = app_fifo_read(&imu_fifo, (uint8_t *) &data, &data_len);
+			err_code = app_fifo_read(&quat_fifo, (uint8_t *) &data, &data_len);
 			if (err_code == NRF_ERROR_NO_MEM)
 			{
 				NRF_LOG_INFO("QUAT FIFO BUFFER FULL!");
@@ -1218,27 +1238,56 @@ void imu_send_data()
 	}
 	if(imu.gyro_enabled || imu.accel_enabled || imu.mag_enabled)
 	{
-		ble_tms_raw_t data;
+		ble_tms_single_raw_t single_raw;
+		uint32_t single_raw_len = sizeof(single_raw);
 
+		// Put data in send buffer + increment packet counter
+		number_of_raw_packets++;
+
+		// Get latest available data
 		// Get last gyro data from buffer
-		data.gyro.x = imu_data.gyro.x;
-		data.gyro.y = imu_data.gyro.y;
-		data.gyro.z = imu_data.gyro.z;
+		single_raw.gyro.x = imu_data.gyro.x;
+		single_raw.gyro.y = imu_data.gyro.y;
+		single_raw.gyro.z = imu_data.gyro.z;
 
 		// Get last accel data from buffer
-		data.accel.x = imu_data.accel.x;
-		data.accel.y = imu_data.accel.y;
-		data.accel.z = imu_data.accel.z;
+		single_raw.accel.x = imu_data.accel.x;
+		single_raw.accel.y = imu_data.accel.y;
+		single_raw.accel.z = imu_data.accel.z;
 
 		// Get last mag data from buffer
-		data.compass.x = imu_data.mag.x;
-		data.compass.y = imu_data.mag.y;
-		data.compass.z = imu_data.mag.z;
+		single_raw.compass.x = imu_data.mag.x;
+		single_raw.compass.y = imu_data.mag.y;
+		single_raw.compass.z = imu_data.mag.z;
 
-		err_code = ble_tms_raw_set(&m_tms, &data);	
-		if(err_code != NRF_SUCCESS)
+		// Put data in send buffer
+		err_code = app_fifo_write(&raw_fifo, (uint8_t *) &single_raw, &single_raw_len);
+		if (err_code == NRF_ERROR_NO_MEM)
 		{
-			NRF_LOG_INFO("ble_tms_raw_set err_code: %d", err_code);
+			NRF_LOG_INFO("QUAT FIFO BUFFER FULL!");
+		}
+
+		// If 10 packets are queued, send them out
+		if( number_of_raw_packets >= 10)
+		{		
+			ble_tms_raw_t data;
+			uint32_t data_len = sizeof(data);
+
+			err_code = app_fifo_read(&raw_fifo, (uint8_t *) &data, &data_len);
+			if (err_code == NRF_ERROR_NO_MEM)
+			{
+				NRF_LOG_INFO("QUAT FIFO BUFFER FULL!");
+			}
+
+			// Send data
+			err_code = ble_tms_raw_set(&m_tms, &data);	
+			if(err_code != NRF_SUCCESS)
+			{
+				NRF_LOG_INFO("ble_tms_raw_set err_code: %d", err_code);
+			}
+
+			number_of_raw_packets = 0;
+			// NRF_LOG_INFO("quat set");
 		}
 	}
 	if(imu.euler_enabled)
