@@ -1,6 +1,9 @@
 #include "usr_ble.h"
 
+// Include utilities
+#include "usr_util.h"
 
+#include "usr_ble_settings.h"
 
 #include <stdint.h>
 #include <string.h>
@@ -33,8 +36,6 @@
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
 
-///////////////////////////////////////////////
-
 #include "nrf_delay.h"
 
 // TimeSync
@@ -55,73 +56,46 @@ extern imu_data_t imu_data;
 // Add TMS service for transmitting IMU data
 #include "ble_tms.h"
 
-ble_tms_t m_tms;
-
 // BLE Battery service
 #include "ble_bas.h"
 
-BLE_BAS_DEF(m_bas);                                                 /**< Structure used to identify the battery service. */
 
-
-#include "usr_util.h"
-
-
-int countrrr = 0;
+// Variable to keep track if the NUS buffer is full
 bool nus_buffer_full = false;
 
-#define FREQ_TO_MS(x) ((1.000/x)*1000)
 
-uint32_t led_blink_tick = 0;
+// Struct to keep track of TimeSync variables
+typedef struct{
+    uint32_t sync_interval_int_time; // How much time between measurements - (In increments of 2.5 ms)
+    bool m_ts_synchronized;
+    bool m_imu_trigger_enabled;
+} time_sync_t;
+
+time_sync_t ts = {
+    .sync_interval_int_time = 4, // Default 100 Hz transmission rate
+    .m_ts_synchronized = 0,
+    .m_imu_trigger_enabled = 0,
+};
 
 
-
-///////////////////////////////////////////////
-#define SYNC_FREQ	2 // Hz
-
-// In increments of 2.5 ms
-uint32_t sync_interval_int_time = 4; // Default 100 Hz transmission rate
-
-static bool m_ts_synchronized = 0;
-static bool m_imu_trigger_enabled = 0;
-
-
-///////////////////////////////////////////////
-
-#define APP_BLE_CONN_CFG_TAG            1                                           /**< A tag identifying the SoftDevice BLE configuration. */
-
-#define DEVICE_NAME                     "IMU2"                               /**< Name of device. Will be included in the advertising data. */
-#define NUS_SERVICE_UUID_TYPE           BLE_UUID_TYPE_VENDOR_BEGIN                  /**< UUID type for the Nordic UART Service (vendor specific). */
-
-#define APP_BLE_OBSERVER_PRIO           3                                           /**< Application's BLE observer priority. You shouldn't need to modify this value. */
-
-#define APP_ADV_INTERVAL                150//64                                          /**< The advertising interval (in units of 0.625 ms. This value corresponds to 40 ms). */
-
-#define APP_ADV_DURATION                18000                                       /**< The advertising duration (180 seconds) in units of 10 milliseconds. */
-
-#define MIN_CONN_INTERVAL               MSEC_TO_UNITS(10, UNIT_1_25_MS)             /**< Minimum acceptable connection interval (20 ms), Connection interval uses 1.25 ms units. */
-#define MAX_CONN_INTERVAL               MSEC_TO_UNITS(75, UNIT_1_25_MS)             /**< Maximum acceptable connection interval (75 ms), Connection interval uses 1.25 ms units. */
-#define SLAVE_LATENCY                   0                                           /**< Slave latency. */
-#define CONN_SUP_TIMEOUT                MSEC_TO_UNITS(4000, UNIT_10_MS)             /**< Connection supervisory timeout (4 seconds), Supervision Timeout uses 10 ms units. */
-#define FIRST_CONN_PARAMS_UPDATE_DELAY  APP_TIMER_TICKS(5000)                       /**< Time from initiating event (connect or start of notification) to first time sd_ble_gap_conn_param_update is called (5 seconds). */
-#define NEXT_CONN_PARAMS_UPDATE_DELAY   APP_TIMER_TICKS(30000)                      /**< Time between each call to sd_ble_gap_conn_param_update after the first call (30 seconds). */
-#define MAX_CONN_PARAMS_UPDATE_COUNT    3                                           /**< Number of attempts before giving up the connection parameter negotiation. */
-
-#define DEAD_BEEF                       0xDEADBEEF                                  /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
-
-#define UART_TX_BUF_SIZE                1024                                         /**< UART TX buffer size. */
-#define UART_RX_BUF_SIZE                1024                                         /**< UART RX buffer size. */
-
+// Initialization
 
 BLE_NUS_DEF(m_nus, NRF_SDH_BLE_TOTAL_LINK_COUNT);                                   /**< BLE NUS service instance. */
 NRF_BLE_GATT_DEF(m_gatt);                                                           /**< GATT module instance. */
 NRF_BLE_QWR_DEF(m_qwr);                                                             /**< Context for the Queued Write module.*/
 BLE_ADVERTISING_DEF(m_advertising);                                                 /**< Advertising module instance. */
 
+BLE_BAS_DEF(m_bas);                                                                 /**< Structure used to identify the battery service. */
+ble_tms_t m_tms;                                                                    /**< Motion service */
+
+
+
+
+
 static uint16_t   m_conn_handle          = BLE_CONN_HANDLE_INVALID;                 /**< Handle of the current connection. */
 static uint16_t   m_ble_nus_max_data_len = BLE_GATT_ATT_MTU_DEFAULT - 3;            /**< Maximum length of data (in bytes) that can be transmitted to the peer by the Nordic UART service module. */
 //static uint16_t   m_ble_nus_max_data_len = 247 - 3;            /**< Maximum length of data (in bytes) that can be transmitted to the peer by the Nordic UART service module. */
 
-#define TMS_SERVICE_UUID_TYPE       BLE_UUID_TYPE_VENDOR_BEGIN
 
 static ble_uuid_t m_adv_uuids[]          =                                          /**< Universally unique service identifier. */
 {
@@ -131,10 +105,8 @@ static ble_uuid_t m_adv_uuids[]          =                                      
 };
 
 
-//////////////////
-// TMS Motion service
-//////////////////
 
+// Motion service event handler
 static void ble_tms_evt_handler(ble_tms_t        * p_tms,
                                 ble_tms_evt_type_t evt_type,
                                 uint8_t          * p_data,
@@ -328,7 +300,7 @@ static void ble_tms_evt_handler(ble_tms_t        * p_tms,
             imu.sync_start_time = received_config.sync_start_time;
 
             // Stop syncing
-            m_imu_trigger_enabled = imu.sync;
+            ts.m_imu_trigger_enabled = imu.sync;
 
             NRF_LOG_INFO("received_config.motion_freq_hz %d", received_config.motion_freq_hz);
             NRF_LOG_INFO("imu.period %d", imu.period);
@@ -447,7 +419,7 @@ void imu_config_evt_sceduled(void * p_event_data, uint16_t event_size)
 		APP_ERROR_CHECK(err_code);
         #endif
 
-        sync_interval_int_time = (imu.period / 2.5);        
+        ts.sync_interval_int_time = (imu.period / 2.5);        
 
         // Temp for debugging
         print_sync_time();
@@ -458,12 +430,12 @@ void imu_config_evt_sceduled(void * p_event_data, uint16_t event_size)
         {
         err_code = ts_set_trigger(imu.sync_start_time, nrf_gpiote_task_addr_get(NRF_GPIOTE_TASKS_OUT_3));
         APP_ERROR_CHECK(err_code);
-        m_imu_trigger_enabled = 1 ;
+        ts.m_imu_trigger_enabled = 1 ;
         }else{
-            m_imu_trigger_enabled = 0;
+            ts.m_imu_trigger_enabled = 0;
         }
 
-        NRF_LOG_INFO("sync_interval_int_time: %d", sync_interval_int_time);
+        NRF_LOG_INFO("ts.sync_interval_int_time: %d", ts.sync_interval_int_time);
 
         // TODO: ADC needs to be implemented
         // adc_enable(imu);
@@ -910,7 +882,7 @@ void ts_imu_trigger_enable(void)
     uint32_t time_target;
     ret_code_t err_code;
 
-    if (m_imu_trigger_enabled)
+    if (ts.m_imu_trigger_enabled)
     {
         return;
     }
@@ -930,13 +902,13 @@ void ts_imu_trigger_enable(void)
 
     nrf_gpiote_task_set(NRF_GPIOTE_TASKS_CLR_3);
 
-    m_imu_trigger_enabled = true;
+    ts.m_imu_trigger_enabled = true;
 }
 
 static void ts_imu_trigger_disable(void)
 {
     NRF_LOG_INFO("ts_imu_trigger_disable()");
-    m_imu_trigger_enabled = false;
+    ts.m_imu_trigger_enabled = false;
 }
 
 void timesync_pin_toggle(uint32_t tick)
@@ -953,17 +925,17 @@ void timesync_pin_toggle(uint32_t tick)
 
 static void ts_evt_synchronized_enable()
 {
-    m_ts_synchronized = 1;
+    ts.m_ts_synchronized = 1;
 }
 
 static void ts_evt_synchronized_disable()
 {
-    m_ts_synchronized = 0;
+    ts.m_ts_synchronized = 0;
 }
 
 static bool ts_evt_synchronized()
 {
-    return m_ts_synchronized;
+    return ts.m_ts_synchronized;
 }
 
 
@@ -992,9 +964,9 @@ static void ts_evt_callback(const ts_evt_t* evt)
             {
                 uint32_t tick_target;
 
-                if (m_imu_trigger_enabled && ts_evt_synchronized())
+                if (ts.m_imu_trigger_enabled && ts_evt_synchronized())
                 {
-                    tick_target = evt->params.triggered.tick_target + sync_interval_int_time;
+                    tick_target = evt->params.triggered.tick_target + ts.sync_interval_int_time;
 
                     uint32_t time;
                     time = TIME_SYNC_TIMESTAMP_TO_USEC(tick_target) / 1000;
@@ -1013,7 +985,7 @@ static void ts_evt_callback(const ts_evt_t* evt)
                     // Check for wrong timesync packet
                     if(tick_target <= (time_now_ticks/1000))
                     {
-                        tick_target = evt->params.triggered.tick_target + sync_interval_int_time;
+                        tick_target = evt->params.triggered.tick_target + ts.sync_interval_int_time;
                         NRF_LOG_INFO("TimeSync tick_target <= ticks_now");
                     }
                     // Print Time - Last Sync
@@ -1340,8 +1312,6 @@ static void advertising_start(void)
 
 
 
-// Bool to keep track if data over BLE NUS is send correctly
-bool NUS_send_OK = true;
 
 // CUSTOM
 uint32_t nus_printf_custom(char* p_char)
@@ -1390,13 +1360,11 @@ uint32_t nus_printf_custom_1(char* p_char)
 							APP_ERROR_CHECK(err_code);
 					}
 			} while (err_code == NRF_SUCCESS);
-		
-			NRF_LOG_INFO("C:	%d", countrrr);
-	countrrr++;
 		index = 0;
 	return err_code;
 }
 
+// Send data over NUS service
 uint32_t nus_send(uint8_t * data, uint16_t len)
 {
 		ret_code_t err_code;

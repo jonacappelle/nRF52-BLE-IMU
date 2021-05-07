@@ -30,5 +30,8 @@ void check_cpu_activity();
 #define FIXED2DOUBLE(x) (((double)(x)) / (1 << FRACT_BITS))
 #define MULT(x, y) ( ((x) >> FRACT_BITS_D2) * ((y)>> FRACT_BITS_D2) )
 
+// Convert frequency to milliseconds
+#define FREQ_TO_MS(x) ((1.000/x)*1000)
+
 
 #endif
