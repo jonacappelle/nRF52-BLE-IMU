@@ -1008,7 +1008,7 @@ static void ts_evt_callback(const ts_evt_t* evt)
                         NRF_LOG_INFO("TimeSync tick_target <= ticks_now");
                     }
                     // Print Time - Last Sync
-                    NRF_LOG_INFO("now   %d  tick_start   %d  tick_target  %d  last_sync   %d", time_now_ticks/1000, evt->params.triggered.tick_start, evt->params.triggered.tick_target, evt->params.triggered.last_sync);
+                    NRF_LOG_INFO("now   %d  tick_target  %d  last_sync   %d", time_now_ticks/1000, evt->params.triggered.tick_target, evt->params.triggered.last_sync);
 
                     // Toggle LED to measure TimeSync
                     timesync_pin_toggle(tick_target);
