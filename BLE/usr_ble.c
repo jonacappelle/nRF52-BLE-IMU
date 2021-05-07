@@ -141,7 +141,7 @@ static void ble_tms_evt_handler(ble_tms_t        * p_tms,
                                 uint16_t           length)
 {
     NRF_LOG_DEBUG("ble_tms_evt_handler called");
-    uint32_t err_code;
+    ret_code_t err_code;
     
     switch (evt_type)
     {
@@ -437,7 +437,7 @@ static void print_sync_time()
 void imu_config_evt_sceduled(void * p_event_data, uint16_t event_size)
 {
 		// Enable sensor parameters based on received configuration
-		uint32_t err_code;
+		ret_code_t err_code;
 
         // Clear all buffers before starting a new measurement
         imu_clear_buff();
@@ -480,7 +480,7 @@ void imu_config_evt_sceduled(void * p_event_data, uint16_t event_size)
 /**@snippet [Handling the data received over BLE] */
 static void nus_data_handler(ble_nus_evt_t * p_evt)
 {
-    uint32_t err_code;
+    ret_code_t err_code;
 	
     switch (p_evt->type)
     {
@@ -539,7 +539,7 @@ static void usr_ble_nus_init()
 
 static void usr_tms_init(void)
 {
-    uint32_t err_code;
+    ret_code_t err_code;
     ble_tms_init_t        tms_init;
 
     memset(&tms_init, 0, sizeof(tms_init));
@@ -562,7 +562,7 @@ static void usr_tms_init(void)
 
 static void usr_bas_init(void)
 {
-    uint32_t err_code;
+    ret_code_t err_code;
     ble_bas_init_t     bas_init;
     
     // Initialize Battery Service.
@@ -614,7 +614,7 @@ static void services_init(void)
  */
 static void on_conn_params_evt(ble_conn_params_evt_t * p_evt)
 {
-    uint32_t err_code;
+    ret_code_t err_code;
 
     if (p_evt->evt_type == BLE_CONN_PARAMS_EVT_FAILED)
     {
@@ -663,7 +663,7 @@ static void conn_params_init(void)
  */
 static void sleep_mode_enter(void)
 {
-    uint32_t err_code = bsp_indication_set(BSP_INDICATE_IDLE);
+    ret_code_t err_code = bsp_indication_set(BSP_INDICATE_IDLE);
     APP_ERROR_CHECK(err_code);
 
     // Prepare wakeup buttons.
@@ -684,7 +684,7 @@ static void sleep_mode_enter(void)
  */
 static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
 {
-    uint32_t err_code;
+    ret_code_t err_code;
 
     switch (ble_adv_evt)
     {
@@ -710,7 +710,7 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
  */
 static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
 {
-    uint32_t err_code;
+    ret_code_t err_code;
 
     // Pass softdevice calls back to TMS handler
     ble_tms_on_ble_evt(&m_tms, p_ble_evt);
@@ -908,7 +908,7 @@ void ts_imu_trigger_enable(void)
     uint64_t time_now_ticks;
     uint32_t time_now_msec;
     uint32_t time_target;
-    uint32_t err_code;
+    ret_code_t err_code;
 
     if (m_imu_trigger_enabled)
     {
@@ -999,7 +999,7 @@ static void ts_evt_callback(const ts_evt_t* evt)
                     uint32_t time;
                     time = TIME_SYNC_TIMESTAMP_TO_USEC(tick_target) / 1000;
 
-                    uint32_t err_code = ts_set_trigger(tick_target, nrf_gpiote_task_addr_get(NRF_GPIOTE_TASKS_OUT_3));
+                    ret_code_t err_code = ts_set_trigger(tick_target, nrf_gpiote_task_addr_get(NRF_GPIOTE_TASKS_OUT_3));
                     if(err_code != NRF_SUCCESS)
                     {
                         NRF_LOG_INFO("err_code: %d", err_code);
@@ -1045,7 +1045,7 @@ static void ts_evt_callback(const ts_evt_t* evt)
 
 static void sync_timer_init(void)
 {
-    uint32_t err_code;
+    ret_code_t err_code;
 
     // Debug pin:
     // nRF52-DK (PCA10040) Toggle P0.24 from sync timer to allow pin measurement
@@ -1095,7 +1095,7 @@ static void sync_timer_init(void)
  */
 void bsp_event_handler(bsp_event_t event)
 {
-    uint32_t err_code;
+    ret_code_t err_code;
     switch (event)
     {
         case BSP_EVENT_KEY_0:
@@ -1279,7 +1279,7 @@ static void buttons_leds_init(bool * p_erase_bonds)
 {
     bsp_event_t startup_event;
 
-    uint32_t err_code = bsp_init(BSP_INIT_LEDS | BSP_INIT_BUTTONS, bsp_event_handler);
+    ret_code_t err_code = bsp_init(BSP_INIT_LEDS | BSP_INIT_BUTTONS, bsp_event_handler);
     APP_ERROR_CHECK(err_code);
 
     err_code = bsp_btn_ble_init(NULL, &startup_event);
@@ -1333,7 +1333,7 @@ void idle_state_handle(void)
  */
 static void advertising_start(void)
 {
-    uint32_t err_code = ble_advertising_start(&m_advertising, BLE_ADV_MODE_FAST);
+    ret_code_t err_code = ble_advertising_start(&m_advertising, BLE_ADV_MODE_FAST);
     APP_ERROR_CHECK(err_code);
 }
 
@@ -1347,7 +1347,7 @@ bool NUS_send_OK = true;
 uint32_t nus_printf_custom(char* p_char)
 {
 		static uint16_t index;
-		uint32_t err_code;
+		ret_code_t err_code;
 		static uint8_t data_array[BLE_NUS_MAX_DATA_LEN];
 		while(*p_char != '\0'){
 						data_array[index] = *p_char;
@@ -1373,7 +1373,7 @@ uint32_t nus_printf_custom(char* p_char)
 uint32_t nus_printf_custom_1(char* p_char)
 {
 	static uint16_t index;
-	uint32_t err_code;
+	ret_code_t err_code;
 	static uint8_t data_array[BLE_NUS_MAX_DATA_LEN];
 	while(*p_char != '\0'){
           data_array[index] = *p_char;
@@ -1399,7 +1399,7 @@ uint32_t nus_printf_custom_1(char* p_char)
 
 uint32_t nus_send(uint8_t * data, uint16_t len)
 {
-		uint32_t err_code;
+		ret_code_t err_code;
 	
 		err_code = ble_nus_data_send(&m_nus, data, &len, m_conn_handle);
 		

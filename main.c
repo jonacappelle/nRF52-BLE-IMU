@@ -49,7 +49,7 @@ IMU imu = {
  */
 int main(void)
 {
-		uint32_t err_code;
+		ret_code_t err_code;
 		
 		// Initialize everything related to BLE
 		usr_ble_init();

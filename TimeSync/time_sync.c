@@ -591,12 +591,12 @@ void ts_on_sys_evt(uint32_t sys_evt, void * p_context)
                 {
                     ++m_tx_slot_retry_count;
                     m_timeslot_req_normal.params.normal.distance_us = m_timeslot_distance * (m_tx_slot_retry_count + 2);
-                    uint32_t err_code = sd_radio_request((nrf_radio_request_t*) &m_timeslot_req_normal);
+                    ret_code_t err_code = sd_radio_request((nrf_radio_request_t*) &m_timeslot_req_normal);
                     APP_ERROR_CHECK(err_code);
                 }
                 else
                 {
-                    uint32_t err_code = sd_radio_request((nrf_radio_request_t*) &m_timeslot_req_earliest);
+                    ret_code_t err_code = sd_radio_request((nrf_radio_request_t*) &m_timeslot_req_earliest);
                     APP_ERROR_CHECK(err_code);
                 }
 
@@ -617,7 +617,7 @@ void ts_on_sys_evt(uint32_t sys_evt, void * p_context)
         {
             NRF_LOG_INFO("NRF_EVT_RADIO_SESSION_IDLE\r\n");
 
-            uint32_t err_code = sd_radio_session_close();
+            ret_code_t err_code = sd_radio_session_close();
             APP_ERROR_CHECK(err_code);
             break;
         }
@@ -1088,7 +1088,7 @@ uint32_t ts_init(const ts_init_t * p_init)
 
 uint32_t ts_enable(const ts_rf_config_t* p_rf_config)
 {
-    uint32_t err_code;
+    ret_code_t err_code;
 
     if (p_rf_config == NULL || p_rf_config->rf_addr == NULL)
     {
@@ -1152,7 +1152,7 @@ uint32_t ts_enable(const ts_rf_config_t* p_rf_config)
 
 uint32_t ts_disable(void)
 {
-    uint32_t err_code;
+    ret_code_t err_code;
 
     nrf_atomic_flag_set(&m_pending_close);
 

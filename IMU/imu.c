@@ -377,7 +377,7 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 		
 
 		
-		uint32_t err_code;
+		ret_code_t err_code;
 		size_t len_in;
 		
 		uint8_t config_data[1];
@@ -779,7 +779,7 @@ void gpiote_evt_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 {
 		nrf_gpio_pin_toggle(25);
 	
-		uint32_t err_code;
+		ret_code_t err_code;
 	
 		if(pin == INT_PIN)
 		{
@@ -987,7 +987,7 @@ uint32_t imu_enable_sensors(IMU * imu)
 
 static void imu_buff_init()
 {
-	uint32_t err_code;
+	ret_code_t err_code;
 
 	// Initialize IMU FIFO structure
 	err_code = app_fifo_init(&buff.imu_fifo, buff.imu_fifo_buff, (uint16_t)sizeof(buff.imu_fifo_buff));
@@ -1004,7 +1004,7 @@ static void imu_buff_init()
 
 void imu_clear_buff()
 {
-	uint32_t err_code;
+	ret_code_t err_code;
 
 	// Clear all data in buffers
 	err_code = app_fifo_flush(&buff.imu_fifo);
@@ -1102,7 +1102,7 @@ size_t get_imu_packet_length(IMU imu)
 
 uint32_t IMU_buffer_bytes_available()
 {
-	uint32_t err_code;
+	ret_code_t err_code;
 	uint32_t data_len;
 	// Request number of elements in the FIFO
 	err_code = app_fifo_read(&buff.imu_fifo, NULL, &data_len);
@@ -1135,7 +1135,7 @@ uint8_t number_of_raw_packets = 0;
 
 void imu_send_data()
 {
-	uint32_t err_code;
+	ret_code_t err_code;
 
 	if(imu.quat6_enabled || imu.quat9_enabled)
 	{

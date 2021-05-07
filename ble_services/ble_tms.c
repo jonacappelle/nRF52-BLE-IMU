@@ -259,7 +259,7 @@ static void on_write(ble_tms_t * p_tms, ble_evt_t * p_ble_evt)
 static void on_authorize_req(ble_tms_t * p_tms, ble_evt_t * p_ble_evt)
 {
     ble_gatts_evt_rw_authorize_request_t * p_evt_rw_authorize_request = &p_ble_evt->evt.gatts_evt.params.authorize_request;
-    uint32_t err_code;
+    ret_code_t err_code;
 
     if (p_evt_rw_authorize_request->type  == BLE_GATTS_AUTHORIZE_TYPE_WRITE)
     {

@@ -161,7 +161,7 @@ void timer_datasend_2_event_handler(nrf_timer_event_t event_type, void* p_contex
 				adc.raw[i] = i;
 			}
 
-			uint32_t err_code;
+			ret_code_t err_code;
 			err_code = ble_tms_adc_set(&m_tms, &adc);
 			if(err_code != NRF_SUCCESS)
 			{
