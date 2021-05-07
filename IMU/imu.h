@@ -8,7 +8,6 @@
 
 #define TIMESYNC_PIN    17
 
-
 #define IMU_ENABLED 1
 
 #define COSTUM_BOARD    0

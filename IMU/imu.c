@@ -1159,7 +1159,7 @@ void imu_send_data()
 		}
 
 		// If 10 packets are queued, send them out
-		if( number_of_quat_packets >= 10)
+		if( number_of_quat_packets >= BLE_PACKET_BUFFER_COUNT)
 		{		
 			ble_tms_quat_t data;
 			uint32_t data_len = sizeof(data);
@@ -1214,7 +1214,7 @@ void imu_send_data()
 		}
 
 		// If 10 packets are queued, send them out
-		if( number_of_raw_packets >= 10)
+		if( number_of_raw_packets >= BLE_PACKET_BUFFER_COUNT)
 		{		
 			ble_tms_raw_t data;
 			uint32_t data_len = sizeof(data);

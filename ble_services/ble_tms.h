@@ -68,6 +68,10 @@
 #define BLE_TMS_BLE_OBSERVER_PRIO       2       //--> BLE TMS event gets send with high priority
 
 
+// How many packets (QUAT - RAW) are grouped in a message
+#define BLE_PACKET_BUFFER_COUNT     1
+
+
 /**@brief Macro for defining a ble_tms instance.
  *
  * @param   _name  Name of the instance.
@@ -132,7 +136,7 @@ typedef PACKED( struct
 
 typedef PACKED( struct
 {
-    ble_tms_single_raw_t raw[10];
+    ble_tms_single_raw_t raw[BLE_PACKET_BUFFER_COUNT];
 }) ble_tms_raw_t;
 
 typedef PACKED( struct
@@ -159,7 +163,7 @@ typedef PACKED( struct
 
 typedef PACKED( struct
 { 
-    ble_tms_single_quat_t quat[10];
+    ble_tms_single_quat_t quat[BLE_PACKET_BUFFER_COUNT];
 }) ble_tms_quat_t;
 
 typedef PACKED( struct
