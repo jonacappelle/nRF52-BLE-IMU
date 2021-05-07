@@ -4,7 +4,8 @@
 #include "stdio.h"
 #include <stdint.h>
 
-#define CPU_ACTIVITY_PIN    18
+#define PIN_CPU_ACTIVITY    18
+#define PIN_IMU_ACTIVITY    20
 
 
 /// Fixed-point Format: 11.5 (16-bit)
@@ -33,5 +34,7 @@ void check_cpu_activity();
 // Convert frequency to milliseconds
 #define FREQ_TO_MS(x) ((1.000/x)*1000)
 
+
+void idle_state_handle(void);
 
 #endif

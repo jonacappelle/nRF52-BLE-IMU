@@ -1,3 +1,26 @@
+/*  ____  ____      _    __  __  ____ ___
+ * |  _ \|  _ \    / \  |  \/  |/ ___/ _ \
+ * | | | | |_) |  / _ \ | |\/| | |  | | | |
+ * | |_| |  _ <  / ___ \| |  | | |__| |_| |
+ * |____/|_| \_\/_/   \_\_|  |_|\____\___/
+ *                           research group
+ *                             dramco.be/
+ *
+ *  KU Leuven - Technology Campus Gent,
+ *  Gebroeders De Smetstraat 1,
+ *  B-9000 Gent, Belgium
+ *
+ *         File: usr_twi.h
+ *      Created: YYYY-MM-DD
+ *       Author: Jona Cappelle
+ *      Version: v1.0
+ *
+ *  Description: I2C communication header file
+ *
+ *  Commissiond by Interreg NOMADe
+ * 
+ */
+
 #ifndef _USR_TWI_H_
 #define _USR_TWI_H_
 

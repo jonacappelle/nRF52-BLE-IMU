@@ -6,9 +6,6 @@
 #include "nrf_log_default_backends.h"
 
 
-
-
-
 /**
  * @brief Function for configuring: PIN_IN pin for input, PIN_OUT pin for output,
  * and configures GPIOTE to give an interrupt on pin change.
@@ -35,19 +32,9 @@ void gpio_init(void)
 #endif
 	
 	
-		// GPIO stuff for timing purposes
-	////////////////////////////////	
-		nrf_gpio_cfg_output(CPU_ACTIVITY_PIN);
-		nrf_gpio_cfg_output(19);
-		nrf_gpio_cfg_output(20);
-		nrf_gpio_cfg_output(TIMESYNC_PIN); // Timing TS_evt handler
-	////////////////////////////////
-		nrf_gpio_cfg_output(25);
-		nrf_gpio_pin_set(25);
-		nrf_gpio_pin_set(20);
-		nrf_delay_ms(1000);
-		nrf_gpio_pin_clear(25);
-		nrf_gpio_pin_clear(20);
-		nrf_delay_ms(1000);
-	////////////////////////////////
+	// GPIO stuff for timing purposes
+	nrf_gpio_cfg_output(PIN_CPU_ACTIVITY);
+	nrf_gpio_cfg_output(PIN_IMU_ACTIVITY);
+	nrf_gpio_cfg_output(TIMESYNC_PIN); // Timing TS_evt handler
+
 }

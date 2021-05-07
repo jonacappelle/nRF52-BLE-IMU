@@ -65,45 +65,16 @@
 // Utilities
 #include "usr_util.h"
 
-
-
-// Create buffer FIFO structure
-typedef struct buffer
-{
-	app_fifo_t imu_fifo;			// FIFO for IMU data - used by NUS
-	uint8_t imu_fifo_buff[1024];		// Buffer for IMU data - used by NUS
-	app_fifo_t quat_fifo;			// Buffer struct for sending QUAT in packets of 10
-	uint8_t quat_fifo_buff[1024];	// Buffer allocation for QUAT
-	app_fifo_t raw_fifo;			// Buffer struct for sending RAW in packets of 10
-	uint8_t raw_fifo_buff[1024];	// Buffer allocation for RAW
-} BUFFER;
-
 BUFFER buff;
 
-
-
-
-
-
-
-
+// Stuct buffer to keep track of latest IMU samples
 imu_data_t imu_data;
 
 
 // Initialisation of IMU struct
 extern IMU imu;
 
-
-
-
 extern ble_tms_t m_tms;
-
-
-/* Define msg level */
-#define MSG_LEVEL INV_MSG_LEVEL_DEBUG
-
-uint32_t bytes_available = 0;
-
 
 /*
  * States for icm20948 device object
@@ -119,9 +90,7 @@ inv_device_t * device; /* just a handy variable to keep the handle to device obj
 /* Activity classification */
 const char * activityName(int act);
 
-//uint32_t imu_init(void);
 static void check_rc(int rc);
-
 
 void imu_evt_poll_sceduled(void * p_event_data, uint16_t event_size);
 void gpiote_evt_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action);
@@ -146,45 +115,21 @@ int my_serif_open_read_reg(uint8_t reg, uint8_t * rbuffer, uint32_t rlen);
 int my_serif_open_write_reg(uint8_t reg, const uint8_t * wbuffer, uint32_t wlen);
 int my_adapter_register_interrupt_callback(void (*interrupt_cb)(void * context, int int_num), void * context);
 
-// Exported instance of SerifHal object:
-// A pointer to this structure shall be passed to the Device API,
-// for the device driver to access to the SPI/I2C bus.
-// The device will not modify the object, so it can be declared const
-// The underlying HW serial interface must be up and running before calling any
-// device methods
-//const inv_serif_hal_t my_serif_instance = {
-//        my_serif_open_read_reg,  /* callback to read_reg low level method */
-//        my_serif_open_write_reg, /* callback to read_reg low level method */
-//        256,                     /* maximum number of bytes allowed per read transaction,
-//                                    (limitation can come from internal buffer in the system driver) */
-//        256,                     /* maximum number of bytes allowed per write transaction,
-//                                    (limitation can come from internal buffer in the system driver) */
-//        INV_SERIF_HAL_TYPE_I2C,  /* type of the serial interface (between SPI or I2C) */
-//        (void *)0xDEAD           /* some context pointer passed to read_reg/write_reg callbacks */
-//};
-
 // definition of the instance
 const inv_host_serif_t my_serif_instance = {
         my_serif_open_adapter,
         my_serif_close_adapter,
         my_serif_open_read_reg,
         my_serif_open_write_reg,
-				my_adapter_register_interrupt_callback,
+		my_adapter_register_interrupt_callback,
         256,
-				256,
+		256,
         INV_HOST_SERIF_TYPE_I2C
 };
 
 // Not used - is integrated in I2C read - write
 int my_serif_open_adapter(void)
 {
-//				ret_code_t err = twi_open();
-//				if(err == NRF_SUCCESS)
-//				{
-//					return 0;
-//				}else{
-//					return -1;
-//				}
 				int rc = 0;
 				return rc;
 }
@@ -206,50 +151,29 @@ int my_adapter_register_interrupt_callback(void (*interrupt_cb)(void * context, 
 
 int my_serif_open_read_reg(uint8_t reg, uint8_t * rbuffer, uint32_t rlen)
 {
-        (void)reg, (void)rbuffer, (void)rlen;
-        // MyTarget_SPI_do_read_reg(&reg, 1, rbuffer, rlen);
+	(void)reg, (void)rbuffer, (void)rlen;
 	
-				ret_code_t error = i2c_read_bytes( &m_twi, ICM_20948_I2C_ADDRESS, reg, rbuffer, rlen);
-				if(error == NRF_SUCCESS)
-				{
-					return 0;
-				}else{
-					return -1;	// shall return a negative value on error
-				}
-					
-//					if(twi_tx_done) 
-//					{
-//						return 0;
-//					}
-//					return -1;
-	
+	ret_code_t error = i2c_read_bytes( &m_twi, ICM_20948_I2C_ADDRESS, reg, rbuffer, rlen);
+	if(error == NRF_SUCCESS)
+	{
+		return 0; // On success
+	}else{
+		return -1;	// shall return a negative value on error
+	}	
 }
 
 int my_serif_open_write_reg(uint8_t reg, const uint8_t * wbuffer, uint32_t wlen)
 {
-        (void)reg, (void)wbuffer, (void)wlen;
-        // MyTarget_SPI_do_write_reg(&reg, 1, wbuffer, wlen);
-	
-//				for( int i=0; i<wlen; i++)
-//				{
-					ret_code_t error = i2c_write_byte( &m_twi, ICM_20948_I2C_ADDRESS, reg, wbuffer, wlen, false);
-//					i++;
-//				}
-				// TODO: return value is now always 0
-	
-				if(error == NRF_SUCCESS)
-				{
-					return 0;
-				}else{
-					return -1;	// shall return a negative value on error
-				}
-//					if(twi_tx_done) 
-//					{
-//						return 0;
-//					}
-//					return -1;
-	
-//        return 0; // shall return a negative value on error
+	(void)reg, (void)wbuffer, (void)wlen;
+
+	ret_code_t error = i2c_write_byte( &m_twi, ICM_20948_I2C_ADDRESS, reg, wbuffer, wlen, false);
+
+	if(error == NRF_SUCCESS)
+	{
+		return 0;   // On success
+	}else{
+		return -1;	// shall return a negative value on error
+	}
 }
 
 
@@ -384,9 +308,6 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 		
 		counterr++;
 
-		// NRF_LOG_INFO("%d", counterr);
-		
-nrf_gpio_pin_set(19);	
 
 	switch(INV_SENSOR_ID_TO_TYPE(event->sensor)) {
 
@@ -412,9 +333,6 @@ nrf_gpio_pin_set(19);
 			// 		(int)(event->data.acc.vect[1]*1000),
 			// 		(int)(event->data.acc.vect[2]*1000),
 			// 		(int)(event->data.acc.accuracy_flag));
-					
-				// New IMU data is available: count how many bytes are available
-				bytes_available++;
 					
 				#ifdef USE_NUS
 				// Put data in the ringbuffer
@@ -454,9 +372,6 @@ nrf_gpio_pin_set(19);
 					(int)(event->data.gyr.vect[1]*1000),
 					(int)(event->data.gyr.vect[2]*1000),
 					(int)(event->data.gyr.accuracy_flag));
-	
-				// New IMU data is available: count how many bytes are available
-				bytes_available++;
 					
 				#ifdef USE_NUS
 				// Put data in the ringbuffer
@@ -496,9 +411,6 @@ nrf_gpio_pin_set(19);
 			// 		(int)(event->data.mag.vect[1]*1000),
 			// 		(int)(event->data.mag.vect[2]*1000),
 			// 		(int)(event->data.mag.accuracy_flag));
-					
-				// New IMU data is available: count how many bytes are available
-				bytes_available++;
 					
 				#ifdef USE_NUS
 				// Put data in the ringbuffer
@@ -556,11 +468,7 @@ nrf_gpio_pin_set(19);
 		case INV_SENSOR_TYPE_GAME_ROTATION_VECTOR:
 		case INV_SENSOR_TYPE_ROTATION_VECTOR:
 		case INV_SENSOR_TYPE_GEOMAG_ROTATION_VECTOR:
-		{
-				// New IMU data is available: count how many bytes are available
-				bytes_available++;
-//			NRF_LOG_INFO("Bytes: %d", bytes_available);
-			
+		{			
 			// NRF_LOG_INFO("%s:	%d %d %d %d", inv_sensor_str(event->sensor),
 			// 		(int)(event->data.quaternion.quat[0]*1000),
 			// 		(int)(event->data.quaternion.quat[1]*1000),
@@ -683,8 +591,6 @@ nrf_gpio_pin_set(19);
 			break;
 		}
 	}
-		
-	nrf_gpio_pin_clear(19);
 }
 }
 
@@ -777,8 +683,6 @@ void msg_printer(int level, const char * str, va_list ap)
 /* Interrupt pin handeler callback function */
 void gpiote_evt_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 {
-		nrf_gpio_pin_toggle(25);
-	
 		ret_code_t err_code;
 	
 		if(pin == INT_PIN)
@@ -796,8 +700,6 @@ void gpiote_evt_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 					APP_ERROR_CHECK(err_code);
 				}
 		}
-		
-	nrf_gpio_pin_toggle(25);
 }
 
 
@@ -809,61 +711,23 @@ void imu_evt_poll_sceduled(void * p_event_data, uint16_t event_size)
 {
     while ( (imu.evt_scheduled > 0) )//&& m_mpu9250.enabled) TODO check when IMU is enabled or not
     {
-				nrf_gpio_pin_set(20);
-			// Poll all data from IMU
-				inv_device_poll(device);
-				nrf_gpio_pin_clear(20);
-				imu.evt_scheduled--;
+		nrf_gpio_pin_set(PIN_IMU_ACTIVITY);
+		
+		// Poll all data from IMU
+		inv_device_poll(device);
+
+		nrf_gpio_pin_clear(PIN_IMU_ACTIVITY);
+		imu.evt_scheduled--;
     }
 }
 
-static uint16_t packet_length_temp;
-void set_imu_packet_length()
-{
-	packet_length_temp = 0;
-	imu.packet_length = 0;
-	
-	
-	// Data length is length of 3 or 4 floats + 1 byte for data classification
-	if(imu.gyro_enabled)
-	{
-		packet_length_temp += (3 * sizeof(float)) + 1;
-		imu.packet_length += (3 * sizeof(float)) + 1;
-	}
-	if(imu.accel_enabled)
-	{
-		packet_length_temp += (3 * sizeof(float)) + 1;
-		imu.packet_length += (3 * sizeof(float)) + 1;
-	}
-	if(imu.mag_enabled)
-	{
-		packet_length_temp += (3 * sizeof(float)) + 1;
-		imu.packet_length += (3 * sizeof(float)) + 1;
-	}
-	if(imu.quat6_enabled)
-	{
-		packet_length_temp += (4 * sizeof(float)) + 1;
-		imu.packet_length += (4 * sizeof(float)) + 1;
-	}
-	if(imu.quat9_enabled)
-	{
-		packet_length_temp += (4 * sizeof(float)) + 1;
-		imu.packet_length += (4 * sizeof(float)) + 1;
-	}
-	if(imu.euler_enabled)
-	{
-		packet_length_temp += (3 * sizeof(float)) + 1;
-		imu.packet_length += (3 * sizeof(float)) + 1;
-	}
-	
-	NRF_LOG_INFO("Packet Len set to: %d", imu.packet_length);
-}
 
-uint32_t imu_enable_sensors(IMU * imu)
+
+ret_code_t imu_enable_sensors(IMU imu)
 {
 		int rc = 0;
 
-		if(imu->stop)
+		if(imu.stop)
 		{
 		// Stop all sensors before enabling the new ones
 		rc += inv_device_stop_sensor(device, INV_SENSOR_TYPE_GAME_ROTATION_VECTOR);
@@ -880,7 +744,7 @@ uint32_t imu_enable_sensors(IMU * imu)
 		check_rc(rc);
 		}
 		// If enabled: Start 6DoF quaternion output
-		if(imu->quat6_enabled)
+		if(imu.quat6_enabled)
 		{
 		NRF_LOG_INFO("Start QUAT6");
 		rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_GAME_ROTATION_VECTOR);
@@ -890,14 +754,14 @@ uint32_t imu_enable_sensors(IMU * imu)
 		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_GAME_ROTATION_VECTOR);
 		check_rc(rc);
 		}
-		else if(!imu->quat6_enabled)
+		else if(!imu.quat6_enabled)
 		{
 		NRF_LOG_INFO("Stop QUAT6");
 		rc += inv_device_stop_sensor(device, INV_SENSOR_TYPE_GAME_ROTATION_VECTOR);
 		check_rc(rc);
 		}
 		// If enabled: Start 9DoF quaternion output
-		if(imu->quat9_enabled)
+		if(imu.quat9_enabled)
 		{
 		NRF_LOG_INFO("Start QUAT9");
 		rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_ROTATION_VECTOR);
@@ -907,14 +771,14 @@ uint32_t imu_enable_sensors(IMU * imu)
 		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_ROTATION_VECTOR);
 		check_rc(rc);
 		}
-		if(!imu->quat9_enabled)
+		if(!imu.quat9_enabled)
 		{
 		NRF_LOG_INFO("Stop QUAT9");
 		rc += inv_device_stop_sensor(device, INV_SENSOR_TYPE_ROTATION_VECTOR);
 		check_rc(rc);
 		}
 		// If enabled: Start Euler angles
-		if(imu->euler_enabled)
+		if(imu.euler_enabled)
 		{
 		NRF_LOG_INFO("Start 9DoF EULER");
 		rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_ORIENTATION);
@@ -924,14 +788,14 @@ uint32_t imu_enable_sensors(IMU * imu)
 		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_ORIENTATION);
 		check_rc(rc);
 		}
-		if(!imu->euler_enabled)
+		if(!imu.euler_enabled)
 		{
 		NRF_LOG_INFO("Stop 9DoF EULER");
 		rc += inv_device_stop_sensor(device, INV_SENSOR_TYPE_ORIENTATION);
 		check_rc(rc);
 		}
 		// If enabled: Start Calibrated Gyroscope output
-		if(imu->gyro_enabled)
+		if(imu.gyro_enabled)
 		{
 		NRF_LOG_INFO("Start GYRO");
 		rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_GYROSCOPE);
@@ -941,14 +805,14 @@ uint32_t imu_enable_sensors(IMU * imu)
 		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_GYROSCOPE);
 		check_rc(rc);
 		}
-		if(!imu->gyro_enabled)
+		if(!imu.gyro_enabled)
 		{
 		NRF_LOG_INFO("Stop GYRO");
 		rc += inv_device_stop_sensor(device, INV_SENSOR_TYPE_GYROSCOPE);
 		check_rc(rc);
 		}
 		// If enabled: Start Calibrated Accelerometer output
-		if(imu->accel_enabled)
+		if(imu.accel_enabled)
 		{
 		NRF_LOG_INFO("Start ACCEL");
 		rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_ACCELEROMETER);
@@ -958,14 +822,14 @@ uint32_t imu_enable_sensors(IMU * imu)
 		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_ACCELEROMETER);
 		check_rc(rc);
 		}
-		if(!imu->accel_enabled)
+		if(!imu.accel_enabled)
 		{
 		NRF_LOG_INFO("Stop ACCEL");
 		rc += inv_device_stop_sensor(device, INV_SENSOR_TYPE_ACCELEROMETER);
 		check_rc(rc);
 		}
 		// If enabled: Start Calibrated Accelerometer output
-		if(imu->mag_enabled)
+		if(imu.mag_enabled)
 		{
 		NRF_LOG_INFO("Start MAG");
 		rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_MAGNETOMETER);
@@ -975,7 +839,7 @@ uint32_t imu_enable_sensors(IMU * imu)
 		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_MAGNETOMETER);
 		check_rc(rc);
 		}
-		if(!imu->mag_enabled)
+		if(!imu.mag_enabled)
 		{
 		NRF_LOG_INFO("Stop MAG");
 		rc += inv_device_stop_sensor(device, INV_SENSOR_TYPE_MAGNETOMETER);
@@ -1085,44 +949,7 @@ void imu_init(void)
 #endif
 }
 
-uint32_t imu_get_bytes_available(void)
-{
-	return bytes_available;
-}
 
-void imu_set_bytes_available(uint32_t bytes)
-{
-	bytes_available = bytes;
-}
-
-size_t get_imu_packet_length(IMU imu)
-{
-	return imu.packet_length;
-}
-
-uint32_t IMU_buffer_bytes_available()
-{
-	ret_code_t err_code;
-	uint32_t data_len;
-	// Request number of elements in the FIFO
-	err_code = app_fifo_read(&buff.imu_fifo, NULL, &data_len);
-	// Check if request was successful
-	if (err_code == NRF_SUCCESS)
-	{
-		// data_len contains the number of elements that can be read
-		return 1;
-	}
-	else if (err_code == NRF_ERROR_NOT_FOUND)
-	{
-		// FIFO is empty
-		return 0;
-	}
-	else
-	{
-		// API parameters incorrect, should not happen
-		NRF_LOG_INFO("Error in IMU_buffer_bytes_available()");
-	}
-}
 
 
 

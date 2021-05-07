@@ -88,10 +88,6 @@ BLE_ADVERTISING_DEF(m_advertising);                                             
 BLE_BAS_DEF(m_bas);                                                                 /**< Structure used to identify the battery service. */
 ble_tms_t m_tms;                                                                    /**< Motion service */
 
-
-
-
-
 static uint16_t   m_conn_handle          = BLE_CONN_HANDLE_INVALID;                 /**< Handle of the current connection. */
 static uint16_t   m_ble_nus_max_data_len = BLE_GATT_ATT_MTU_DEFAULT - 3;            /**< Maximum length of data (in bytes) that can be transmitted to the peer by the Nordic UART service module. */
 //static uint16_t   m_ble_nus_max_data_len = 247 - 3;            /**< Maximum length of data (in bytes) that can be transmitted to the peer by the Nordic UART service module. */
@@ -103,6 +99,29 @@ static ble_uuid_t m_adv_uuids[]          =                                      
     {BLE_UUID_TMS_SERVICE, TMS_SERVICE_UUID_TYPE}, // Added for TMS service
     {BLE_UUID_BATTERY_SERVICE, BLE_UUID_TYPE_BLE}
 };
+
+
+
+// Print received config
+static void print_config(ble_tms_config_t config)
+{
+    NRF_LOG_INFO("---RECEIVED CONFIG---")
+
+    if(config.gyro_enabled) NRF_LOG_INFO("Gyro enabled");
+    if(config.accel_enabled) NRF_LOG_INFO("Accel enabled");
+    if(config.mag_enabled) NRF_LOG_INFO("Mag enabled");
+    if(config.euler_enabled) NRF_LOG_INFO("Euler enabled");
+    if(config.quat6_enabled) NRF_LOG_INFO("QUAT6 enabled");
+    if(config.quat9_enabled) NRF_LOG_INFO("QUAT9 enabled");
+    NRF_LOG_INFO("Frequency: %d", config.motion_freq_hz);
+
+    if(config.adc_enabled) NRF_LOG_INFO("ADC enabled");
+
+    if(config.sync_enabled) NRF_LOG_INFO("SYNC enabled");
+    NRF_LOG_INFO("Sync start time: %d", config.sync_start_time);
+
+    if(config.wom_enabled) NRF_LOG_INFO("WoM enabled");
+}
 
 
 
@@ -282,41 +301,34 @@ static void ble_tms_evt_handler(ble_tms_t        * p_tms,
             NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_CONFIG_RECEIVED - %d\r\n", length);
             APP_ERROR_CHECK_BOOL(length == sizeof(ble_tms_config_t));
 
+            // Init struct for storing received data
             ble_tms_config_t received_config;
             memcpy(&received_config, p_data, length);
 
-            NRF_LOG_INFO("FREQUENCY %d Hz", received_config.motion_freq_hz);
-
+            // Copy data into IMU struct
             imu.gyro_enabled = received_config.gyro_enabled;
             imu.accel_enabled = received_config.accel_enabled;
             imu.mag_enabled = received_config.mag_enabled;
             imu.quat6_enabled = received_config.quat6_enabled;
             imu.quat9_enabled = received_config.quat9_enabled;
             imu.euler_enabled = received_config.euler_enabled;
-            if(received_config.motion_freq_hz != 0) imu.period = FREQ_TO_MS(received_config.motion_freq_hz);
+            if(received_config.motion_freq_hz != 0) imu.period = FREQ_TO_MS(received_config.motion_freq_hz); // Convert from frequency to period
             imu.sync = received_config.sync_enabled;
             imu.stop = received_config.stop;
             imu.adc = received_config.adc_enabled;
             imu.sync_start_time = received_config.sync_start_time;
 
-            // Stop syncing
-            ts.m_imu_trigger_enabled = imu.sync;
-
-            NRF_LOG_INFO("received_config.motion_freq_hz %d", received_config.motion_freq_hz);
-            NRF_LOG_INFO("imu.period %d", imu.period);
-            NRF_LOG_INFO("ADC received config: %d", received_config.adc_enabled);
-            NRF_LOG_INFO("ADC: %d", imu.adc);
+            // Print out received config over RTT
+            print_config(received_config);
 
             // Pass change IMU settings to event handler
             err_code = app_sched_event_put(0, 0, imu_config_evt_sceduled);
             APP_ERROR_CHECK(err_code);
-
             break;
 
         default:
             break;
     }
-
 }
 
 
@@ -391,7 +403,7 @@ static void gap_params_init(void)
 }
 
 
-static void print_sync_time()
+static void ts_print_sync_time()
 {
     uint64_t time_now_ticks;
     uint32_t time_now_msec;
@@ -401,6 +413,29 @@ static void print_sync_time()
     time_now_msec = TIME_SYNC_TIMESTAMP_TO_USEC(time_now_ticks) / 1000;
     time_ticks = TIME_SYNC_MSEC_TO_TICK(time_now_msec);
     NRF_LOG_INFO("Time: ticks %d - ms %d", time_ticks, time_now_msec);
+}
+
+static void ts_set_triggered_period(IMU imu)
+{
+    ts.sync_interval_int_time = (imu.period / 2.5);
+}
+
+static void ts_start_trigger(IMU imu)
+{
+    ret_code_t err_code;
+
+    // Print start time
+    NRF_LOG_INFO("time.sync_start_time %d", imu.sync_start_time);
+
+    if( ( imu.sync ) && ( imu.sync_start_time != 0) )
+    {
+        err_code = ts_set_trigger(imu.sync_start_time, nrf_gpiote_task_addr_get(NRF_GPIOTE_TASKS_OUT_3));
+        APP_ERROR_CHECK(err_code);
+        ts.m_imu_trigger_enabled = 1 ;
+    }else{
+        ts.m_imu_trigger_enabled = 0;
+    }
+    NRF_LOG_INFO("ts.sync_interval_int_time: %d", ts.sync_interval_int_time);
 }
 
 // Event handler DIY
@@ -415,27 +450,18 @@ void imu_config_evt_sceduled(void * p_event_data, uint16_t event_size)
         imu_clear_buff();
 
         #if IMU_ENABLED == 1
-		err_code =  imu_enable_sensors(&imu);
+		err_code =  imu_enable_sensors(imu);
 		APP_ERROR_CHECK(err_code);
         #endif
 
-        ts.sync_interval_int_time = (imu.period / 2.5);        
+        // Set correct trigger period for TS_EVT_TRIGGERED
+        ts_set_triggered_period(imu);
 
         // Temp for debugging
-        print_sync_time();
+        ts_print_sync_time();
 
-        NRF_LOG_INFO("ime.sync_start_time %d", imu.sync_start_time);
-
-        if( ( imu.sync ) && ( imu.sync_start_time != 0) )
-        {
-        err_code = ts_set_trigger(imu.sync_start_time, nrf_gpiote_task_addr_get(NRF_GPIOTE_TASKS_OUT_3));
-        APP_ERROR_CHECK(err_code);
-        ts.m_imu_trigger_enabled = 1 ;
-        }else{
-            ts.m_imu_trigger_enabled = 0;
-        }
-
-        NRF_LOG_INFO("ts.sync_interval_int_time: %d", ts.sync_interval_int_time);
+        // Set trigger if peripheral is synced
+        ts_start_trigger(imu);
 
         // TODO: ADC needs to be implemented
         // adc_enable(imu);
@@ -457,9 +483,9 @@ static void nus_data_handler(ble_nus_evt_t * p_evt)
     switch (p_evt->type)
     {
         case BLE_NUS_EVT_RX_DATA:				
-                // Pass change IMU settings to event handler
-                err_code = app_sched_event_put(0, 0, imu_config_evt_sceduled);
-                APP_ERROR_CHECK(err_code);
+                // Pass change IMU settings to event handler - no RX functionality needed in slave
+                // err_code = app_sched_event_put(0, 0, imu_config_evt_sceduled);
+                // APP_ERROR_CHECK(err_code);
             break;
                 
             // Added //
@@ -514,6 +540,7 @@ static void usr_tms_init(void)
     ret_code_t err_code;
     ble_tms_init_t        tms_init;
 
+    // Initialize Motion service
     memset(&tms_init, 0, sizeof(tms_init));
 
     // Init with all parameters to default value
@@ -674,6 +701,11 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
     }
 }
 
+static void imu_clear_struct(IMU * imu)
+{
+    memset(imu, 0, sizeof(imu));
+}
+
 
 /**@brief Function for handling BLE events.
  *
@@ -703,13 +735,7 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             // LED indication will be changed when advertising starts.
             m_conn_handle = BLE_CONN_HANDLE_INVALID;
 
-            // Stop IMU when BLE connection disconnects
-            imu.gyro_enabled = 0;
-            imu.accel_enabled = 0;
-            imu.mag_enabled = 0;
-            imu.euler_enabled = 0;
-            imu.quat6_enabled = 0;
-            imu.quat9_enabled = 0;
+            imu_clear_struct(&imu);
 
             // Pass change IMU settings to event handler
             err_code = app_sched_event_put(0, 0, imu_config_evt_sceduled);
@@ -811,8 +837,8 @@ void gatt_evt_handler(nrf_ble_gatt_t * p_gatt, nrf_ble_gatt_evt_t const * p_evt)
                   p_gatt->att_mtu_desired_central,
                   p_gatt->att_mtu_desired_periph);
 		
-		// Added//
-		if ((m_conn_handle == p_evt->conn_handle) && (p_evt->evt_id == NRF_BLE_GATT_EVT_ATT_MTU_UPDATED))
+    // Added//
+    if ((m_conn_handle == p_evt->conn_handle) && (p_evt->evt_id == NRF_BLE_GATT_EVT_ATT_MTU_UPDATED))
     {
         NRF_LOG_INFO("MTU size is set to 0x%X(%d)", p_evt->params.att_mtu_effective, p_evt->params.att_mtu_effective);
     }
@@ -913,12 +939,10 @@ static void ts_imu_trigger_disable(void)
 
 void timesync_pin_toggle(uint32_t tick)
 {
-    // NRF_LOG_INFO("tick_target:  %d", tick_target);
+    // Toggle on multiples of 100 ticks
     if( (tick % 100) == 0)
     {
-        // NRF_LOG_INFO("Multiple of 100 ticks detected");
         nrf_gpio_pin_toggle(TIMESYNC_PIN);
-        // NRF_LOG_INFO("Sync pin toggle");
     }
 }
 
@@ -1075,13 +1099,8 @@ void bsp_event_handler(bsp_event_t event)
 
         case BSP_EVENT_KEY_2:
         {
-            uint64_t time_ticks;
-            uint32_t time_usec;
-
-            time_ticks = ts_timestamp_get_ticks_u64();
-            time_usec = TIME_SYNC_TIMESTAMP_TO_USEC(time_ticks);
-
-            NRF_LOG_INFO("Timestamp: %d us (%d, %d)", time_usec, time_usec / 1000000, time_usec / 1000);
+            // Print syncrhonized timestamp
+            ts_print_sync_time();
             break;
         }
 						
@@ -1288,17 +1307,6 @@ static void power_management_init(void)
 }
 
 
-/**@brief Function for handling the idle state (main loop).
- *
- * @details If there is no pending log operation, then sleep until next the next event occurs.
- */
-void idle_state_handle(void)
-{
-    if (NRF_LOG_PROCESS() == false)
-    {
-        nrf_pwr_mgmt_run();
-    }
-}
 
 
 /**@brief Function for starting advertising.

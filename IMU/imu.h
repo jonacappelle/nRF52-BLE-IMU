@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "app_fifo.h"
+
 /* Interrupt pin number */
 
 #define TIMESYNC_PIN    17
@@ -91,7 +93,6 @@ typedef struct imu
     bool sync;
     uint64_t sync_start_time;
 	uint32_t period; // period in milliseconds (ms)
-	uint16_t packet_length;
     bool adc;
     uint32_t evt_scheduled;
 }IMU;
@@ -143,14 +144,23 @@ typedef struct
 } imu_data_t;
 
 
+// Create buffer FIFO structure
+typedef struct buffer
+{
+	app_fifo_t imu_fifo;			// FIFO for IMU data - used by NUS
+	uint8_t imu_fifo_buff[1024];		// Buffer for IMU data - used by NUS
+	app_fifo_t quat_fifo;			// Buffer struct for sending QUAT in packets of 10
+	uint8_t quat_fifo_buff[1024];	// Buffer allocation for QUAT
+	app_fifo_t raw_fifo;			// Buffer struct for sending RAW in packets of 10
+	uint8_t raw_fifo_buff[1024];	// Buffer allocation for RAW
+} BUFFER;
+
+
 void imu_init(void);
 
-uint32_t imu_get_bytes_available(void);
-void imu_set_bytes_available(uint32_t bytes);
 
-uint32_t imu_enable_sensors(IMU * imu);
-void set_imu_packet_length(void);
-uint32_t IMU_buffer_bytes_available();
+uint32_t imu_enable_sensors(IMU imu);
+
 void imu_send_data();
 
 // Init and de-init FIFO buffers
