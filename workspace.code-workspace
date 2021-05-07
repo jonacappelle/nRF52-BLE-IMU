@@ -23,7 +23,9 @@
 			"nrf_drv_twi.h": "c",
 			"nrf_drv_spi.h": "c",
 			"dataconverter.h": "c",
-			"imu_params.h": "c"
+			"imu_params.h": "c",
+			"app_scheduler.h": "c",
+			"usr_ble_nus.h": "c"
 		}
 	}
 }

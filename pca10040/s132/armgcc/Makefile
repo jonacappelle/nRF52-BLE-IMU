@@ -26,6 +26,7 @@ SRC_FILES += $(wildcard $(PROJ_DIR)/Invn/VSensor/*.c)
 
 # Source files common to all targets
 SRC_FILES += \
+  $(PROJ_DIR)/ble_services/usr_ble_nus.c \
   $(PROJ_DIR)/EMG/emg.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_ppi.c \
   $(SDK_ROOT)/components/ble/ble_services/ble_bas/ble_bas.c \

@@ -59,10 +59,8 @@ extern imu_data_t imu_data;
 // BLE Battery service
 #include "ble_bas.h"
 
-
-// Variable to keep track if the NUS buffer is full
-bool nus_buffer_full = false;
-
+// BLE NUS Service
+#include "usr_ble_nus.h"
 
 // Struct to keep track of TimeSync variables
 typedef struct{
@@ -79,7 +77,6 @@ time_sync_t ts = {
 
 
 // Initialization
-
 BLE_NUS_DEF(m_nus, NRF_SDH_BLE_TOTAL_LINK_COUNT);                                   /**< BLE NUS service instance. */
 NRF_BLE_GATT_DEF(m_gatt);                                                           /**< GATT module instance. */
 NRF_BLE_QWR_DEF(m_qwr);                                                             /**< Context for the Queued Write module.*/
@@ -100,6 +97,54 @@ static ble_uuid_t m_adv_uuids[]          =                                      
     {BLE_UUID_BATTERY_SERVICE, BLE_UUID_TYPE_BLE}
 };
 
+
+
+
+void ble_send_quat(ble_tms_quat_t * data)
+{
+    ret_code_t err_code;
+
+    err_code = ble_tms_quat_set(&m_tms, data);
+    if(err_code != NRF_SUCCESS)
+    {
+        NRF_LOG_INFO("ble_tms_quat_set err_code: %d", err_code);
+        APP_ERROR_CHECK(err_code);
+    }
+}
+
+void ble_send_raw(ble_tms_raw_t * data)
+{
+    ret_code_t err_code;
+
+    err_code = ble_tms_raw_set(&m_tms, data);	
+    if(err_code != NRF_SUCCESS)
+    {
+        NRF_LOG_INFO("ble_tms_raw_set err_code: %d", err_code);
+        APP_ERROR_CHECK(err_code);
+    }    
+}
+
+void ble_send_adc(ble_tms_adc_t * data)
+{
+    ret_code_t err_code;
+
+    err_code = ble_tms_adc_set(&m_tms, data);
+    if(err_code != NRF_SUCCESS)
+    {
+        NRF_LOG_INFO("ble_tms_adc_set err_code: %d", err_code);
+    } 
+}
+
+void ble_send_euler(ble_tms_euler_t * data)
+{
+    ret_code_t err_code;
+
+    err_code = ble_tms_euler_set(&m_tms, data);
+    if(err_code != NRF_SUCCESS)
+    {
+        NRF_LOG_INFO("ble_tms_raw_set err_code: %d", err_code);
+    }
+}
 
 
 // Print received config
@@ -468,45 +513,10 @@ void imu_config_evt_sceduled(void * p_event_data, uint16_t event_size)
 }
 
 
-/**@brief Function for handling the data from the Nordic UART Service.
- *
- * @details This function will process the data received from the Nordic UART BLE Service and send
- *          it to the UART module.
- *
- * @param[in] p_evt       Nordic UART Service event.
- */
-/**@snippet [Handling the data received over BLE] */
-static void nus_data_handler(ble_nus_evt_t * p_evt)
-{
-    ret_code_t err_code;
-	
-    switch (p_evt->type)
-    {
-        case BLE_NUS_EVT_RX_DATA:				
-                // Pass change IMU settings to event handler - no RX functionality needed in slave
-                // err_code = app_sched_event_put(0, 0, imu_config_evt_sceduled);
-                // APP_ERROR_CHECK(err_code);
-            break;
-                
-            // Added //
-            // When BLE NUS
-        case BLE_NUS_EVT_TX_RDY:
-                nus_buffer_full = false;
-//				NRF_LOG_INFO("BLE_NUS_EVT_TX_RDY");
-            break;
-        case BLE_NUS_EVT_COMM_STARTED:
-                NRF_LOG_DEBUG("BLE_NUS_EVT_COMM_STARTED");
-            break;
-        case BLE_NUS_EVT_COMM_STOPPED:
-                NRF_LOG_DEBUG("BLE_NUS_EVT_COMM_STOPPED");
-            break;
 
-        default:
-            break;
-    }
-}
-/**@snippet [Handling the data received over BLE] */
 
+
+/**@snippet [Handling the data received over BLE] */
 static void usr_qwr_init()
 {
     uint32_t           err_code;
@@ -518,21 +528,6 @@ static void usr_qwr_init()
     err_code = nrf_ble_qwr_init(&m_qwr, &qwr_init);
     APP_ERROR_CHECK(err_code);
 }
-
-static void usr_ble_nus_init()
-{
-    uint32_t           err_code;
-    ble_nus_init_t     nus_init;
-
-    // Initialize NUS.
-    memset(&nus_init, 0, sizeof(nus_init));
-
-    nus_init.data_handler = nus_data_handler;
-
-    err_code = ble_nus_init(&m_nus, &nus_init);
-    APP_ERROR_CHECK(err_code);    
-}
-
 
 
 static void usr_tms_init(void)
@@ -1133,6 +1128,136 @@ void bsp_event_handler(bsp_event_t event)
 }
 
 
+
+
+// Variable to keep track if the NUS buffer is full
+static bool nus_buffer_full = false;
+
+
+/**@brief Function for handling the data from the Nordic UART Service.
+ *
+ * @details This function will process the data received from the Nordic UART BLE Service and send
+ *          it to the UART module.
+ *
+ * @param[in] p_evt       Nordic UART Service event.
+ */
+/**@snippet [Handling the data received over BLE] */
+static void nus_data_handler(ble_nus_evt_t * p_evt)
+{
+    ret_code_t err_code;
+	
+    switch (p_evt->type)
+    {
+        case BLE_NUS_EVT_RX_DATA:				
+                // Pass change IMU settings to event handler - no RX functionality needed in slave
+                // err_code = app_sched_event_put(0, 0, imu_config_evt_sceduled);
+                // APP_ERROR_CHECK(err_code);
+            break;
+                
+            // Added //
+            // When BLE NUS
+        case BLE_NUS_EVT_TX_RDY:
+                nus_buffer_full = false;
+//				NRF_LOG_INFO("BLE_NUS_EVT_TX_RDY");
+            break;
+        case BLE_NUS_EVT_COMM_STARTED:
+                NRF_LOG_DEBUG("BLE_NUS_EVT_COMM_STARTED");
+            break;
+        case BLE_NUS_EVT_COMM_STOPPED:
+                NRF_LOG_DEBUG("BLE_NUS_EVT_COMM_STOPPED");
+            break;
+
+        default:
+            break;
+    }
+}
+
+void usr_ble_nus_init()
+{
+    uint32_t           err_code;
+    ble_nus_init_t     nus_init;
+
+    // Initialize NUS.
+    memset(&nus_init, 0, sizeof(nus_init));
+
+    nus_init.data_handler = nus_data_handler;
+
+    err_code = ble_nus_init(&m_nus, &nus_init);
+    APP_ERROR_CHECK(err_code);    
+}
+
+
+
+// CUSTOM
+uint32_t nus_printf_custom(char* p_char)
+{
+		static uint16_t index;
+		ret_code_t err_code;
+		static uint8_t data_array[BLE_NUS_MAX_DATA_LEN];
+		while(*p_char != '\0'){
+						data_array[index] = *p_char;
+						index++;
+						p_char++;
+						}
+
+		err_code = ble_nus_data_send(&m_nus, data_array, &index, m_conn_handle);
+		
+		// Check for errors
+		if ((err_code != NRF_ERROR_INVALID_STATE) &&
+				(err_code != NRF_ERROR_RESOURCES) &&
+				(err_code != NRF_ERROR_NOT_FOUND))
+		{
+				APP_ERROR_CHECK(err_code);
+		}
+				
+		index = 0;
+		return err_code;
+}
+
+// CUSTOM
+uint32_t nus_printf_custom_1(char* p_char)
+{
+	static uint16_t index;
+	ret_code_t err_code;
+	static uint8_t data_array[BLE_NUS_MAX_DATA_LEN];
+	while(*p_char != '\0'){
+          data_array[index] = *p_char;
+          index++;
+          p_char++;
+          }			
+			do
+			{
+					err_code = ble_nus_data_send(&m_nus, data_array, &index, m_conn_handle);
+					if ((err_code != NRF_ERROR_INVALID_STATE) &&
+							(err_code != NRF_ERROR_RESOURCES) &&
+							(err_code != NRF_ERROR_NOT_FOUND))
+					{
+							APP_ERROR_CHECK(err_code);
+					}
+			} while (err_code == NRF_SUCCESS);
+		index = 0;
+	return err_code;
+}
+
+// Send data over NUS service
+uint32_t nus_send(uint8_t * data, uint16_t len)
+{
+		ret_code_t err_code;
+	
+		err_code = ble_nus_data_send(&m_nus, data, &len, m_conn_handle);
+		
+		// Check for errors
+		if ((err_code != NRF_ERROR_INVALID_STATE) &&
+				(err_code != NRF_ERROR_RESOURCES) &&
+				(err_code != NRF_ERROR_NOT_FOUND))
+		{
+				APP_ERROR_CHECK(err_code);
+		}
+		return err_code;
+}
+
+
+
 /**@brief   Function for handling app_uart events.
  *
  * @details This function will receive a single character from the app_uart module and append it to
@@ -1307,8 +1432,6 @@ static void power_management_init(void)
 }
 
 
-
-
 /**@brief Function for starting advertising.
  */
 static void advertising_start(void)
@@ -1316,80 +1439,6 @@ static void advertising_start(void)
     ret_code_t err_code = ble_advertising_start(&m_advertising, BLE_ADV_MODE_FAST);
     APP_ERROR_CHECK(err_code);
 }
-
-
-
-
-
-// CUSTOM
-uint32_t nus_printf_custom(char* p_char)
-{
-		static uint16_t index;
-		ret_code_t err_code;
-		static uint8_t data_array[BLE_NUS_MAX_DATA_LEN];
-		while(*p_char != '\0'){
-						data_array[index] = *p_char;
-						index++;
-						p_char++;
-						}
-
-		err_code = ble_nus_data_send(&m_nus, data_array, &index, m_conn_handle);
-		
-		// Check for errors
-		if ((err_code != NRF_ERROR_INVALID_STATE) &&
-				(err_code != NRF_ERROR_RESOURCES) &&
-				(err_code != NRF_ERROR_NOT_FOUND))
-		{
-				APP_ERROR_CHECK(err_code);
-		}
-				
-		index = 0;
-		return err_code;
-}
-
-// CUSTOM
-uint32_t nus_printf_custom_1(char* p_char)
-{
-	static uint16_t index;
-	ret_code_t err_code;
-	static uint8_t data_array[BLE_NUS_MAX_DATA_LEN];
-	while(*p_char != '\0'){
-          data_array[index] = *p_char;
-          index++;
-          p_char++;
-          }			
-			do
-			{
-					err_code = ble_nus_data_send(&m_nus, data_array, &index, m_conn_handle);
-					if ((err_code != NRF_ERROR_INVALID_STATE) &&
-							(err_code != NRF_ERROR_RESOURCES) &&
-							(err_code != NRF_ERROR_NOT_FOUND))
-					{
-							APP_ERROR_CHECK(err_code);
-					}
-			} while (err_code == NRF_SUCCESS);
-		index = 0;
-	return err_code;
-}
-
-// Send data over NUS service
-uint32_t nus_send(uint8_t * data, uint16_t len)
-{
-		ret_code_t err_code;
-	
-		err_code = ble_nus_data_send(&m_nus, data, &len, m_conn_handle);
-		
-		// Check for errors
-		if ((err_code != NRF_ERROR_INVALID_STATE) &&
-				(err_code != NRF_ERROR_RESOURCES) &&
-				(err_code != NRF_ERROR_NOT_FOUND))
-		{
-				APP_ERROR_CHECK(err_code);
-		}
-		return err_code;
-}
-
-
 
 
 

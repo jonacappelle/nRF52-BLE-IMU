@@ -49,6 +49,8 @@
 #include "nrf_drv_twi.h"
 #include "nrf_delay.h"
 
+
+// Invensense Drivers
 #include "../Devices/SerifHal.h"
 #include "../Devices/HostSerif.h"
 #include "../Devices/DeviceIcm20948.h"
@@ -62,6 +64,8 @@
 // BLE Motion service
 #include "ble_tms.h"
 
+#include "usr_ble.h"
+
 // Utilities
 #include "usr_util.h"
 
@@ -73,8 +77,6 @@ imu_data_t imu_data;
 
 // Initialisation of IMU struct
 extern IMU imu;
-
-extern ble_tms_t m_tms;
 
 /*
  * States for icm20948 device object
@@ -233,10 +235,6 @@ void inv_icm20948_sleep_us(int us)
 #include "../DynamicProtocol/DynProtocolTransportUart.h"
 // INV_MSG functionality
 #include "../EmbUtils/Message.h"
-
-
-extern uint32_t nus_printf_custom(char* p_char);
-extern uint32_t nus_send(void);
 
 
 /*
@@ -997,12 +995,8 @@ void imu_send_data()
 				NRF_LOG_INFO("QUAT FIFO BUFFER FULL!");
 			}
 
-			// Send data
-			err_code = ble_tms_quat_set(&m_tms, &data);
-			if(err_code != NRF_SUCCESS)
-			{
-				NRF_LOG_INFO("ble_tms_quat_set err_code: %d", err_code);
-			}
+			// Send data over BLE
+			ble_send_quat(&data);
 
 			number_of_quat_packets = 0;
 			// NRF_LOG_INFO("quat set");
@@ -1052,12 +1046,8 @@ void imu_send_data()
 				NRF_LOG_INFO("QUAT FIFO BUFFER FULL!");
 			}
 
-			// Send data
-			err_code = ble_tms_raw_set(&m_tms, &data);	
-			if(err_code != NRF_SUCCESS)
-			{
-				NRF_LOG_INFO("ble_tms_raw_set err_code: %d", err_code);
-			}
+			// Send data over BLE
+			ble_send_raw(&data);
 
 			number_of_raw_packets = 0;
 			// NRF_LOG_INFO("quat set");
@@ -1071,11 +1061,9 @@ void imu_send_data()
 		data.pitch = imu_data.euler.pitch;
 		data.roll = imu_data.euler.roll;
 
-		err_code = ble_tms_euler_set(&m_tms, &data);
-		if(err_code != NRF_SUCCESS)
-		{
-			NRF_LOG_INFO("ble_tms_raw_set err_code: %d", err_code);
-		}
+		// Send data over BLE
+		ble_send_euler(&data);
+
 	}
 	if(imu.adc)
 	{
@@ -1083,15 +1071,7 @@ void imu_send_data()
 
 		data.raw[0] = 1;
 
-		err_code = ble_tms_adc_set(&m_tms, &data);
-		if(err_code != NRF_SUCCESS)
-		{
-			NRF_LOG_INFO("ble_tms_adc_set err_code: %d", err_code);
-		}
-
-		// NRF_LOG_INFO("ble_tms_adc_set %d", err_code);
-
-		// nrf_gpio_pin_toggle(17);
+		ble_send_adc(&data);
 
 	}
 }

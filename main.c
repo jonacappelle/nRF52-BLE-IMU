@@ -55,7 +55,7 @@ int main(void)
 		usr_ble_init();
 
 		// Application scheduler (soft interrupt like)
-		APP_SCHED_INIT(SCHED_MAX_EVENT_DATA_SIZE, SCHED_QUEUE_SIZE);
+		app_scheduler_init();
 	
 		/* Initialize GPIO pins */
 		gpio_init();

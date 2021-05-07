@@ -8,6 +8,9 @@
 
 #include "nrf_pwr_mgmt.h"
 
+// Application scheduler
+#include "app_scheduler.h"
+
 
 double fixed_to_float(fixed_point_t input)
 {
@@ -31,8 +34,6 @@ void check_cpu_activity()
     nrf_gpio_pin_set(PIN_CPU_ACTIVITY);
 }
 
-
-
 /**@brief Function for handling the idle state (main loop).
  *
  * @details If there is no pending log operation, then sleep until next the next event occurs.
@@ -43,4 +44,10 @@ void idle_state_handle(void)
     {
         nrf_pwr_mgmt_run();
     }
+}
+
+
+void app_scheduler_init(void)
+{
+    APP_SCHED_INIT(SCHED_MAX_EVENT_DATA_SIZE, SCHED_QUEUE_SIZE);
 }

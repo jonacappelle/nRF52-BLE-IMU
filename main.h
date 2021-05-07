@@ -120,6 +120,9 @@
 // EMG
 #include "emg.h"
 
+// BLE NUS Functionality
+#include "usr_ble_nus.h"
+
 
 
 ////////////////
@@ -127,11 +130,6 @@
 ////////////////
 
 #define DEAD_BEEF   0xDEADBEEF          /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
-
-#define SCHED_MAX_EVENT_DATA_SIZE   APP_TIMER_SCHED_EVENT_DATA_SIZE /**< Maximum size of scheduler events. */
-#define SCHED_QUEUE_SIZE            60  /**< Maximum number of events in the scheduler queue. */
-
-
 
 
 
