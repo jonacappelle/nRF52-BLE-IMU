@@ -4,6 +4,8 @@
 #include "stdio.h"
 #include <stdint.h>
 
+#define CPU_ACTIVITY_PIN    18
+
 
 /// Fixed-point Format: 11.5 (16-bit)
 typedef int32_t fixed_point_t;

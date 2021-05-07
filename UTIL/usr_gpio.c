@@ -37,7 +37,7 @@ void gpio_init(void)
 	
 		// GPIO stuff for timing purposes
 	////////////////////////////////	
-		nrf_gpio_cfg_output(18);
+		nrf_gpio_cfg_output(CPU_ACTIVITY_PIN);
 		nrf_gpio_cfg_output(19);
 		nrf_gpio_cfg_output(20);
 		nrf_gpio_cfg_output(TIMESYNC_PIN); // Timing TS_evt handler

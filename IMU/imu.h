@@ -8,6 +8,7 @@
 
 #define TIMESYNC_PIN    17
 
+
 #define IMU_ENABLED 1
 
 #define COSTUM_BOARD    0
@@ -144,7 +145,7 @@ typedef struct
 
 
 void imu_init(void);
-void IMU_data_get(uint8_t * data, uint16_t * len);
+
 uint32_t imu_get_bytes_available(void);
 void imu_set_bytes_available(uint32_t bytes);
 

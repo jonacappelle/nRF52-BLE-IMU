@@ -81,7 +81,7 @@ uint32_t led_blink_tick = 0;
 // In increments of 2.5 ms
 uint32_t sync_interval_int_time = 4; // Default 100 Hz transmission rate
 
-static bool m_gpio_trigger_enabled = 0;
+static bool m_ts_synchronized = 0;
 static bool m_imu_trigger_enabled = 0;
 
 
@@ -866,39 +866,39 @@ void gatt_init(void)
 
 
 
-static void ts_gpio_trigger_enable(void)
-{
-    uint64_t time_now_ticks;
-    uint32_t time_now_msec;
-    uint32_t time_target;
-    uint32_t err_code;
+// static void ts_gpio_trigger_enable(void)
+// {
+//     uint64_t time_now_ticks;
+//     uint32_t time_now_msec;
+//     uint32_t time_target;
+//     uint32_t err_code;
 
-    if (m_gpio_trigger_enabled)
-    {
-        return;
-    }
+//     if (m_gpio_trigger_enabled)
+//     {
+//         return;
+//     }
 
-    // Round up to nearest second to next 2000 ms to start toggling.
-    // If the receiver has received a valid sync packet within this time, the GPIO toggling polarity will be the same.
+//     // Round up to nearest second to next 2000 ms to start toggling.
+//     // If the receiver has received a valid sync packet within this time, the GPIO toggling polarity will be the same.
 
-    time_now_ticks = ts_timestamp_get_ticks_u64();
-    time_now_msec = TIME_SYNC_TIMESTAMP_TO_USEC(time_now_ticks) / 1000;
+//     time_now_ticks = ts_timestamp_get_ticks_u64();
+//     time_now_msec = TIME_SYNC_TIMESTAMP_TO_USEC(time_now_ticks) / 1000;
 
-    time_target = TIME_SYNC_MSEC_TO_TICK(time_now_msec) + (2000 * 2);
-    time_target = (time_target / 2000) * 2000;
+//     time_target = TIME_SYNC_MSEC_TO_TICK(time_now_msec) + (2000 * 2);
+//     time_target = (time_target / 2000) * 2000;
 
-    err_code = ts_set_trigger(time_target, nrf_gpiote_task_addr_get(NRF_GPIOTE_TASKS_OUT_3));
-    APP_ERROR_CHECK(err_code);
+//     err_code = ts_set_trigger(time_target, nrf_gpiote_task_addr_get(NRF_GPIOTE_TASKS_OUT_3));
+//     APP_ERROR_CHECK(err_code);
 
-    nrf_gpiote_task_set(NRF_GPIOTE_TASKS_CLR_3);
+//     nrf_gpiote_task_set(NRF_GPIOTE_TASKS_CLR_3);
 
-    m_gpio_trigger_enabled = true;
-}
+//     m_gpio_trigger_enabled = true;
+// }
 
-static void ts_gpio_trigger_disable(void)
-{
-    m_gpio_trigger_enabled = false;
-}
+// static void ts_gpio_trigger_disable(void)
+// {
+//     m_gpio_trigger_enabled = false;
+// }
 
 
 void ts_imu_trigger_enable(void)
@@ -939,6 +939,36 @@ static void ts_imu_trigger_disable(void)
     m_imu_trigger_enabled = false;
 }
 
+void timesync_pin_toggle(uint32_t tick)
+{
+    // NRF_LOG_INFO("tick_target:  %d", tick_target);
+    if( (tick % 100) == 0)
+    {
+        // NRF_LOG_INFO("Multiple of 100 ticks detected");
+        nrf_gpio_pin_toggle(TIMESYNC_PIN);
+        // NRF_LOG_INFO("Sync pin toggle");
+    }
+}
+
+
+static void ts_evt_synchronized_enable()
+{
+    m_ts_synchronized = 1;
+}
+
+static void ts_evt_synchronized_disable()
+{
+    m_ts_synchronized = 0;
+}
+
+static bool ts_evt_synchronized()
+{
+    return m_ts_synchronized;
+}
+
+
+
+
 static void ts_evt_callback(const ts_evt_t* evt)
 {
     // NRF_LOG_INFO("ts_evt_callback");
@@ -950,70 +980,61 @@ static void ts_evt_callback(const ts_evt_t* evt)
         case TS_EVT_SYNCHRONIZED:
             NRF_LOG_INFO("TS_EVT_SYNCHRONIZED");
             // ts_imu_trigger_enable();
-            m_gpio_trigger_enabled = true;
+            ts_evt_synchronized_enable();
             break;
         case TS_EVT_DESYNCHRONIZED:
             NRF_LOG_INFO("TS_EVT_DESYNCHRONIZED");
             ts_imu_trigger_disable();
-            m_gpio_trigger_enabled = false;
+            ts_evt_synchronized_disable();
             break;
         case TS_EVT_TRIGGERED:
             // NRF_LOG_INFO("TS_EVT_TRIGGERED");
             {
-            uint32_t tick_target;
+                uint32_t tick_target;
 
-            // NRF_LOG_INFO("State; %d", ts_state_get());
-
-            if (m_imu_trigger_enabled && m_gpio_trigger_enabled)
-            {
-                // NRF_LOG_INFO("TS_EVT_TRIGGERED && m_imu_trigger_enabled");
-
-                tick_target = evt->params.triggered.tick_target + sync_interval_int_time;
-
-                uint32_t time;
-                time = TIME_SYNC_TIMESTAMP_TO_USEC(tick_target) / 1000;
-                // NRF_LOG_INFO("target   %d", tick_target);
-
-                uint32_t err_code = ts_set_trigger(tick_target, nrf_gpiote_task_addr_get(NRF_GPIOTE_TASKS_OUT_3));
-                if(err_code != NRF_SUCCESS)
-                {
-                    NRF_LOG_INFO("err_code: %d", err_code);
-                }
-                APP_ERROR_CHECK(err_code);
-
-                uint64_t time_now_ticks;
-                uint32_t time_now_msec;
-                time_now_ticks = TIME_SYNC_MSEC_TO_TICK(TIME_SYNC_TIMESTAMP_TO_USEC(ts_timestamp_get_ticks_u64()));
-                // time_now_msec = TIME_SYNC_TIMESTAMP_TO_USEC(time_now_ticks) / 1000;
-
-                if(tick_target <= (time_now_ticks/1000))
+                if (m_imu_trigger_enabled && ts_evt_synchronized())
                 {
                     tick_target = evt->params.triggered.tick_target + sync_interval_int_time;
-                    NRF_LOG_INFO("TimeSync tick_target <= ticks_now");
-                }
-                // NRF_LOG_INFO("now   %d  tick_start   %d  tick_target  %d  last_sync   %d", time_now_ticks/1000, evt->params.triggered.tick_start, evt->params.triggered.tick_target, evt->params.triggered.last_sync);
 
-                // NRF_LOG_INFO("tick_target:  %d", tick_target);
-                if( (tick_target % 100) == 0)
+                    uint32_t time;
+                    time = TIME_SYNC_TIMESTAMP_TO_USEC(tick_target) / 1000;
+
+                    uint32_t err_code = ts_set_trigger(tick_target, nrf_gpiote_task_addr_get(NRF_GPIOTE_TASKS_OUT_3));
+                    if(err_code != NRF_SUCCESS)
+                    {
+                        NRF_LOG_INFO("err_code: %d", err_code);
+                    }
+                    APP_ERROR_CHECK(err_code);
+
+                    uint64_t time_now_ticks;
+                    uint32_t time_now_msec;
+                    time_now_ticks = TIME_SYNC_MSEC_TO_TICK(TIME_SYNC_TIMESTAMP_TO_USEC(ts_timestamp_get_ticks_u64()));
+
+                    // Check for wrong timesync packet
+                    if(tick_target <= (time_now_ticks/1000))
+                    {
+                        tick_target = evt->params.triggered.tick_target + sync_interval_int_time;
+                        NRF_LOG_INFO("TimeSync tick_target <= ticks_now");
+                    }
+                    // Print Time - Last Sync
+                    NRF_LOG_INFO("now   %d  tick_start   %d  tick_target  %d  last_sync   %d", time_now_ticks/1000, evt->params.triggered.tick_start, evt->params.triggered.tick_target, evt->params.triggered.last_sync);
+
+                    // Toggle LED to measure TimeSync
+                    timesync_pin_toggle(tick_target);
+
+                    // Process IMU BLE packet for sending
+                    imu_send_data();
+                }
+                else
                 {
-                    // NRF_LOG_INFO("Multiple of 100 ticks detected");
-                    nrf_gpio_pin_toggle(TIMESYNC_PIN);
-                    // NRF_LOG_INFO("Sync pin toggle");
+                    // Ensure pin is low when triggering is stopped
+                    nrf_gpiote_task_set(NRF_GPIOTE_TASKS_CLR_3);
+
+                    // Set pin low when triggering is stopped
+                    nrf_gpio_pin_clear(TIMESYNC_PIN);
+
+                    NRF_LOG_INFO("Triggering stopped");
                 }
-
-                // Process IMU BLE packet for sending
-                // Only send data when imu.stop is not called
-                imu_send_data();
-            }
-            else
-            {
-                // Ensure pin is low when triggering is stopped
-                nrf_gpiote_task_set(NRF_GPIOTE_TASKS_CLR_3);
-
-                nrf_gpio_pin_clear(TIMESYNC_PIN);
-
-                NRF_LOG_INFO("Triggering stopped");
-            }
             }
             break;
         default:
@@ -1078,35 +1099,6 @@ void bsp_event_handler(bsp_event_t event)
     switch (event)
     {
         case BSP_EVENT_KEY_0:
-            {
-                static bool m_send_sync_pkt = false;
-
-                if (m_send_sync_pkt)
-                {
-                    m_send_sync_pkt = false;
-                    m_gpio_trigger_enabled = false;
-
-                    bsp_board_leds_off();
-
-                    err_code = ts_tx_stop();
-                    APP_ERROR_CHECK(err_code);
-
-                    NRF_LOG_INFO("Stopping sync beacon transmission!\r\n");
-                }
-                else
-                {
-                    m_send_sync_pkt = true;
-
-                    bsp_board_leds_on();
-
-                    err_code = ts_tx_start(1); // 1Hz
-                    APP_ERROR_CHECK(err_code);
-
-                    ts_gpio_trigger_enable();
-
-                    NRF_LOG_INFO("Starting sync beacon transmission!\r\n");
-                }
-            }
             break;
 
         case BSP_EVENT_KEY_2:

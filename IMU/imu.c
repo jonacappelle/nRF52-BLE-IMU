@@ -1077,7 +1077,7 @@ void imu_init(void)
 		rc += inv_device_setup(device);
 		check_rc(rc);
 		
-		rc += inv_device_load(device, NULL, dmp3_image, sizeof(dmp3_image), true /* verify */, NULL);
+		rc += inv_device_load(device, (int) NULL, dmp3_image, sizeof(dmp3_image), true /* verify */, (int) NULL);
 		check_rc(rc);
 
 		NRF_LOG_INFO("DMP Image loaded");
@@ -1125,31 +1125,7 @@ uint32_t IMU_buffer_bytes_available()
 }
 
 
-void IMU_data_get(uint8_t * data, uint16_t * len)
-{
-		uint32_t err_code;
 
-		*len = imu.packet_length;
-	
-		NRF_LOG_INFO("len_out: %d   %d", *len, packet_length_temp);
-	
-		uint8_t temp[*len];
-
-		if( (err_code = app_fifo_read(&buff.imu_fifo, temp, len)) == NRF_SUCCESS )
-		{
-			memcpy(data, temp, *len);
-			NRF_LOG_INFO("OKK");
-		}
-		if( err_code = NRF_ERROR_NOT_FOUND )
-		{
-			NRF_LOG_INFO("IMU FIFO EMPTY");
-		}
-	
-	NRF_LOG_INFO("temp: %X %X %X %X", temp[0], temp[1], temp[2], temp[3]);
-//		NRF_LOG_INFO("%d %d %d %d", (int)(quat[0]*1000),(int)(quat[1]*1000),(int)(quat[2]*1000),(int)(quat[3]*1000));
-//		NRF_LOG_INFO("%d %d %d", (int)(temp[0]*1000),(int)(temp[1]*1000),(int)(temp[2]*1000));
-		// memcpy(data, temp, *len);
-}
 
 uint8_t number_of_quat_packets = 0;
 uint8_t number_of_raw_packets = 0;
