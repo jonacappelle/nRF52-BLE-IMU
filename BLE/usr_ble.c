@@ -107,8 +107,13 @@ void ble_send_quat(ble_tms_quat_t * data)
     err_code = ble_tms_quat_set(&m_tms, data);
     if(err_code != NRF_SUCCESS)
     {
-        NRF_LOG_INFO("ble_tms_quat_set err_code: %d", err_code);
-        APP_ERROR_CHECK(err_code);
+        if(err_code == NRF_ERROR_RESOURCES)
+        {
+            NRF_LOG_INFO("Packet lost");
+        }else{
+            NRF_LOG_INFO("ble_tms_quat_set err_code: %d", err_code);
+            APP_ERROR_CHECK(err_code);            
+        }
     }
 }
 
@@ -462,7 +467,7 @@ static void ts_print_sync_time()
 
 static void ts_set_triggered_period(IMU imu)
 {
-    ts.sync_interval_int_time = (imu.period / 2.5);
+    ts.sync_interval_int_time = (imu.period / TIME_SYNC_TIMER_PERIOD_MS);
 }
 
 static void ts_start_trigger(IMU imu)
@@ -655,7 +660,7 @@ static void conn_params_init(void)
  *
  * @note This function will not return.
  */
-static void sleep_mode_enter(void)
+void sleep_mode_enter(void)
 {
     ret_code_t err_code = bsp_indication_set(BSP_INDICATE_IDLE);
     APP_ERROR_CHECK(err_code);
@@ -935,7 +940,7 @@ static void ts_imu_trigger_disable(void)
 void timesync_pin_toggle(uint32_t tick)
 {
     // Toggle on multiples of 100 ticks
-    if( (tick % 100) == 0)
+    if( (tick % 1000) == 0)
     {
         nrf_gpio_pin_toggle(TIMESYNC_PIN);
     }
@@ -986,6 +991,7 @@ static void ts_evt_callback(const ts_evt_t* evt)
                 if (ts.m_imu_trigger_enabled && ts_evt_synchronized())
                 {
                     tick_target = evt->params.triggered.tick_target + ts.sync_interval_int_time;
+                    // NRF_LOG_INFO("ts.sync_interval_int_time: %d", ts.sync_interval_int_time);
 
                     uint32_t time;
                     time = TIME_SYNC_TIMESTAMP_TO_USEC(tick_target) / 1000;
@@ -1008,7 +1014,7 @@ static void ts_evt_callback(const ts_evt_t* evt)
                         NRF_LOG_INFO("TimeSync tick_target <= ticks_now");
                     }
                     // Print Time - Last Sync
-                    NRF_LOG_INFO("now   %d  tick_target  %d  last_sync   %d", time_now_ticks/1000, evt->params.triggered.tick_target, evt->params.triggered.last_sync);
+                    // NRF_LOG_INFO("now   %d  tick_target  %d  last_sync   %d", time_now_ticks/1000, evt->params.triggered.tick_target, evt->params.triggered.last_sync);
 
                     // Toggle LED to measure TimeSync
                     timesync_pin_toggle(tick_target);
@@ -1090,6 +1096,9 @@ void bsp_event_handler(bsp_event_t event)
     switch (event)
     {
         case BSP_EVENT_KEY_0:
+            NRF_LOG_INFO("Key pressed");
+            imu_set_config();
+
             break;
 
         case BSP_EVENT_KEY_2:
@@ -1440,6 +1449,12 @@ static void advertising_start(void)
     APP_ERROR_CHECK(err_code);
 }
 
+
+// void advertising_stop(void)
+// {
+//     ret_code_t err_code = sd_ble_gap_adv_stop(&m_advertising);
+//     APP_ERROR_CHECK(err_code);
+// }
 
 
 void usr_ble_init(void)

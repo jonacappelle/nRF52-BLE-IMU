@@ -59,6 +59,11 @@
 #include "../EmbUtils/Message.h"
 #include "DataConverter.h"
 
+#include "Device.h"
+#include "SensorConfig.h"
+#include "SensorConfig.h"
+
+
 #include "imu_params.h"
 
 // BLE Motion service
@@ -264,6 +269,12 @@ char stringsend[247];
 
 static void check_rc(int rc)
 {
+	if( rc < 0 )
+	{
+		ret_code_t err_code = NRF_ERROR_INTERNAL;
+		APP_ERROR_CHECK(err_code);
+	}
+
 	if(rc == -1) {
 		NRF_LOG_INFO("BAD RC=%d", rc);
 		NRF_LOG_FLUSH();
@@ -272,11 +283,6 @@ static void check_rc(int rc)
 }
 
 uint8_t test_troughput_array[132];
-
-
-
-
-
 
 
 
@@ -292,7 +298,7 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
         (void)event;
         /* ... do something with event */
 	
-				//NRF_LOG_INFO("Sensor event!");
+				// NRF_LOG_INFO("Sensor event!");
 				//NRF_LOG_FLUSH();	
 	
 	if(event->status == INV_SENSOR_STATUS_DATA_UPDATED) {
@@ -308,7 +314,6 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 
 
 	switch(INV_SENSOR_ID_TO_TYPE(event->sensor)) {
-
 
 		case INV_SENSOR_TYPE_RAW_ACCELEROMETER:
 		case INV_SENSOR_TYPE_RAW_GYROSCOPE:
@@ -365,11 +370,11 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 		}
 		case INV_SENSOR_TYPE_GYROSCOPE:
 		{
-			NRF_LOG_INFO("data event %s (mdps): %d %d %d %d", inv_sensor_str(event->sensor),
-					(int)(event->data.gyr.vect[0]*1000),
-					(int)(event->data.gyr.vect[1]*1000),
-					(int)(event->data.gyr.vect[2]*1000),
-					(int)(event->data.gyr.accuracy_flag));
+			// NRF_LOG_INFO("data event %s (mdps): %d %d %d %d", inv_sensor_str(event->sensor),
+			// 		(int)(event->data.gyr.vect[0]*1000),
+			// 		(int)(event->data.gyr.vect[1]*1000),
+			// 		(int)(event->data.gyr.vect[2]*1000),
+			// 		(int)(event->data.gyr.accuracy_flag));
 					
 				#ifdef USE_NUS
 				// Put data in the ringbuffer
@@ -582,10 +587,13 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 		case INV_SENSOR_TYPE_PICK_UP_GESTURE:
 		case INV_SENSOR_TYPE_STEP_DETECTOR:
 		case INV_SENSOR_TYPE_SMD:
+				NRF_LOG_INFO("Wake on motion!");
+			break;
 		case INV_SENSOR_TYPE_B2S:
 		case INV_SENSOR_TYPE_TILT_DETECTOR:
 		default:
-			INV_MSG(INV_MSG_LEVEL_INFO, "data event %s : ...", inv_sensor_str(event->sensor));
+			NRF_LOG_INFO("DEFAULT");
+			// INV_MSG(INV_MSG_LEVEL_INFO, "data event %s : ...", inv_sensor_str(event->sensor));
 			break;
 		}
 	}
@@ -685,6 +693,8 @@ void gpiote_evt_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 	
 		if(pin == INT_PIN)
 		{
+				// NRF_LOG_INFO("IMU INTERRUPT");
+
 				// If there are already events in the queue
 				if(imu.evt_scheduled > 0)
 				{
@@ -1075,3 +1085,121 @@ void imu_send_data()
 
 	}
 }
+
+
+// void imu_get_config()
+// {
+// 	int rc = 0;
+		
+// 	rc += inv_device_get_sensor_config(device, );
+// 	check_rc(rc);
+// }
+
+void imu_set_config()
+{
+	int rc = 0;
+
+	// 0 -> low power mode
+	// 1 -> low noise mode
+	inv_sensor_config_powermode_t power_mode;
+	power_mode.lowpower_or_highperformance = 0;
+    
+	// rc = inv_device_set_sensor_config(device, 0, INV_SENSOR_CONFIG_POWER_MODE, &power_mode, 1);
+	// check_rc(rc);
+
+	NRF_LOG_INFO("Ping SMD");
+	rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_SMD);
+	check_rc(rc);
+
+	NRF_LOG_INFO("Set SMD period");
+	rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_SMD, 0);
+	check_rc(rc);
+
+	NRF_LOG_INFO("Start SMD");
+	rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_SMD);
+	check_rc(rc);
+
+	// dmp_icm20948_set_wom_enable();
+}
+
+
+void imu_wom_enable(bool enable)
+{
+	int rc = 0;
+
+	rc += inv_device_set_running_state(device, false);
+	check_rc(rc);
+
+	// rc += inv_device_set_sensor_config();
+	// check_rc(rc);
+}
+
+
+void imu_deinit()
+{
+	int rc = 0;
+
+	// Shutdown IMU and clear internal state
+	rc += inv_device_cleanup(device);
+	check_rc(rc);
+}
+
+
+// void apply_stored_offsets(void)
+// {
+// 	uint8_t sensor_bias[84];
+// 	int32_t acc_bias_q16[6] = {0}, gyro_bias_q16[6] = {0};
+// 	uint8_t i, idx = 0;
+// 	int rc;
+	
+	
+// 	// TODO own implementation needed
+// 	/* Retrieve Sel-test offsets stored in NV memory */
+// //	if(flash_manager_readData(sensor_bias) != 0) {
+// //		INV_MSG(INV_MSG_LEVEL_WARNING, "No bias values retrieved from NV memory !");
+// //		return;
+// //	}
+	
+// 	for(i = 0; i < 6; i++)
+// 		gyro_bias_q16[i] = inv_dc_little8_to_int32((const uint8_t *)(&sensor_bias[i * sizeof(uint32_t)]));
+// 	idx += sizeof(gyro_bias_q16);
+// 	rc = inv_device_set_sensor_config(device, INV_SENSOR_TYPE_GYROSCOPE,
+// 		VSENSOR_CONFIG_TYPE_OFFSET, gyro_bias_q16, sizeof(gyro_bias_q16));
+// 	check_rc(rc);
+	
+// 	for(i = 0; i < 6; i++)
+// 		acc_bias_q16[i] = inv_dc_little8_to_int32((const uint8_t *)(&sensor_bias[idx + i * sizeof(uint32_t)]));
+// 	idx += sizeof(acc_bias_q16);
+// 	rc = inv_device_set_sensor_config(device, INV_SENSOR_TYPE_ACCELEROMETER,
+// 		VSENSOR_CONFIG_TYPE_OFFSET, acc_bias_q16, sizeof(acc_bias_q16));
+
+// }
+
+
+
+// void store_offsets(void)
+// {
+// 	int rc = 0;
+// 	uint8_t i, idx = 0;
+// 	int gyro_bias_q16[6] = {0}, acc_bias_q16[6] = {0};
+
+// 	uint8_t sensor_bias[84] = {0};
+	
+// 	/* Strore Self-test bias in NV memory */
+// 	rc = inv_device_get_sensor_config(device, INV_SENSOR_TYPE_GYROSCOPE,
+// 			VSENSOR_CONFIG_TYPE_OFFSET, gyro_bias_q16, sizeof(gyro_bias_q16));
+// 	check_rc(rc);
+// 	for(i = 0; i < 6; i++)
+// 		inv_dc_int32_to_little8(gyro_bias_q16[i], &sensor_bias[i * sizeof(uint32_t)]);
+// 	idx += sizeof(gyro_bias_q16);
+	
+// 	rc = inv_device_get_sensor_config(device, INV_SENSOR_TYPE_ACCELEROMETER,
+// 			VSENSOR_CONFIG_TYPE_OFFSET, acc_bias_q16, sizeof(acc_bias_q16));
+// 	check_rc(rc);
+// 	for(i = 0; i < 6; i++)
+// 		inv_dc_int32_to_little8(acc_bias_q16[i], &sensor_bias[idx + i * sizeof(uint32_t)]);
+// 	idx += sizeof(acc_bias_q16);
+
+// 	// TODO own implementation needed to store sensor_bias in non volatile memory
+// 	// flash_manager_writeData(sensor_bias);
+// }

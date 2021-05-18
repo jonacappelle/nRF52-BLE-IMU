@@ -24,4 +24,6 @@ void ble_send_raw(ble_tms_raw_t * data);
 void ble_send_adc(ble_tms_adc_t * data);
 void ble_send_euler(ble_tms_euler_t * data);
 
+// void advertising_stop(void);
+
 #endif

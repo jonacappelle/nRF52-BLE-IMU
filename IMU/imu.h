@@ -157,7 +157,7 @@ typedef struct buffer
 
 
 void imu_init(void);
-
+void imu_deinit();
 
 uint32_t imu_enable_sensors(IMU imu);
 
@@ -166,5 +166,9 @@ void imu_send_data();
 // Init and de-init FIFO buffers
 static void imu_buff_init();
 void imu_clear_buff();
+
+void imu_wom_enable(bool enable);
+
+void imu_set_config();
 
 #endif

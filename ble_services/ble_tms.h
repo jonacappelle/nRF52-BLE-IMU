@@ -69,7 +69,7 @@
 
 
 // How many packets (QUAT - RAW) are grouped in a message
-#define BLE_PACKET_BUFFER_COUNT     1
+#define BLE_PACKET_BUFFER_COUNT     5
 
 
 /**@brief Macro for defining a ble_tms instance.

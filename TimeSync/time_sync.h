@@ -55,7 +55,12 @@ extern "C" {
 #endif
 
 #ifndef TIME_SYNC_TIMER_MAX_VAL
-#define TIME_SYNC_TIMER_MAX_VAL (40000)
+#define TIME_SYNC_TIMER_MAX_VAL (16000) //(40000) for 1 ms timer wraparound time
+#endif
+
+// Changes
+#ifndef TIME_SYNC_TIMER_PERIOD_MS
+#define TIME_SYNC_TIMER_PERIOD_MS   1.000
 #endif
 
 #ifndef TIME_SYNC_RTC_MAX_VAL
