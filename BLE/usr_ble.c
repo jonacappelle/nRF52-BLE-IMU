@@ -199,163 +199,38 @@ static void ble_tms_evt_handler(ble_tms_t        * p_tms,
     {
         case BLE_TMS_EVT_NOTIF_TAP:
             NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_TAP - %d\r\n", p_tms->is_tap_notif_enabled);
-            // if (p_tms->is_tap_notif_enabled)
-            // {
-            //     err_code = drv_motion_enable(DRV_MOTION_FEATURE_MASK_TAP);
-            //     APP_ERROR_CHECK(err_code);
-            // }
-            // else
-            // {
-            //     err_code = drv_motion_disable(DRV_MOTION_FEATURE_MASK_TAP);
-            //     APP_ERROR_CHECK(err_code);
-            // }
             break;
 
         case BLE_TMS_EVT_NOTIF_ADC:
             NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_ADC - %d\r\n", p_tms->is_adc_notif_enabled);
-            // if (p_tms->is_orientation_notif_enabled)
-            // {
-            //     imu.quat6_enabled = 1;
-                
-            //     // err_code = drv_motion_enable(DRV_MOTION_FEATURE_MASK_ORIENTATION);
-            //     // APP_ERROR_CHECK(err_code);
-            // }
-            // else
-            // {
-            //     imu.quat6_enabled = 0;
-
-            //     // err_code = drv_motion_disable(DRV_MOTION_FEATURE_MASK_ORIENTATION);
-            //     // APP_ERROR_CHECK(err_code);
-            // }
-
-            // // Pass change IMU settings to event handler
-            // err_code = app_sched_event_put(0, 0, imu_config_evt_sceduled);
-            // APP_ERROR_CHECK(err_code);
             break;
 
         case BLE_TMS_EVT_NOTIF_QUAT:
             NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_QUAT - %d\r\n", p_tms->is_quat_notif_enabled);
-            // if (p_tms->is_quat_notif_enabled)
-            // {
-            //     imu.quat6_enabled = 1;
-                
-            //     // err_code = drv_motion_enable(DRV_MOTION_FEATURE_MASK_QUAT);
-            //     // APP_ERROR_CHECK(err_code);
-            // }
-            // else
-            // {
-            //     imu.quat6_enabled = 0;
-
-            //     // err_code = drv_motion_disable(DRV_MOTION_FEATURE_MASK_QUAT);
-            //     // APP_ERROR_CHECK(err_code);
-            // }
-
-            // // Pass change IMU settings to event handler
-            // err_code = app_sched_event_put(0, 0, imu_config_evt_sceduled);
-            // APP_ERROR_CHECK(err_code);
-
             break;
 
         case BLE_TMS_EVT_NOTIF_PEDOMETER:
             NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_PEDOMETER - %d\r\n", p_tms->is_pedo_notif_enabled);
-            // if (p_tms->is_pedo_notif_enabled)
-            // {
-            //     err_code = drv_motion_enable(DRV_MOTION_FEATURE_MASK_PEDOMETER);
-            //     APP_ERROR_CHECK(err_code);
-            // }
-            // else
-            // {
-            //     err_code = drv_motion_disable(DRV_MOTION_FEATURE_MASK_PEDOMETER);
-            //     APP_ERROR_CHECK(err_code);
-            // }
             break;
 
         case BLE_TMS_EVT_NOTIF_RAW:
             NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_RAW - %d\r\n", p_tms->is_raw_notif_enabled);
-            // if (p_tms->is_raw_notif_enabled)
-            // {
-            //     imu.gyro_enabled = 1;
-            //     imu.accel_enabled = 1;
-            //     imu.mag_enabled = 1;
-            //     // err_code = drv_motion_enable(DRV_MOTION_FEATURE_MASK_RAW);
-            //     // APP_ERROR_CHECK(err_code);
-            // }
-            // else
-            // {
-            //     imu.gyro_enabled = 0;
-            //     imu.accel_enabled = 0;
-            //     imu.mag_enabled = 0;
-            //     // err_code = drv_motion_disable(DRV_MOTION_FEATURE_MASK_RAW);
-            //     // APP_ERROR_CHECK(err_code);
-            // }
-
-            // // Pass change IMU settings to event handler
-            // err_code = app_sched_event_put(0, 0, imu_config_evt_sceduled);
-            // APP_ERROR_CHECK(err_code);
-
             break;
 
         case BLE_TMS_EVT_NOTIF_EULER:
             NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_EULER - %d\r\n", p_tms->is_euler_notif_enabled);
-            // if (p_tms->is_euler_notif_enabled)
-            // {
-            //     imu.euler_enabled = 1;
-            //     // err_code = drv_motion_enable(DRV_MOTION_FEATURE_MASK_EULER);
-            //     // APP_ERROR_CHECK(err_code);
-            // }
-            // else
-            // {
-            //     imu.euler_enabled = 0;
-            //     // err_code = drv_motion_disable(DRV_MOTION_FEATURE_MASK_EULER);
-            //     // APP_ERROR_CHECK(err_code);
-            // }
-
-            // // Pass change IMU settings to event handler
-            // err_code = app_sched_event_put(0, 0, imu_config_evt_sceduled);
-            // APP_ERROR_CHECK(err_code);
-
             break;
 
         case BLE_TMS_EVT_NOTIF_ROT_MAT:
             NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_ROT_MAT - %d\r\n", p_tms->is_rot_mat_notif_enabled);
-            // if (p_tms->is_rot_mat_notif_enabled)
-            // {
-            //     err_code = drv_motion_enable(DRV_MOTION_FEATURE_MASK_ROT_MAT);
-            //     APP_ERROR_CHECK(err_code);
-            // }
-            // else
-            // {
-            //     err_code = drv_motion_disable(DRV_MOTION_FEATURE_MASK_ROT_MAT);
-            //     APP_ERROR_CHECK(err_code);
-            // }
             break;
 
         case BLE_TMS_EVT_NOTIF_HEADING:
             NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_HEADING - %d\r\n", p_tms->is_heading_notif_enabled);
-            // if (p_tms->is_heading_notif_enabled)
-            // {
-            //     err_code = drv_motion_enable(DRV_MOTION_FEATURE_MASK_HEADING);
-            //     APP_ERROR_CHECK(err_code);
-            // }
-            // else
-            // {
-            //     err_code = drv_motion_disable(DRV_MOTION_FEATURE_MASK_HEADING);
-            //     APP_ERROR_CHECK(err_code);
-            // }
             break;
 
         case BLE_TMS_EVT_NOTIF_GRAVITY:
             NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_GRAVITY - %d\r\n", p_tms->is_gravity_notif_enabled);
-            // if (p_tms->is_gravity_notif_enabled)
-            // {
-            //     err_code = drv_motion_enable(DRV_MOTION_FEATURE_MASK_GRAVITY_VECTOR);
-            //     APP_ERROR_CHECK(err_code);
-            // }
-            // else
-            // {
-            //     err_code = drv_motion_disable(DRV_MOTION_FEATURE_MASK_GRAVITY_VECTOR);
-            //     APP_ERROR_CHECK(err_code);
-            // }
             break;
 
         case BLE_TMS_EVT_CONFIG_RECEIVED:
