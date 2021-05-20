@@ -253,6 +253,7 @@ static void ble_tms_evt_handler(ble_tms_t        * p_tms,
             imu.stop = received_config.stop;
             imu.adc = received_config.adc_enabled;
             imu.sync_start_time = received_config.sync_start_time;
+            imu.wom = received_config.wom_enabled;
 
             // Print out received config over RTT
             print_config(received_config);

@@ -95,6 +95,7 @@ typedef struct imu
 	uint32_t period; // period in milliseconds (ms)
     bool adc;
     uint32_t evt_scheduled;
+    bool wom;
 }IMU;
 
 

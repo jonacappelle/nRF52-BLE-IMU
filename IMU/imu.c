@@ -736,6 +736,23 @@ ret_code_t imu_enable_sensors(IMU imu)
 {
 		int rc = 0;
 
+		if(imu.wom)
+		{
+			NRF_LOG_INFO("Start WOM");
+			rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_SMD);
+			check_rc(rc);
+			rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_SMD, 0);
+			check_rc(rc);
+			rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_SMD);
+			check_rc(rc);
+		}
+		else if(!imu.wom)
+		{
+			NRF_LOG_INFO("Stop WOM");
+			rc += inv_device_stop_sensor(device, INV_SENSOR_TYPE_SMD);
+			check_rc(rc);
+		}
+
 		if(imu.stop)
 		{
 		// Stop all sensors before enabling the new ones
