@@ -26,4 +26,6 @@ void ble_send_euler(ble_tms_euler_t * data);
 
 // void advertising_stop(void);
 
+void TimeSync_re_enable();
+
 #endif

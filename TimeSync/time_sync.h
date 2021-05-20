@@ -68,7 +68,7 @@ extern "C" {
 #endif
 
 #ifndef TIME_SYNC_DESYNC_TIMEOUT
-#define TIME_SYNC_DESYNC_TIMEOUT 10000000 /* Timeout for desynchronization [us] */
+#define TIME_SYNC_DESYNC_TIMEOUT 30000000 // 30 sec timeout for synchronization to get out of sync   //10 000 000 /* Timeout for desynchronization [us] */
 #endif
 
 #ifndef TIME_SYNC_EVT_HANDLER_IRQ_PRIORITY
@@ -112,6 +112,7 @@ typedef enum
     TS_EVT_DESYNCHRONIZED, /* @ref TIME_SYNC_DESYNC_TIMEOUT microseconds passed without any sync packets reception from transmitter */
     TS_EVT_TRIGGERED,      /* Trigger event set by @ref ts_set_trigger */
     TS_EVT_TIMESTAMP,      /* Timestamp triggered by PPI */
+    TS_EVT_SYNC_PACKET_RECEIVED,
 } ts_evt_type_t;
 
 typedef struct
@@ -243,6 +244,12 @@ uint32_t ts_timestamp_get_ticks_u32(void);
  * @retval timestamp value [1 second/16 MHz]
  */
 uint64_t ts_timestamp_get_ticks_u64(void);
+
+
+// Costum function for temp disabling and re-enabling TimeSync in an attempt to save power
+uint32_t ts_re_enable(const ts_rf_config_t* p_rf_config);
+uint32_t ts_temp_disable(void);
+
 
 #ifdef __cplusplus
 }

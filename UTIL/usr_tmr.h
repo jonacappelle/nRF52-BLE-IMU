@@ -24,10 +24,12 @@ void timer_datasend_2_init (void);
 void timer_datasend_1_event_handler(nrf_timer_event_t event_type, void* p_context);
 void timer_datasend_2_event_handler(nrf_timer_event_t event_type, void* p_context);
 
-static void ts_timer_handler(void * p_context);
+void ts_timer_handler(void * p_context);
 static void create_ts_timer();
 static void ts_lp_timer_start();
 void ts_timer_init();
+
+void ts_start_idle_timer(uint32_t t_sec);
 
 
 #endif

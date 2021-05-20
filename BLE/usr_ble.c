@@ -70,12 +70,20 @@ typedef struct{
     uint32_t sync_interval_int_time; // How much time between measurements - (In increments of 2.5 ms)
     bool m_ts_synchronized;
     bool m_imu_trigger_enabled;
+    bool m_ts_packet_received;
 } time_sync_t;
 
 time_sync_t ts = {
     .sync_interval_int_time = 4, // Default 100 Hz transmission rate
     .m_ts_synchronized = 0,
     .m_imu_trigger_enabled = 0,
+    .m_ts_packet_received = 0,
+};
+
+ts_rf_config_t rf_config =
+{
+    .rf_chn = 80,
+    .rf_addr = { 0xDE, 0xAD, 0xBE, 0xEF, 0x19 }
 };
 
 
@@ -959,7 +967,25 @@ static bool ts_evt_synchronized()
     return ts.m_ts_synchronized;
 }
 
+static bool ts_packet_received()
+{
+    return ts.m_ts_packet_received;
+}
 
+static void ts_set_packet_received()
+{
+    ts.m_ts_packet_received = 1;
+}
+
+void TimeSync_re_enable()
+{
+    ret_code_t err_code;
+
+    err_code =  ts_re_enable(&rf_config);
+    APP_ERROR_CHECK(err_code);
+
+    NRF_LOG_INFO("ts_re_enable");
+}
 
 
 static void ts_evt_callback(const ts_evt_t* evt)
@@ -967,6 +993,8 @@ static void ts_evt_callback(const ts_evt_t* evt)
     // NRF_LOG_INFO("ts_evt_callback");
 
     APP_ERROR_CHECK_BOOL(evt != NULL);
+
+    ret_code_t err_code;
 
     switch (evt->type)
     {
@@ -979,6 +1007,18 @@ static void ts_evt_callback(const ts_evt_t* evt)
             NRF_LOG_INFO("TS_EVT_DESYNCHRONIZED");
             ts_imu_trigger_disable();
             ts_evt_synchronized_disable();
+            break;
+        case TS_EVT_SYNC_PACKET_RECEIVED:
+            NRF_LOG_INFO("TS_EVT_SYNC_PACKET_RECEIVED");
+
+            // Let application know a TimeSync packet has been received
+            ts_set_packet_received();
+
+            // Temp disable TimeSync for x seconds to disable power
+            err_code = ts_temp_disable();
+            APP_ERROR_CHECK(err_code);
+            ts_start_idle_timer(10);
+
             break;
         case TS_EVT_TRIGGERED:
             // NRF_LOG_INFO("TS_EVT_TRIGGERED");
@@ -1065,12 +1105,6 @@ static void sync_timer_init(void)
 
     err_code = ts_init(&init_ts);
     APP_ERROR_CHECK(err_code);
-
-	ts_rf_config_t rf_config =
-	{
-		.rf_chn = 80,
-		.rf_addr = { 0xDE, 0xAD, 0xBE, 0xEF, 0x19 }
-	};
 
     err_code = ts_enable(&rf_config);
     APP_ERROR_CHECK(err_code);

@@ -200,14 +200,19 @@ void imu_timers_init(void)
 #include "app_timer.h"
 #include "nrf_drv_clock.h"
 
+#include "usr_ble.h"
+
 APP_TIMER_DEF(ts_timer);     /**< Handler for repeated timer used to blink LED 1. */
 
 /**@brief Timeout handler for the repeated timer.
  */
-static void ts_timer_handler(void * p_context)
+void ts_timer_handler(void * p_context)
 {
 	// Start timer again
-	ts_lp_timer_start();
+	// ts_lp_timer_start();
+
+	// Start timesync again
+	TimeSync_re_enable();
 
     NRF_LOG_INFO("ts_timer_handler");
 }
@@ -240,7 +245,19 @@ void ts_timer_init()
 	create_ts_timer();
 
 	// Start TimeSync turn on-off timer
-	ts_lp_timer_start();
+	// ts_lp_timer_start();
+}
+
+// Start idle timer for x seconds
+void ts_start_idle_timer(uint32_t t_sec)
+{
+	ret_code_t err_code;
+
+	uint32_t t_msec = t_sec * 1000;
+
+	// Start single shot timer
+	err_code = app_timer_start(ts_timer, APP_TIMER_TICKS(t_msec), NULL);
+	APP_ERROR_CHECK(err_code);
 }
 
 /**@brief Function for initializing the timer module.

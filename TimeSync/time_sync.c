@@ -625,10 +625,10 @@ static void sync_timer_start(void)
 
 uint32_t ts_set_trigger(uint32_t target_tick, uint32_t ppi_endpoint)
 {
-    if (!m_timeslot_session_open)
-    {
-        return NRF_ERROR_INVALID_STATE;
-    }
+    // if (!m_timeslot_session_open)
+    // {
+    //     return NRF_ERROR_INVALID_STATE;
+    // }
 
     if (ppi_sync_trigger_configure(ppi_endpoint) != NRF_SUCCESS)
     {
@@ -707,6 +707,17 @@ void SWI3_EGU3_IRQHandler(void)
 
                 m_callback(&evt);
             }
+        }
+
+        // Let event handler know when sync packet has been received
+        if (m_callback)
+        {
+            ts_evt_t sync_packet_received_evt =
+            {
+                .type = TS_EVT_SYNC_PACKET_RECEIVED,
+            };
+
+            m_callback(&sync_packet_received_evt);
         }
     }
 
@@ -1248,3 +1259,109 @@ uint64_t ts_timestamp_get_ticks_u64(void)
 
     return timestamp;
 }
+
+
+
+uint32_t ts_re_enable(const ts_rf_config_t* p_rf_config)
+{
+    uint32_t err_code;
+
+    if (p_rf_config == NULL || p_rf_config->rf_addr == NULL)
+    {
+        return NRF_ERROR_INVALID_PARAM;
+    }
+
+    if (m_timeslot_session_open)
+    {
+        return NRF_ERROR_INVALID_STATE;
+    }
+
+    // err_code = sd_clock_hfclk_request();
+    // if (err_code != NRF_SUCCESS)
+    // {
+    //     return err_code;
+    // }
+
+    err_code = sd_power_mode_set(NRF_POWER_MODE_CONSTLAT);
+    if (err_code != NRF_SUCCESS)
+    {
+        return err_code;
+    }
+
+    memcpy(m_params.rf_addr, p_rf_config->rf_addr, sizeof(m_params.rf_addr));
+    m_params.rf_chn = p_rf_config->rf_chn;
+
+    err_code = sd_radio_session_open(radio_callback);
+    if (err_code != NRF_SUCCESS)
+    {
+        return err_code;
+    }
+
+    err_code = sd_radio_request(&m_timeslot_req_earliest);
+    if (err_code != NRF_SUCCESS)
+    {
+        return err_code;
+    }
+
+    // ppi_timestamp_timer_configure();
+    // ppi_sync_timer_adjust_configure();
+
+    NVIC_ClearPendingIRQ(m_params.egu_irq_type);
+    NVIC_SetPriority(m_params.egu_irq_type, TIME_SYNC_EVT_HANDLER_IRQ_PRIORITY);
+    NVIC_EnableIRQ(m_params.egu_irq_type);
+
+    m_params.egu->INTENCLR = 0xFFFFFFFF;
+    m_params.egu->INTENSET = EGU_INTENSET_TRIGGERED0_Msk | EGU_INTENSET_TRIGGERED2_Msk | EGU_INTENSET_TRIGGERED3_Msk | EGU_INTENSET_TRIGGERED4_Msk | EGU_INTENSET_TRIGGERED5_Msk;
+
+    m_blocked_cancelled_count  = 0;
+    m_radio_state              = RADIO_STATE_IDLE;
+
+    nrf_atomic_flag_clear(&m_send_sync_pkt);
+
+    // timestamp_counter_start();
+    // sync_timer_start();
+
+    nrf_atomic_flag_set(&m_timeslot_session_open);
+
+    return NRF_SUCCESS;
+}
+
+uint32_t ts_temp_disable(void)
+{
+    uint32_t err_code;
+
+    nrf_atomic_flag_set(&m_pending_close);
+
+    err_code = sd_radio_session_close();
+    if (err_code != NRF_SUCCESS)
+    {
+        return err_code;
+    }
+
+    // TODO: stop timer
+
+    // err_code = sd_clock_hfclk_release();
+    // if (err_code != NRF_SUCCESS)
+    // {
+    //     return err_code;
+    // }
+
+    err_code = sd_power_mode_set(NRF_POWER_MODE_LOWPWR);
+    if (err_code != NRF_SUCCESS)
+    {
+        return err_code;
+    }
+
+    // TODO:
+    //       - Close SoftDevice radio session (sd_radio_session_close())
+    //       - Stop radio activity
+    //       - Stop timers
+    //       - Disable used PPI channels
+    //       - Disable used interrupts
+    //       - Release HFCLK (sd_clock_hfclk_release()),
+    //       - Go back to low-power (mode sd_power_mode_set(NRF_POWER_MODE_LOWPWR))
+    // Care must be taken to ensure clean stop. Order of tasks above should be reconsidered.
+    return NRF_SUCCESS;
+}
+
+
