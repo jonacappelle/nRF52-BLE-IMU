@@ -10,7 +10,7 @@ const nrf_drv_timer_t TIMER_MICROS = NRF_DRV_TIMER_INSTANCE(1);
 
 
 
-void timer_init (void)
+void imu_timer_init (void)
 {
 	// TODO: Timer will overflow in 1.19 hours
     ret_code_t err_code;
@@ -183,12 +183,70 @@ void timer_datasend_2_event_handler(nrf_timer_event_t event_type, void* p_contex
     }
 }
 
-void timers_init(void)
+void imu_timers_init(void)
 {
 		/* Initialize us timer */
-		timer_init();
+		imu_timer_init();
 	
 		/* Initialize timer: Generates interrupt at 100 Hz and 50 Hz */
 		// timer_datasend_1_init();
 		// timer_datasend_2_init();
+}
+
+//////////////////////////////////////////////////
+// Timers for dynamically turning on-off TimeSync
+//////////////////////////////////////////////////
+
+#include "app_timer.h"
+#include "nrf_drv_clock.h"
+
+APP_TIMER_DEF(ts_timer);     /**< Handler for repeated timer used to blink LED 1. */
+
+/**@brief Timeout handler for the repeated timer.
+ */
+static void ts_timer_handler(void * p_context)
+{
+	// Start timer again
+	ts_lp_timer_start();
+
+    NRF_LOG_INFO("ts_timer_handler");
+}
+
+/**@brief Create timers.
+ */
+static void create_ts_timer()
+{
+    ret_code_t err_code;
+
+    // Create single shot timer for enabling TimeSync - TimeSync will be disabled once a valid TimeSync packet gets received
+    err_code = app_timer_create(&ts_timer,
+                                APP_TIMER_MODE_SINGLE_SHOT,
+                                ts_timer_handler);
+    APP_ERROR_CHECK(err_code);
+}
+
+static void ts_lp_timer_start()
+{
+	ret_code_t err_code;
+
+	// Start single shot timer
+	err_code = app_timer_start(ts_timer, APP_TIMER_TICKS(1000), NULL);
+	APP_ERROR_CHECK(err_code);
+}
+
+void ts_timer_init()
+{
+	// Create TimeSync turn on-off timer
+	create_ts_timer();
+
+	// Start TimeSync turn on-off timer
+	ts_lp_timer_start();
+}
+
+/**@brief Function for initializing the timer module.
+ */
+void timers_init(void)
+{
+    ret_code_t err_code = app_timer_init();
+    APP_ERROR_CHECK(err_code);
 }

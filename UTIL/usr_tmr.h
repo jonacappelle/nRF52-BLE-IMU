@@ -14,13 +14,20 @@
 #include "nrf_log_default_backends.h"
 
 void timers_init(void);
+void imu_timers_init(void);
 
-void timer_init (void);
+
 void timer_event_handler(nrf_timer_event_t event_type, void* p_context);
 
 void timer_datasend_1_init (void);
 void timer_datasend_2_init (void);
 void timer_datasend_1_event_handler(nrf_timer_event_t event_type, void* p_context);
 void timer_datasend_2_event_handler(nrf_timer_event_t event_type, void* p_context);
+
+static void ts_timer_handler(void * p_context);
+static void create_ts_timer();
+static void ts_lp_timer_start();
+void ts_timer_init();
+
 
 #endif

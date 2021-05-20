@@ -61,7 +61,7 @@ int main(void)
 		gpio_init();
 		
 		// Initialize all needed timers
-		timers_init();
+		imu_timers_init();
 	
 		// Initialize IMU
 		imu_init();

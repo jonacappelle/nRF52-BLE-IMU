@@ -44,6 +44,9 @@
 #include "nrf_ppi.h"
 #include "nrf_timer.h"
 
+// Timers
+#include "usr_tmr.h"
+
 // IMU params
 #include "imu_params.h"
 #include "imu.h"
@@ -415,13 +418,7 @@ static void nrf_qwr_error_handler(uint32_t nrf_error)
     APP_ERROR_HANDLER(nrf_error);
 }
 
-/**@brief Function for initializing the timer module.
- */
-static void timers_init(void)
-{
-    ret_code_t err_code = app_timer_init();
-    APP_ERROR_CHECK(err_code);
-}
+
 
 /**@brief Function for the GAP initialization.
  *
@@ -1495,6 +1492,7 @@ void usr_ble_init(void)
 
     // Initialize time synchronization functionality
     sync_timer_init();
+    ts_timer_init();
 
     // Start advertising
     advertising_start();

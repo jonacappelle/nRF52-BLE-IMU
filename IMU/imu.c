@@ -303,7 +303,8 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 	
 	if(event->status == INV_SENSOR_STATUS_DATA_UPDATED) {
 		
-
+		// Temp
+imu_send_data();
 		
 		ret_code_t err_code;
 		size_t len_in;
