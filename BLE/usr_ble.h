@@ -28,4 +28,9 @@ void ble_send_euler(ble_tms_euler_t * data);
 
 void TimeSync_re_enable();
 
+void ble_disconnect(void);
+
+void advertising_start(void);
+ret_code_t advertising_stop(void);
+
 #endif

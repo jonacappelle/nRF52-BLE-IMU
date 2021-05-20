@@ -589,6 +589,9 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 		case INV_SENSOR_TYPE_STEP_DETECTOR:
 		case INV_SENSOR_TYPE_SMD:
 				NRF_LOG_INFO("Wake on motion!");
+
+				// If we wake on motion, we need to start advertising again to be able to retrieve the BLE device
+				advertising_start();
 			break;
 		case INV_SENSOR_TYPE_B2S:
 		case INV_SENSOR_TYPE_TILT_DETECTOR:

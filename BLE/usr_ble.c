@@ -255,6 +255,16 @@ static void ble_tms_evt_handler(ble_tms_t        * p_tms,
             imu.sync_start_time = received_config.sync_start_time;
             imu.wom = received_config.wom_enabled;
 
+            // If wake on motion command is received
+            // - Break the BLE connection
+            // - Turn of wake-on-motion
+            // - Setup interrupt pin to wake-up microcontroller
+            if (imu.wom)
+            {
+                NRF_LOG_INFO("in if(imu.wom) statement");
+                ble_disconnect();
+            }
+
             // Print out received config over RTT
             print_config(received_config);
 
@@ -399,7 +409,18 @@ void imu_config_evt_sceduled(void * p_event_data, uint16_t event_size)
 }
 
 
+void ble_disconnect(void)
+{
+    ret_code_t err_code;
 
+    if (m_conn_handle != BLE_CONN_HANDLE_INVALID)
+    {
+        NRF_LOG_INFO("m_conn_handle in sd_ble_gap_disconnect %d", m_conn_handle);
+        err_code = sd_ble_gap_disconnect(m_conn_handle, BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
+        NRF_LOG_INFO("m_conn_handle in sd_ble_gap_disconnect %d", m_conn_handle);
+        APP_ERROR_CHECK(err_code);
+    }
+}
 
 
 /**@snippet [Handling the data received over BLE] */
@@ -621,6 +642,12 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             // Pass change IMU settings to event handler
             err_code = app_sched_event_put(0, 0, imu_config_evt_sceduled);
             APP_ERROR_CHECK(err_code);
+
+            // Stop advertising - otherwise, a new connection will be made
+            // When waking up from IMU WoM interrupt, we need to start advertising again
+            err_code = advertising_stop();
+            APP_ERROR_CHECK(err_code);
+            NRF_LOG_INFO("Advertising stopped");
 
             break;
 
@@ -1350,19 +1377,31 @@ static void power_management_init(void)
 
 /**@brief Function for starting advertising.
  */
-static void advertising_start(void)
+void advertising_start(void)
 {
     ret_code_t err_code = ble_advertising_start(&m_advertising, BLE_ADV_MODE_FAST);
     APP_ERROR_CHECK(err_code);
 }
 
 
-// void advertising_stop(void)
-// {
-//     ret_code_t err_code = sd_ble_gap_adv_stop(&m_advertising);
-//     APP_ERROR_CHECK(err_code);
-// }
+ret_code_t advertising_stop(void)
+{   
+    // @retval ::NRF_SUCCESS The BLE stack has stopped advertising.
+    // @retval ::BLE_ERROR_INVALID_ADV_HANDLE Invalid advertising handle.
+    // @retval ::NRF_ERROR_INVALID_STATE The advertising handle is not advertising.
+    ret_code_t err_code;
+	err_code = sd_ble_gap_adv_stop(m_advertising.adv_handle);
+    if( err_code == NRF_ERROR_INVALID_STATE )
+    {
+        NRF_LOG_INFO("NRF_ERROR_INVALID_STATE");
+    }
+    if( err_code != NRF_ERROR_INVALID_STATE )
+    {
+        return err_code;
+    }
+	
 
+}
 
 void usr_ble_init(void)
 {
