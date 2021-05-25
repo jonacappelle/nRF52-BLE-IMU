@@ -24,6 +24,11 @@
 #include "imu.h"
 
 // Logging functionality
+#define NRF_LOG_MODULE_NAME imu
+#define NRF_LOG_LEVEL 4
+#include "nrf_log.h"
+NRF_LOG_MODULE_REGISTER();
+
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
@@ -73,6 +78,10 @@
 
 // Utilities
 #include "usr_util.h"
+
+
+
+
 
 BUFFER buff;
 
@@ -586,6 +595,10 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 					(unsigned long)event->data.step.count);
 			break;
 		case INV_SENSOR_TYPE_PICK_UP_GESTURE:
+				NRF_LOG_INFO("PICKUP GESTURE");
+				// If we wake on motion, we need to start advertising again to be able to retrieve the BLE device
+				advertising_start();
+				break;
 		case INV_SENSOR_TYPE_STEP_DETECTOR:
 		case INV_SENSOR_TYPE_SMD:
 				NRF_LOG_INFO("Wake on motion!");
@@ -910,12 +923,45 @@ void imu_clear_buff()
 	APP_ERROR_CHECK(err_code);
 }
 
+static void imu_power_en(bool enable)
+{
+	ret_code_t err_code;
+
+	if(enable)
+	{
+		// Set pin modes - set high drive strength
+		nrf_gpio_cfg(IMU_POWER_PIN, NRF_GPIO_PIN_DIR_OUTPUT, NRF_GPIO_PIN_INPUT_DISCONNECT, NRF_GPIO_PIN_NOPULL, NRF_GPIO_PIN_H0H1, NRF_GPIO_PIN_NOSENSE);
+		// Set pin high to enable IMU
+		nrf_gpio_pin_set(IMU_POWER_PIN);
+		err_code = NRF_SUCCESS;
+	}
+	else if(!enable)
+	{
+		// Set pin low to disable IMU
+		nrf_gpio_pin_clear(IMU_POWER_PIN);
+		// Set to default pin configuration: input with no pull resistors
+		nrf_gpio_cfg_default(IMU_POWER_PIN);
+		err_code = NRF_SUCCESS;
+	}
+	else
+	{
+		err_code = NRF_ERROR_INVALID_PARAM;
+	}
+	APP_ERROR_CHECK(err_code);
+
+	// Some delay - may not be necessary
+	nrf_delay_ms(100);
+}
+
 
 void imu_init(void)
 {
 #if IMU_ENABLED == 1
 
 		NRF_LOG_INFO("IMU Init");
+
+		// Power on the IMU
+		imu_power_en(true);
 
 		// Initialize necessary buffers for data transmission
 		imu_buff_init();
@@ -963,7 +1009,7 @@ void imu_init(void)
 		check_rc(rc);
 		NRF_LOG_INFO("Data: 0x%x", whoami);
 		NRF_LOG_FLUSH();
-		
+
 		/* Configure and initialize the Icm20948 device */
 		NRF_LOG_INFO("Setting up ICM20948");
 		NRF_LOG_FLUSH();
@@ -1163,6 +1209,9 @@ void imu_deinit()
 	// Shutdown IMU and clear internal state
 	rc += inv_device_cleanup(device);
 	check_rc(rc);
+
+	// Power on the IMU
+	imu_power_en(false);
 }
 
 

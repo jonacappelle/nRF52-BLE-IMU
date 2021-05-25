@@ -37,14 +37,14 @@ void gpio_init(void)
 {
     ret_code_t err_code;
 
-// TODO for some reason, code crashes when this is enabled, this is maybe already enabled elsewhere
-//    err_code = nrf_drv_gpiote_init();
-//    APP_ERROR_CHECK(err_code);
+// TODO for some reason, code crashes when this is enabled, this is maybe already enabled elsewhere -> Yes in BSP module
+   err_code = nrf_drv_gpiote_init();
+   APP_ERROR_CHECK(err_code);
 
 
 #if IMU_ENABLED == 1
     nrf_drv_gpiote_in_config_t in_config = GPIOTE_CONFIG_IN_SENSE_LOTOHI(true); // Low to high trigger
-    in_config.pull = NRF_GPIO_PIN_PULLUP;
+    in_config.pull = NRF_GPIO_PIN_NOPULL;
 
     err_code = nrf_drv_gpiote_in_init(INT_PIN, &in_config, gpiote_evt_handler);
     APP_ERROR_CHECK(err_code);
@@ -60,4 +60,41 @@ void gpio_init(void)
 	nrf_gpio_cfg_output(PIN_IMU_ACTIVITY);
 	nrf_gpio_cfg_output(TIMESYNC_PIN); // Timing TS_evt handler
 
+}
+
+static void led_flash()
+{
+	for(uint8_t c=0; c<2; c++)
+	{
+		for(uint8_t i=0; i<2; i++)
+		{
+			nrf_gpio_pin_set(TIMESYNC_PIN);
+			nrf_delay_ms(100);
+			nrf_gpio_pin_clear(TIMESYNC_PIN);
+			nrf_delay_ms(100);
+		}
+		nrf_delay_ms(400);
+	}
+}
+
+void led_init()
+{
+	ret_code_t err_code;
+
+	// Set pin mode as output
+	nrf_gpio_cfg_output(TIMESYNC_PIN);
+
+	// LED blink on startup
+	led_flash();
+
+	// Some delay - may not be necessary
+	// nrf_delay_ms(10000);
+}
+
+void led_deinit()
+{
+	// Set pin low to disable LED
+	nrf_gpio_pin_clear(TIMESYNC_PIN);
+	// Set to default pin configuration: input with no pull resistors
+	// nrf_gpio_cfg_default(TIMESYNC_PIN);
 }

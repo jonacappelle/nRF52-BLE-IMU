@@ -11,6 +11,9 @@
 // Application scheduler
 #include "app_scheduler.h"
 
+#include "nrf_drv_clock.h"
+#include "nrf_pwr_mgmt.h"
+
 
 double fixed_to_float(fixed_point_t input)
 {
@@ -33,6 +36,42 @@ void check_cpu_activity()
 {
     nrf_gpio_pin_set(PIN_CPU_ACTIVITY);
 }
+
+
+/**@brief Handler for shutdown preparation.
+ */
+bool shutdown_handler(nrf_pwr_mgmt_evt_t event)
+{
+    uint32_t err_code;
+
+    switch (event)
+    {
+        case NRF_PWR_MGMT_EVT_PREPARE_SYSOFF:
+            NRF_LOG_INFO("NRF_PWR_MGMT_EVT_PREPARE_SYSOFF");
+            break;
+
+        case NRF_PWR_MGMT_EVT_PREPARE_WAKEUP:
+            NRF_LOG_INFO("NRF_PWR_MGMT_EVT_PREPARE_WAKEUP");
+            break;
+
+        case NRF_PWR_MGMT_EVT_PREPARE_DFU:
+            NRF_LOG_ERROR("Entering DFU is not supported by this example.");
+            APP_ERROR_HANDLER(NRF_ERROR_API_NOT_IMPLEMENTED);
+            break;
+
+        case NRF_PWR_MGMT_EVT_PREPARE_RESET:
+            NRF_LOG_INFO("NRF_PWR_MGMT_EVT_PREPARE_RESET");
+            break;
+    }
+
+    err_code = app_timer_stop_all();
+    APP_ERROR_CHECK(err_code);
+
+    return true;
+}
+
+/**@brief Register application shutdown handler with priority 0. */
+NRF_PWR_MGMT_HANDLER_REGISTER(shutdown_handler, 0);
 
 /**@brief Function for handling the idle state (main loop).
  *

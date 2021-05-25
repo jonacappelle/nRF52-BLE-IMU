@@ -8,14 +8,23 @@
 
 /* Interrupt pin number */
 
-#define TIMESYNC_PIN    17
+#define TIMESYNC_PIN    13
 
 #define IMU_ENABLED 1
 
-#define COSTUM_BOARD    0
-#define NRF_DEV_BOARD   1
+#define COSTUM_BOARD    1
+#define SPARKFUN_BOARD  0
+#define NRF_DEV_BOARD   0
 
 #if COSTUM_BOARD == 1
+#define IMU_POWER_PIN 14
+#define INT_PIN	20
+#define USR_TWI_SCL 16
+#define USR_TWI_SDA 15
+#define USR_RX_PIN_NUMBER   11
+#define USR_TX_PIN_NUMBER   12
+#endif
+#if SPARKFUN_BOARD == 1
 #define INT_PIN	8
 #define USR_TWI_SCL 15
 #define USR_TWI_SDA 14

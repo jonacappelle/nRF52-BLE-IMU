@@ -249,7 +249,9 @@ uint64_t ts_timestamp_get_ticks_u64(void);
 // Costum function for temp disabling and re-enabling TimeSync in an attempt to save power
 uint32_t ts_re_enable(const ts_rf_config_t* p_rf_config);
 uint32_t ts_temp_disable(void);
-
+bool ts_receiver_enabled(void);
+static void ts_set_receiver_enabled(bool enabled);
+uint32_t ts_timeslot_open(void);
 
 #ifdef __cplusplus
 }

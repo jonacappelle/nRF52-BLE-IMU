@@ -32,11 +32,21 @@
 #include "nrf_uarte.h"
 #endif
 
+
+
+#define NRF_LOG_MODULE_NAME usr_ble
+#define NRF_LOG_LEVEL 4
+#include "nrf_log.h"
+NRF_LOG_MODULE_REGISTER();
+
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
 
 #include "nrf_delay.h"
+
+
+#include "usr_gpio.h"
 
 // TimeSync
 #include "time_sync.h"
@@ -266,7 +276,7 @@ static void ble_tms_evt_handler(ble_tms_t        * p_tms,
             }
 
             // Print out received config over RTT
-            print_config(received_config);
+            // print_config(received_config);
 
             // Pass change IMU settings to event handler
             err_code = app_sched_event_put(0, 0, imu_config_evt_sceduled);
@@ -395,17 +405,20 @@ void imu_config_evt_sceduled(void * p_event_data, uint16_t event_size)
 		APP_ERROR_CHECK(err_code);
         #endif
 
-        // Set correct trigger period for TS_EVT_TRIGGERED
-        ts_set_triggered_period(imu);
+        if( !imu.wom )
+        {
+            // Set correct trigger period for TS_EVT_TRIGGERED
+            ts_set_triggered_period(imu);
 
-        // Temp for debugging
-        ts_print_sync_time();
+            // Temp for debugging
+            ts_print_sync_time();
 
-        // Set trigger if peripheral is synced
-        ts_start_trigger(imu);
+            // Set trigger if peripheral is synced
+            ts_start_trigger(imu);
 
-        // TODO: ADC needs to be implemented
-        // adc_enable(imu);
+            // TODO: ADC needs to be implemented
+            // adc_enable(imu);
+        }
 }
 
 
@@ -415,9 +428,9 @@ void ble_disconnect(void)
 
     if (m_conn_handle != BLE_CONN_HANDLE_INVALID)
     {
-        NRF_LOG_INFO("m_conn_handle in sd_ble_gap_disconnect %d", m_conn_handle);
+        // NRF_LOG_INFO("m_conn_handle in sd_ble_gap_disconnect %d", m_conn_handle);
         err_code = sd_ble_gap_disconnect(m_conn_handle, BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
-        NRF_LOG_INFO("m_conn_handle in sd_ble_gap_disconnect %d", m_conn_handle);
+        // NRF_LOG_INFO("m_conn_handle in sd_ble_gap_disconnect %d", m_conn_handle);
         APP_ERROR_CHECK(err_code);
     }
 }
@@ -608,6 +621,36 @@ static void imu_clear_struct(IMU * imu)
     memset(imu, 0, sizeof(imu));
 }
 
+void sleep(void * p_event_data, uint16_t event_size)
+{
+    ret_code_t err_code;
+
+    // Disable time synchronization
+    err_code = ts_disable();
+    APP_ERROR_CHECK(err_code);
+
+    // Attempt to busy wait until timeslot is closed
+
+    do{
+        NRF_LOG_FLUSH();
+    }
+    while( ts_timeslot_open() == 1 );
+
+    NRF_LOG_INFO("ts timeslot closed");
+
+    // Stop advertising - otherwise, a new connection will be made
+    // When waking up from IMU WoM interrupt, we need to start advertising again
+    err_code = advertising_stop();
+    APP_ERROR_CHECK(err_code);
+    NRF_LOG_INFO("Advertising stopped");
+
+    // Shutdown IMU
+    imu_deinit();
+
+}
+
+
+
 
 /**@brief Function for handling BLE events.
  *
@@ -639,15 +682,24 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
 
             imu_clear_struct(&imu);
 
-            // Pass change IMU settings to event handler
-            err_code = app_sched_event_put(0, 0, imu_config_evt_sceduled);
-            APP_ERROR_CHECK(err_code);
+            // Enable sensor parameters based on received configuration
+            ret_code_t err_code;
 
-            // Stop advertising - otherwise, a new connection will be made
-            // When waking up from IMU WoM interrupt, we need to start advertising again
-            err_code = advertising_stop();
+            // Clear all buffers before starting a new measurement
+            imu_clear_buff();
+
+            // De-initialize LED
+            led_deinit();
+
+            // Stop ts timer - otherwise when timesync packets are enabled and peripheral goes to sleep, there will be an event generated in 10 sec re-enabling the TimeSync receiver
+            ts_timer_stop();
+
+            // // Pass change IMU settings to event handler
+            // err_code = app_sched_event_put(0, 0, imu_config_evt_sceduled);
+            // APP_ERROR_CHECK(err_code);
+
+            err_code = app_sched_event_put(0, 0, sleep);
             APP_ERROR_CHECK(err_code);
-            NRF_LOG_INFO("Advertising stopped");
 
             break;
 
@@ -870,16 +922,6 @@ static bool ts_evt_synchronized()
     return ts.m_ts_synchronized;
 }
 
-static bool ts_packet_received()
-{
-    return ts.m_ts_packet_received;
-}
-
-static void ts_set_packet_received()
-{
-    ts.m_ts_packet_received = 1;
-}
-
 void TimeSync_re_enable()
 {
     ret_code_t err_code;
@@ -913,9 +955,6 @@ static void ts_evt_callback(const ts_evt_t* evt)
             break;
         case TS_EVT_SYNC_PACKET_RECEIVED:
             NRF_LOG_INFO("TS_EVT_SYNC_PACKET_RECEIVED");
-
-            // Let application know a TimeSync packet has been received
-            ts_set_packet_received();
 
             // Temp disable TimeSync for x seconds to disable power
             err_code = ts_temp_disable();
@@ -1406,7 +1445,7 @@ ret_code_t advertising_stop(void)
 void usr_ble_init(void)
 {
     // UART Init - (not really necessary) -  used by BLE NUS
-    uart_init();
+    // uart_init();
 
     // Logging to RTT functionality
     log_init();
@@ -1415,8 +1454,8 @@ void usr_ble_init(void)
     timers_init();
 
     // Setup buttons + Leds on NRF_DK board
-    bool erase_bonds;
-    buttons_leds_init(&erase_bonds);
+    // bool erase_bonds;
+    // buttons_leds_init(&erase_bonds);
 
     // Init power management
     power_management_init();

@@ -139,6 +139,7 @@ static nrf_atomic_flag_t m_send_sync_pkt = false;
 static nrf_atomic_flag_t m_timer_update_in_progress = false;
 
 static bool m_synchronized = false;
+static bool receiver_enabled = false;
 
 static volatile int64_t  m_master_counter_diff = 0;
 static nrf_atomic_u32_t  m_rcv_count      = 0;
@@ -540,6 +541,7 @@ void ts_on_sys_evt(uint32_t sys_evt, void * p_context)
         {
             if (!m_pending_close)
             {
+                // NRF_LOG_INFO("NRF_EVT_RADIO_CANCELED pending close\r\n");
                 /*
                  * This is caused by a conflict with an active BLE session.
                  * This will mess up the tx frequency, because the next request is scheduled immediately
@@ -555,6 +557,7 @@ void ts_on_sys_evt(uint32_t sys_evt, void * p_context)
                 }
                 else
                 {
+                    // NRF_LOG_INFO("m_tx_slot_retry_count > 5");
                     uint32_t err_code = sd_radio_request((nrf_radio_request_t*) &m_timeslot_req_earliest);
                     APP_ERROR_CHECK(err_code);
                 }
@@ -1155,6 +1158,9 @@ uint32_t ts_enable(const ts_rf_config_t* p_rf_config)
 
     nrf_atomic_flag_set(&m_timeslot_session_open);
 
+    // Keep track of when the receiver is enabled
+    ts_set_receiver_enabled(true);
+
     return NRF_SUCCESS;
 }
 
@@ -1164,10 +1170,15 @@ uint32_t ts_disable(void)
 
     nrf_atomic_flag_set(&m_pending_close);
 
-    err_code = sd_radio_session_close();
-    if (err_code != NRF_SUCCESS)
+    // Fix for problem with custom low power version of this library when temporary disabling the receiver, sd_radio_session_close() returns [NRF_ERROR_FORBIDDEN] because the session is not open
+    // If current session is not open -> do not try to close it
+    if(ts_receiver_enabled())
     {
-        return err_code;
+        err_code = sd_radio_session_close();
+        if (err_code != NRF_SUCCESS)
+        {
+            return err_code;
+        }
     }
 
     // TODO: stop timer
@@ -1183,6 +1194,9 @@ uint32_t ts_disable(void)
     {
         return err_code;
     }
+
+    // Keep track of when the receiver is enabled
+    ts_set_receiver_enabled(false);
 
     // TODO:
     //       - Close SoftDevice radio session (sd_radio_session_close())
@@ -1261,7 +1275,6 @@ uint64_t ts_timestamp_get_ticks_u64(void)
 }
 
 
-
 uint32_t ts_re_enable(const ts_rf_config_t* p_rf_config)
 {
     uint32_t err_code;
@@ -1323,6 +1336,9 @@ uint32_t ts_re_enable(const ts_rf_config_t* p_rf_config)
 
     nrf_atomic_flag_set(&m_timeslot_session_open);
 
+    // Keep track of when the receiver is enabled
+    ts_set_receiver_enabled(true);
+
     return NRF_SUCCESS;
 }
 
@@ -1337,7 +1353,6 @@ uint32_t ts_temp_disable(void)
     {
         return err_code;
     }
-
     // TODO: stop timer
 
     // err_code = sd_clock_hfclk_release();
@@ -1352,6 +1367,9 @@ uint32_t ts_temp_disable(void)
         return err_code;
     }
 
+    // Keep track of when the receiver is enabled
+    ts_set_receiver_enabled(false);
+
     // TODO:
     //       - Close SoftDevice radio session (sd_radio_session_close())
     //       - Stop radio activity
@@ -1364,4 +1382,20 @@ uint32_t ts_temp_disable(void)
     return NRF_SUCCESS;
 }
 
+// Functions to keep track of when the receiver is enabled/disabled
+static void ts_set_receiver_enabled(bool enabled)
+{
+    receiver_enabled = enabled;
+    if(receiver_enabled) NRF_LOG_INFO("Receiver enabled");
+    if(!receiver_enabled) NRF_LOG_INFO("Receiver disabled");
+}
 
+bool ts_receiver_enabled(void)
+{
+    return receiver_enabled;
+}
+
+uint32_t ts_timeslot_open(void)
+{
+    return (uint32_t) m_timeslot_session_open;
+}

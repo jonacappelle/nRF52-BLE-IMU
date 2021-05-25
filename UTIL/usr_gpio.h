@@ -38,4 +38,7 @@
 void gpio_init(void);
 void gpiote_evt_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action);
 
+void led_init();
+void led_deinit();
+
 #endif

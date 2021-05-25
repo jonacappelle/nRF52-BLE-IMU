@@ -267,3 +267,8 @@ void timers_init(void)
     ret_code_t err_code = app_timer_init();
     APP_ERROR_CHECK(err_code);
 }
+
+void ts_timer_stop()
+{
+	app_timer_stop(ts_timer);
+}
