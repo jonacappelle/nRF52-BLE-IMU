@@ -1182,6 +1182,9 @@ uint32_t ts_disable(void)
     }
 
     // TODO: stop timer
+    m_params.high_freq_timer[0]->TASKS_STOP = 1;
+    m_params.high_freq_timer[1]->TASKS_STOP = 1;
+
 
     err_code = sd_clock_hfclk_release();
     if (err_code != NRF_SUCCESS)
