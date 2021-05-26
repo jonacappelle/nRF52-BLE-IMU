@@ -25,7 +25,8 @@
 			"dataconverter.h": "c",
 			"imu_params.h": "c",
 			"app_scheduler.h": "c",
-			"usr_ble_nus.h": "c"
+			"usr_ble_nus.h": "c",
+			"app_gpiote.h": "c"
 		}
 	}
 }

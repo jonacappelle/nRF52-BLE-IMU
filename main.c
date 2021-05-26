@@ -50,8 +50,6 @@ IMU imu = {
 int main(void)
 {
 		ret_code_t err_code;
-
-		
 		
 		// Initialize everything related to BLE
 		usr_ble_init();
@@ -69,9 +67,7 @@ int main(void)
 		imu_timers_init();		
 	
 		// Initialize IMU
-		imu_init();
-
-		
+		imu_init();		
 		
 		//////////////////////////////////////////
 		// SPI TODO

@@ -34,6 +34,13 @@ void imu_timer_init (void)
 		nrf_drv_timer_enable(&TIMER_MICROS);
 }
 
+void imu_timer_deinit()
+{
+	nrf_drv_timer_disable(&TIMER_MICROS);
+	nrf_drv_timer_uninit(&TIMER_MICROS);
+	NRF_LOG_INFO("IMU timer deinit");
+}
+
 
 /**
  * @brief Handler for timer events.

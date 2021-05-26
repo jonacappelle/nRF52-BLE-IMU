@@ -32,6 +32,7 @@ void ts_timer_init();
 void ts_start_idle_timer(uint32_t t_sec);
 
 void ts_timer_stop();
+void imu_timer_deinit();
 
 
 #endif

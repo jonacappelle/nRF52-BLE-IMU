@@ -694,6 +694,9 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             // Stop ts timer - otherwise when timesync packets are enabled and peripheral goes to sleep, there will be an event generated in 10 sec re-enabling the TimeSync receiver
             ts_timer_stop();
 
+            // Reduces power consumption by +-200uA
+            imu_timer_deinit();
+
             // // Pass change IMU settings to event handler
             // err_code = app_sched_event_put(0, 0, imu_config_evt_sceduled);
             // APP_ERROR_CHECK(err_code);
