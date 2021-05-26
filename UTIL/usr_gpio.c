@@ -55,7 +55,7 @@ void gpio_init(void)
 
     // TODO: change this in final version
     // Will cause missed trigger events
-    in_config.hi_accuracy = false;
+    // in_config.hi_accuracy = false;
 
     err_code = nrf_drv_gpiote_in_init(INT_PIN, &in_config, gpiote_evt_handler);
     APP_ERROR_CHECK(err_code);
@@ -67,9 +67,8 @@ void gpio_init(void)
 	
 	
 	// GPIO stuff for timing purposes
-	nrf_gpio_cfg_output(PIN_CPU_ACTIVITY);
-	nrf_gpio_cfg_output(PIN_IMU_ACTIVITY);
-	nrf_gpio_cfg_output(TIMESYNC_PIN); // Timing TS_evt handler
+	// nrf_gpio_cfg_output(PIN_CPU_ACTIVITY);
+	// nrf_gpio_cfg_output(PIN_IMU_ACTIVITY);
 
 }
 

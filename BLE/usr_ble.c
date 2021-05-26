@@ -647,6 +647,11 @@ void sleep(void * p_event_data, uint16_t event_size)
     // Shutdown IMU
     imu_deinit();
 
+                // Power cycle TWI peripheral to reduce current by +-250uA
+            *(volatile uint32_t *)0x40003FFC = 0;
+            *(volatile uint32_t *)0x40003FFC;
+            *(volatile uint32_t *)0x40003FFC = 1;
+
 }
 
 

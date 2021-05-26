@@ -736,12 +736,12 @@ void imu_evt_poll_sceduled(void * p_event_data, uint16_t event_size)
 {
     while ( (imu.evt_scheduled > 0) )//&& m_mpu9250.enabled) TODO check when IMU is enabled or not
     {
-		nrf_gpio_pin_set(PIN_IMU_ACTIVITY);
+		// nrf_gpio_pin_set(PIN_IMU_ACTIVITY);
 		
 		// Poll all data from IMU
 		inv_device_poll(device);
 
-		nrf_gpio_pin_clear(PIN_IMU_ACTIVITY);
+		// nrf_gpio_pin_clear(PIN_IMU_ACTIVITY);
 		imu.evt_scheduled--;
     }
 }
