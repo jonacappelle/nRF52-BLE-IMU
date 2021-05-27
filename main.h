@@ -124,6 +124,9 @@
 #include "usr_ble_nus.h"
 
 
+// Flash
+#include "usr_flash.h"
+
 
 ////////////////
 //  DEFINES   //

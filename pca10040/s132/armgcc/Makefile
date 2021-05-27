@@ -26,6 +26,10 @@ SRC_FILES += $(wildcard $(PROJ_DIR)/Invn/VSensor/*.c)
 
 # Source files common to all targets
 SRC_FILES += \
+  $(PROJ_DIR)/IMU/usr_flash.c \
+  $(SDK_ROOT)/components/libraries/fstorage/nrf_fstorage.c \
+  $(SDK_ROOT)/components/libraries/fstorage/nrf_fstorage_sd.c \
+  $(SDK_ROOT)/components/libraries/fds/fds.c \
   $(PROJ_DIR)/ble_services/usr_ble_nus.c \
   $(PROJ_DIR)/EMG/emg.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_ppi.c \
@@ -264,6 +268,8 @@ INC_FOLDERS += \
   $(PROJ_DIR)/ble_services \
   $(SDK_ROOT)/components/ble/ble_services/ble_bas \
   $(PROJ_DIR)/EMG \
+  $(SDK_ROOT)/components/libraries/fds \
+  $(SDK_ROOT)/components/libraries/fstorage \
 
 
 # Libraries common to all targets

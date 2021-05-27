@@ -82,6 +82,9 @@ NRF_LOG_MODULE_REGISTER();
 #include "time_sync.h"
 #include "usr_tmr.h"
 
+// Flash manager
+#include "usr_flash.h"
+
 
 static bool in_wom = false;
 static bool in_shutdown = false;
@@ -739,7 +742,7 @@ void gpiote_evt_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 		{
 			if(pin == INT_PIN)
 			{
-					NRF_LOG_INFO("IMU INTERRUPT");
+					// NRF_LOG_INFO("IMU INTERRUPT");
 
 					// If there are already events in the queue
 					if(imu.evt_scheduled > 0)
@@ -1010,6 +1013,9 @@ void imu_init(void)
 
 		NRF_LOG_INFO("IMU Init");
 
+		// Enable storing calibration values to flash
+		usr_flash_init();
+
 		// Power on the IMU
 		imu_power_en(true);
 
@@ -1071,6 +1077,11 @@ void imu_init(void)
 
 		NRF_LOG_INFO("DMP Image loaded");
 		NRF_LOG_FLUSH();
+
+		// Apply stored IMU offsets from flash
+		apply_stored_offsets();
+
+
 #endif
 }
 void imu_re_init(void)
@@ -1143,6 +1154,11 @@ void imu_re_init(void)
 
 		NRF_LOG_INFO("DMP Image loaded");
 		NRF_LOG_FLUSH();
+
+
+		// Apply stored IMU offsets from flash
+		apply_stored_offsets();
+
 
 		// Init IMU + reset device
 		// Keep track of WoM state
@@ -1339,6 +1355,9 @@ void imu_sleep_wom()
 {
 	// Disable interrupts when shutting down
 	imu_set_in_shutdown(true);
+
+	// Store IMU offsets in flash memory
+	store_offsets();
 
 	// Assuming the device has been initialized before
 	// De-init the Invensense implementation
@@ -1679,61 +1698,67 @@ void ICM_20948_wakeOnMotionITEnable(uint8_t womThreshold, float sampleRate)
 }
 
 
-// void apply_stored_offsets(void)
-// {
-// 	uint8_t sensor_bias[84];
-// 	int32_t acc_bias_q16[6] = {0}, gyro_bias_q16[6] = {0};
-// 	uint8_t i, idx = 0;
-// 	int rc;
+void apply_stored_offsets(void)
+{
+	uint8_t sensor_bias[84];
+	int32_t acc_bias_q16[6] = {0}, gyro_bias_q16[6] = {0};
+	uint8_t i, idx = 0;
+	int rc;
 	
+	/* Retrieve Sel-test offsets stored in NV memory */
+	if(usr_flash_check_valid_record() == 0) {
+		NRF_LOG_INFO("No bias values retrieved from NV memory !");
+		return;
+	}
+
+	// Read previous configuration from flash memory
+	usr_flash_read(sensor_bias, 84);
 	
-// 	// TODO own implementation needed
-// 	/* Retrieve Sel-test offsets stored in NV memory */
-// //	if(flash_manager_readData(sensor_bias) != 0) {
-// //		INV_MSG(INV_MSG_LEVEL_WARNING, "No bias values retrieved from NV memory !");
-// //		return;
-// //	}
+	for(i = 0; i < 6; i++)
+		gyro_bias_q16[i] = inv_dc_little8_to_int32((const uint8_t *)(&sensor_bias[i * sizeof(uint32_t)]));
+	idx += sizeof(gyro_bias_q16);
+	rc = inv_device_set_sensor_config(device, INV_SENSOR_TYPE_GYROSCOPE,
+		VSENSOR_CONFIG_TYPE_OFFSET, gyro_bias_q16, sizeof(gyro_bias_q16));
+	check_rc(rc);
 	
-// 	for(i = 0; i < 6; i++)
-// 		gyro_bias_q16[i] = inv_dc_little8_to_int32((const uint8_t *)(&sensor_bias[i * sizeof(uint32_t)]));
-// 	idx += sizeof(gyro_bias_q16);
-// 	rc = inv_device_set_sensor_config(device, INV_SENSOR_TYPE_GYROSCOPE,
-// 		VSENSOR_CONFIG_TYPE_OFFSET, gyro_bias_q16, sizeof(gyro_bias_q16));
-// 	check_rc(rc);
+	for(i = 0; i < 6; i++)
+		acc_bias_q16[i] = inv_dc_little8_to_int32((const uint8_t *)(&sensor_bias[idx + i * sizeof(uint32_t)]));
+	idx += sizeof(acc_bias_q16);
+	rc = inv_device_set_sensor_config(device, INV_SENSOR_TYPE_ACCELEROMETER,
+		VSENSOR_CONFIG_TYPE_OFFSET, acc_bias_q16, sizeof(acc_bias_q16));
+
+	NRF_LOG_INFO("Sensor bias read from flash:");
+	NRF_LOG_HEXDUMP_INFO(sensor_bias, 84);	
+
+}
+
+
+void store_offsets(void)
+{
+	int rc = 0;
+	uint8_t i, idx = 0;
+	int gyro_bias_q16[6] = {0}, acc_bias_q16[6] = {0};
+
+	static uint8_t sensor_bias[84] = {0};
 	
-// 	for(i = 0; i < 6; i++)
-// 		acc_bias_q16[i] = inv_dc_little8_to_int32((const uint8_t *)(&sensor_bias[idx + i * sizeof(uint32_t)]));
-// 	idx += sizeof(acc_bias_q16);
-// 	rc = inv_device_set_sensor_config(device, INV_SENSOR_TYPE_ACCELEROMETER,
-// 		VSENSOR_CONFIG_TYPE_OFFSET, acc_bias_q16, sizeof(acc_bias_q16));
-
-// }
-
-
-
-// void store_offsets(void)
-// {
-// 	int rc = 0;
-// 	uint8_t i, idx = 0;
-// 	int gyro_bias_q16[6] = {0}, acc_bias_q16[6] = {0};
-
-// 	uint8_t sensor_bias[84] = {0};
+	/* Strore Self-test bias in NV memory */
+	rc = inv_device_get_sensor_config(device, INV_SENSOR_TYPE_GYROSCOPE,
+			VSENSOR_CONFIG_TYPE_OFFSET, gyro_bias_q16, sizeof(gyro_bias_q16));
+	check_rc(rc);
+	for(i = 0; i < 6; i++)
+		inv_dc_int32_to_little8(gyro_bias_q16[i], &sensor_bias[i * sizeof(uint32_t)]);
+	idx += sizeof(gyro_bias_q16);
 	
-// 	/* Strore Self-test bias in NV memory */
-// 	rc = inv_device_get_sensor_config(device, INV_SENSOR_TYPE_GYROSCOPE,
-// 			VSENSOR_CONFIG_TYPE_OFFSET, gyro_bias_q16, sizeof(gyro_bias_q16));
-// 	check_rc(rc);
-// 	for(i = 0; i < 6; i++)
-// 		inv_dc_int32_to_little8(gyro_bias_q16[i], &sensor_bias[i * sizeof(uint32_t)]);
-// 	idx += sizeof(gyro_bias_q16);
-	
-// 	rc = inv_device_get_sensor_config(device, INV_SENSOR_TYPE_ACCELEROMETER,
-// 			VSENSOR_CONFIG_TYPE_OFFSET, acc_bias_q16, sizeof(acc_bias_q16));
-// 	check_rc(rc);
-// 	for(i = 0; i < 6; i++)
-// 		inv_dc_int32_to_little8(acc_bias_q16[i], &sensor_bias[idx + i * sizeof(uint32_t)]);
-// 	idx += sizeof(acc_bias_q16);
+	rc = inv_device_get_sensor_config(device, INV_SENSOR_TYPE_ACCELEROMETER,
+			VSENSOR_CONFIG_TYPE_OFFSET, acc_bias_q16, sizeof(acc_bias_q16));
+	check_rc(rc);
+	for(i = 0; i < 6; i++)
+		inv_dc_int32_to_little8(acc_bias_q16[i], &sensor_bias[idx + i * sizeof(uint32_t)]);
+	idx += sizeof(acc_bias_q16);
 
-// 	// TODO own implementation needed to store sensor_bias in non volatile memory
-// 	// flash_manager_writeData(sensor_bias);
-// }
+	// TODO own implementation needed to store sensor_bias in non volatile memory
+	usr_flash_write(sensor_bias, 84);
+
+	NRF_LOG_INFO("Sensor bias written to flash:");
+	NRF_LOG_HEXDUMP_INFO(sensor_bias, 84);
+}

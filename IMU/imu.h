@@ -166,6 +166,10 @@ typedef struct buffer
 	uint8_t raw_fifo_buff[1024];	// Buffer allocation for RAW
 } BUFFER;
 
+// Flash
+void apply_stored_offsets(void);
+void store_offsets(void);
+
 
 void imu_sleep_wom();
 

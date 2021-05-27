@@ -26,7 +26,10 @@
 			"imu_params.h": "c",
 			"app_scheduler.h": "c",
 			"usr_ble_nus.h": "c",
-			"app_gpiote.h": "c"
+			"app_gpiote.h": "c",
+			"main.h": "c",
+			"fds_internal_defs.h": "c",
+			"fds.h": "c"
 		}
 	}
 }

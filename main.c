@@ -64,7 +64,7 @@ int main(void)
 		led_init();
 
 		// Initialize all needed timers
-		imu_timers_init();		
+		imu_timers_init();
 	
 		// Initialize IMU
 		imu_init();
