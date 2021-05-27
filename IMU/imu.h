@@ -167,6 +167,8 @@ typedef struct buffer
 } BUFFER;
 
 
+void imu_sleep_wom();
+
 void imu_init(void);
 void imu_re_init(void);
 void imu_deinit();

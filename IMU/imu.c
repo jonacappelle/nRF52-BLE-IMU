@@ -772,20 +772,11 @@ void imu_evt_poll_sceduled(void * p_event_data, uint16_t event_size)
 		{
 			NRF_LOG_INFO("WoM wake-up");
 
-			// Init IMU + reset device
-			// Keep track of WoM state
-			imu_set_in_wom(false);
-
-			imu_timers_init();
-
 			// Initialize IMU with DMP (Invensense Driver)
-			NRF_LOG_INFO("imu_re_init start");
 			imu_re_init();
-			NRF_LOG_INFO("imu_re_init completed");
 
 			// Start advertising again
 			advertising_start();
-			NRF_LOG_INFO("advertising_start");
 
 			// Disable time synchronization
 			TimeSync_enable();
@@ -1086,7 +1077,10 @@ void imu_re_init(void)
 {
 #if IMU_ENABLED == 1
 
-		NRF_LOG_INFO("IMU Init");
+		NRF_LOG_INFO("IMU re-init");
+
+		// Re-enable IMU timer
+		imu_timers_init();
 
 		// Power on the IMU
 		// imu_power_en(true);
@@ -1149,6 +1143,10 @@ void imu_re_init(void)
 
 		NRF_LOG_INFO("DMP Image loaded");
 		NRF_LOG_FLUSH();
+
+		// Init IMU + reset device
+		// Keep track of WoM state
+		imu_set_in_wom(false);
 #endif
 }
 
@@ -1329,6 +1327,37 @@ void imu_wom_enable(bool enable)
 	// check_rc(rc);
 }
 
+void imu_twi_cycle()
+{
+	// Power cycle TWI peripheral to reduce current by +-250uA
+    *(volatile uint32_t *)0x40003FFC = 0;
+    *(volatile uint32_t *)0x40003FFC;
+    *(volatile uint32_t *)0x40003FFC = 1;
+}
+
+void imu_sleep_wom()
+{
+	// Disable interrupts when shutting down
+	imu_set_in_shutdown(true);
+
+	// Assuming the device has been initialized before
+	// De-init the Invensense implementation
+	imu_deinit();
+
+    // Prepare for WoM
+    ICM20948_reset();
+    ICM_20948_wakeOnMotionITEnable(50, 2.2);
+
+	// Disable IMU timestamp timer
+	// Reduces power consumption by +-200uA
+    imu_timer_deinit();
+
+	// Power cycle TWI peripheral to reduce current by +-250uA
+	imu_twi_cycle();
+
+	// Enable interrupts again
+	imu_set_in_shutdown(false);
+}
 
 void imu_deinit()
 {
@@ -1341,12 +1370,6 @@ void imu_deinit()
 	// Shutdown IMU and clear internal state
 	rc += inv_device_cleanup(device);
 	check_rc(rc);
-
-	// rc = inv_host_serif_close(&my_serif_instance);
-	// check_rc(rc);
-
-	// Power on the IMU
-	// imu_power_en(false);
 }
 
 void ICM20948_reset()

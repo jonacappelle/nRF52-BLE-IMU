@@ -612,7 +612,10 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
 
             // TODO need to enter sleep mode
             // sleep_mode_enter();
-            idle_state_handle();
+            // idle_state_handle();
+            
+            err_code = app_sched_event_put(0, 0, sleep);
+            APP_ERROR_CHECK(err_code);
             break;
         default:
             break;
@@ -628,6 +631,18 @@ void sleep(void * p_event_data, uint16_t event_size)
 {
     ret_code_t err_code;
 
+    // Clear IMU params
+    imu_clear_struct(&imu);
+
+    // Clear all buffers before starting a new measurement
+    imu_clear_buff();
+
+    // De-initialize LED
+    led_deinit();
+
+    // Stop ts timer - otherwise when timesync packets are enabled and peripheral goes to sleep, there will be an event generated in 10 sec re-enabling the TimeSync receiver
+    ts_timer_stop();
+
     // Disable time synchronization
     err_code = ts_disable();
     APP_ERROR_CHECK(err_code);
@@ -638,34 +653,14 @@ void sleep(void * p_event_data, uint16_t event_size)
         NRF_LOG_FLUSH();
     }
     while( ts_timeslot_open() == 1 );
-
     NRF_LOG_INFO("ts timeslot closed");
 
     // Stop advertising - otherwise, a new connection will be made
     // When waking up from IMU WoM interrupt, we need to start advertising again
-    err_code = advertising_stop();
-    APP_ERROR_CHECK(err_code);
-    NRF_LOG_INFO("Advertising stopped");
+    advertising_stop();
 
-    imu_set_in_shutdown(true);
-
-    // Shutdown IMU
-    imu_deinit();
-
-    // Prepare for WoM
-    ICM20948_reset();
-    ICM_20948_wakeOnMotionITEnable(50, 2.2);
-
-    imu_set_in_shutdown(false);
-
-
-    // Power cycle TWI peripheral to reduce current by +-250uA
-    *(volatile uint32_t *)0x40003FFC = 0;
-    *(volatile uint32_t *)0x40003FFC;
-    *(volatile uint32_t *)0x40003FFC = 1;
-    // *(volatile uint32_t *)0x40003FFC;
-    // *(volatile uint32_t *)0x40003FFC = 0;
-
+    // Shutdown IMU and enable WoM
+    imu_sleep_wom();
 }
 
 
@@ -698,27 +693,6 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             NRF_LOG_INFO("Disconnected");
             // LED indication will be changed when advertising starts.
             m_conn_handle = BLE_CONN_HANDLE_INVALID;
-
-            imu_clear_struct(&imu);
-
-            // Enable sensor parameters based on received configuration
-            ret_code_t err_code;
-
-            // Clear all buffers before starting a new measurement
-            imu_clear_buff();
-
-            // De-initialize LED
-            led_deinit();
-
-            // Stop ts timer - otherwise when timesync packets are enabled and peripheral goes to sleep, there will be an event generated in 10 sec re-enabling the TimeSync receiver
-            ts_timer_stop();
-
-            // Reduces power consumption by +-200uA
-            imu_timer_deinit();
-
-            // // Pass change IMU settings to event handler
-            // err_code = app_sched_event_put(0, 0, imu_config_evt_sceduled);
-            // APP_ERROR_CHECK(err_code);
 
             err_code = app_sched_event_put(0, 0, sleep);
             APP_ERROR_CHECK(err_code);
@@ -1452,23 +1426,27 @@ void advertising_start(void)
 {
     ret_code_t err_code = ble_advertising_start(&m_advertising, BLE_ADV_MODE_FAST);
     APP_ERROR_CHECK(err_code);
+    NRF_LOG_INFO("advertising_start");
 }
 
 
-ret_code_t advertising_stop(void)
+void advertising_stop(void)
 {   
     // @retval ::NRF_SUCCESS The BLE stack has stopped advertising.
     // @retval ::BLE_ERROR_INVALID_ADV_HANDLE Invalid advertising handle.
     // @retval ::NRF_ERROR_INVALID_STATE The advertising handle is not advertising.
     ret_code_t err_code;
+
 	err_code = sd_ble_gap_adv_stop(m_advertising.adv_handle);
+    
     if( err_code == NRF_ERROR_INVALID_STATE )
     {
         NRF_LOG_INFO("NRF_ERROR_INVALID_STATE");
     }
     if( err_code != NRF_ERROR_INVALID_STATE )
     {
-        return err_code;
+        NRF_LOG_INFO("Advertising stopped");
+        APP_ERROR_CHECK(err_code);
     }
 }
 
