@@ -79,8 +79,12 @@ NRF_LOG_MODULE_REGISTER();
 // Utilities
 #include "usr_util.h"
 
+#include "time_sync.h"
+#include "usr_tmr.h"
 
 
+static bool in_wom = false;
+static bool in_shutdown = false;
 
 
 BUFFER buff;
@@ -703,27 +707,53 @@ void msg_printer(int level, const char * str, va_list ap)
 
 
 
+bool imu_in_shutdown(void)
+{
+	return in_shutdown;
+}
+
+void imu_set_in_shutdown(bool enable)
+{
+	in_shutdown = enable;
+}
+
+
+bool imu_in_wom(void)
+{
+	return in_wom;
+}
+
+void imu_set_in_wom(bool enable)
+{
+	in_wom = enable;
+}
+
+
 /* Interrupt pin handeler callback function */
 void gpiote_evt_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
 {
 		ret_code_t err_code;
-	
-		if(pin == INT_PIN)
-		{
-				// NRF_LOG_INFO("IMU INTERRUPT");
 
-				// If there are already events in the queue
-				if(imu.evt_scheduled > 0)
-				{
-					imu.evt_scheduled++;
-				}
-				// If there are not yet any events in the queue, schedule event. In gpiote_evt_sceduled all callbacks are called
-				else
-				{
-					imu.evt_scheduled++;
-					err_code = app_sched_event_put(0, 0, imu_evt_poll_sceduled);
-					APP_ERROR_CHECK(err_code);
-				}
+		// Temp disable interrupts in transition period
+		if(!imu_in_shutdown())
+		{
+			if(pin == INT_PIN)
+			{
+					NRF_LOG_INFO("IMU INTERRUPT");
+
+					// If there are already events in the queue
+					if(imu.evt_scheduled > 0)
+					{
+						imu.evt_scheduled++;
+					}
+					// If there are not yet any events in the queue, schedule event. In gpiote_evt_sceduled all callbacks are called
+					else
+					{
+						imu.evt_scheduled++;
+						err_code = app_sched_event_put(0, 0, imu_evt_poll_sceduled);
+						APP_ERROR_CHECK(err_code);
+					}
+			}
 		}
 }
 
@@ -737,9 +767,38 @@ void imu_evt_poll_sceduled(void * p_event_data, uint16_t event_size)
     while ( (imu.evt_scheduled > 0) )//&& m_mpu9250.enabled) TODO check when IMU is enabled or not
     {
 		// nrf_gpio_pin_set(PIN_IMU_ACTIVITY);
-		
-		// Poll all data from IMU
-		inv_device_poll(device);
+
+		if(imu_in_wom())
+		{
+			NRF_LOG_INFO("WoM wake-up");
+
+			// Init IMU + reset device
+			// Keep track of WoM state
+			imu_set_in_wom(false);
+
+			imu_timers_init();
+
+			// Initialize IMU with DMP (Invensense Driver)
+			NRF_LOG_INFO("imu_re_init start");
+			imu_re_init();
+			NRF_LOG_INFO("imu_re_init completed");
+
+			// Start advertising again
+			advertising_start();
+			NRF_LOG_INFO("advertising_start");
+
+			// Disable time synchronization
+			TimeSync_enable();
+
+		}else{
+			// Poll all data from IMU
+			inv_device_poll(device);
+		}
+
+				// 		uint8_t temp[1];
+				// ICM_20948_registerRead(ICM_20948_REG_INT_STATUS, 1, temp);
+				// NRF_LOG_INFO("interrupt source: 0x%X - %d", temp[0], temp[0]);
+				// NRF_LOG_FLUSH();
 
 		// nrf_gpio_pin_clear(PIN_IMU_ACTIVITY);
 		imu.evt_scheduled--;
@@ -923,7 +982,7 @@ void imu_clear_buff()
 	APP_ERROR_CHECK(err_code);
 }
 
-static void imu_power_en(bool enable)
+void imu_power_en(bool enable)
 {
 	ret_code_t err_code;
 
@@ -984,8 +1043,8 @@ void imu_init(void)
 		/* Open serial interface (SPI or I2C) before playing with the device */
 		// Not needed anymore - this is implemented in the inv_host_serif_open(&my_serif_instance)
 //		twi_init();
-		rc = inv_host_serif_open(&my_serif_instance);
-		check_rc(rc);
+		// rc = inv_host_serif_open(&my_serif_instance);
+		// check_rc(rc);
 		
 		NRF_LOG_INFO("i2c init");
 		NRF_LOG_FLUSH();
@@ -1003,6 +1062,75 @@ void imu_init(void)
 		 */
 		device = inv_device_icm20948_get_base(&device_icm20948);
 		NRF_LOG_FLUSH();
+		
+		/* Just get the whoami */
+		rc += inv_device_whoami(device, &whoami);
+		check_rc(rc);
+		NRF_LOG_INFO("Data: 0x%x", whoami);
+		NRF_LOG_FLUSH();
+
+		/* Configure and initialize the Icm20948 device */
+		NRF_LOG_INFO("Setting up ICM20948");
+		NRF_LOG_FLUSH();
+		rc += inv_device_setup(device);
+		check_rc(rc);
+		
+		rc += inv_device_load(device, (int) NULL, dmp3_image, sizeof(dmp3_image), true /* verify */, (int) NULL);
+		check_rc(rc);
+
+		NRF_LOG_INFO("DMP Image loaded");
+		NRF_LOG_FLUSH();
+#endif
+}
+void imu_re_init(void)
+{
+#if IMU_ENABLED == 1
+
+		NRF_LOG_INFO("IMU Init");
+
+		// Power on the IMU
+		// imu_power_en(true);
+
+		// Initialize necessary buffers for data transmission
+		// imu_buff_init();
+
+		/*
+		 * Setup message facility to see internal traces from IDD
+		 */
+		INV_MSG_SETUP(MSG_LEVEL, msg_printer);
+
+		INV_MSG(INV_MSG_LEVEL_INFO, "###################################");
+		INV_MSG(INV_MSG_LEVEL_INFO, "#          20948 example          #");
+		INV_MSG(INV_MSG_LEVEL_INFO, "###################################");
+		NRF_LOG_FLUSH();
+
+		/* To keep track of errors */
+		int rc = 0;
+		
+		uint8_t whoami;
+		
+		/* Open serial interface (SPI or I2C) before playing with the device */
+		// Not needed anymore - this is implemented in the inv_host_serif_open(&my_serif_instance)
+//		twi_init();
+		// rc = inv_host_serif_open(&my_serif_instance);
+		// check_rc(rc);
+		
+		NRF_LOG_INFO("i2c init");
+		NRF_LOG_FLUSH();
+		
+		/*
+		 * Create ICM20948 Device 
+		 * Pass to the driver:
+		 * - reference to serial interface object,
+		 * - reference to listener that will catch sensor events,
+		 */
+		// inv_device_icm20948_init(&device_icm20948, &my_serif_instance, &sensor_listener, dmp3_image, sizeof(dmp3_image));
+		
+		/*
+		 * Simply get generic device handle from Icm20948 Device
+		 */
+		// device = inv_device_icm20948_get_base(&device_icm20948);
+		// NRF_LOG_FLUSH();
 		
 		/* Just get the whoami */
 		rc += inv_device_whoami(device, &whoami);
@@ -1206,12 +1334,325 @@ void imu_deinit()
 {
 	int rc = 0;
 
+	// Reset device to be in a known state
+	rc += inv_device_reset(device);
+	check_rc(rc);
+
 	// Shutdown IMU and clear internal state
 	rc += inv_device_cleanup(device);
 	check_rc(rc);
 
+	// rc = inv_host_serif_close(&my_serif_instance);
+	// check_rc(rc);
+
 	// Power on the IMU
-	imu_power_en(false);
+	// imu_power_en(false);
+}
+
+void ICM20948_reset()
+{
+/* Set H_RESET bit to initiate soft reset */
+ICM_20948_registerWrite(ICM_20948_REG_PWR_MGMT_1, ICM_20948_BIT_H_RESET);
+
+/* Wait 100ms to complete the reset sequence */
+nrf_delay_ms(100);
+}
+
+void ICM_20948_bankSelect(uint8_t bank)
+{
+	uint8_t wBuffer[2];
+	wBuffer[0] = ICM_20948_REG_BANK_SEL;
+	wBuffer[1] = (bank << 4);
+
+	uint8_t temp[1];
+	memcpy(temp, &wBuffer[1], 1);
+
+	ret_code_t error = i2c_write_byte( &m_twi, ICM_20948_I2C_ADDRESS, wBuffer[0], temp, 1, false);
+	APP_ERROR_CHECK(error);
+}
+
+void ICM_20948_registerWrite(uint16_t addr, uint8_t data)
+{
+	uint8_t regAddr;
+	uint8_t bank;
+
+	regAddr = (uint8_t) (addr & 0x7F);
+	bank = (uint8_t) (addr >> 7);
+
+	ICM_20948_bankSelect(bank);
+	
+	uint8_t temp[1];
+
+	memcpy(temp, &data, 1);
+
+	// int rc = inv_device_write_mems_register(device, 0, addr, temp, 1);
+	// check_rc(rc);
+
+	ret_code_t error = i2c_write_byte( &m_twi, ICM_20948_I2C_ADDRESS, regAddr, temp, 1, false);
+	APP_ERROR_CHECK(error);
+
+	return;
+}
+void ICM_20948_registerRead(uint16_t addr, int numBytes, uint8_t *data)
+{
+	// int rc = inv_device_read_mems_register(device, 0, addr, data, numBytes);
+	// check_rc(rc);
+
+	ret_code_t error = i2c_read_bytes( &m_twi, ICM_20948_I2C_ADDRESS, addr, data, 1);
+	APP_ERROR_CHECK(error);
+
+	return;
+}
+
+
+uint32_t ICM_20948_sensorEnable(bool accel, bool gyro, bool temp)
+{
+  uint8_t pwrManagement1;
+  uint8_t pwrManagement2;
+
+  ICM_20948_registerRead(ICM_20948_REG_PWR_MGMT_1, 1, &pwrManagement1);
+  pwrManagement2 = 0;
+
+  /* To enable the accelerometer clear the DISABLE_ACCEL bits in PWR_MGMT_2 */
+  if ( accel ) {
+    pwrManagement2 &= ~(ICM_20948_BIT_PWR_ACCEL_STBY);
+  } else {
+    pwrManagement2 |= ICM_20948_BIT_PWR_ACCEL_STBY;
+  }
+
+  /* To enable gyro clear the DISABLE_GYRO bits in PWR_MGMT_2 */
+  if ( gyro ) {
+    pwrManagement2 &= ~(ICM_20948_BIT_PWR_GYRO_STBY);
+  } else {
+    pwrManagement2 |= ICM_20948_BIT_PWR_GYRO_STBY;
+  }
+
+  /* To enable the temperature sensor clear the TEMP_DIS bit in PWR_MGMT_1 */
+  if ( temp ) {
+    pwrManagement1 &= ~(ICM_20948_BIT_TEMP_DIS);
+  } else {
+    pwrManagement1 |= ICM_20948_BIT_TEMP_DIS;
+  }
+
+  /* Write back the modified values */
+  ICM_20948_registerWrite(ICM_20948_REG_PWR_MGMT_1, pwrManagement1);
+  ICM_20948_registerWrite(ICM_20948_REG_PWR_MGMT_2, pwrManagement2);
+
+  return NRF_SUCCESS;
+}
+
+uint32_t ICM_20948_sleepModeEnable(bool enable)
+{
+  uint8_t reg;
+
+  /* Read the Sleep Enable register */
+  ICM_20948_registerRead(ICM_20948_REG_PWR_MGMT_1, 1, &reg);
+
+  if ( enable ) {
+    /* Sleep: set the SLEEP bit */
+    reg |= ICM_20948_BIT_SLEEP;
+  } else {
+    /* Wake up: clear the SLEEP bit */
+    //reg &= ~(ICM_20948_BIT_SLEEP); /* this was the provided code */
+
+	/* My own solution */
+	/* AND to define the bits that can be changed: here bit nr 6 */
+	reg &= 0b10111111;
+	/*OR met 0 to set the SLEEP bit to 0, not really necessary in this case */
+	reg |= 0b00000000;
+  }
+
+  ICM_20948_registerWrite(ICM_20948_REG_PWR_MGMT_1, reg);
+
+
+  return NRF_SUCCESS;
+}
+
+uint32_t ICM_20948_cycleModeEnable(bool enable)
+{
+  uint8_t reg;
+
+  reg = 0x00;
+
+  if ( enable ) {
+    reg = ICM_20948_BIT_ACCEL_CYCLE | ICM_20948_BIT_GYRO_CYCLE;
+  }
+
+  ICM_20948_registerWrite(ICM_20948_REG_LP_CONFIG, reg);
+
+  return NRF_SUCCESS;
+}
+
+uint32_t ICM_20948_lowPowerModeEnter(bool enAccel, bool enGyro, bool enTemp)
+{
+  uint8_t data;
+
+  ICM_20948_registerRead(ICM_20948_REG_PWR_MGMT_1, 1, &data);
+
+  if ( enAccel || enGyro || enTemp ) {
+    /* Make sure that the chip is not in sleep */
+    ICM_20948_sleepModeEnable(false);
+
+    /* And in continuous mode */
+    ICM_20948_cycleModeEnable(false);
+
+    /* Enable the accelerometer and the gyroscope*/
+    ICM_20948_sensorEnable(enAccel, enGyro, enTemp);
+    nrf_delay_ms(50);
+
+    /* Enable cycle mode */
+    ICM_20948_cycleModeEnable(true);
+
+    /* Set the LP_EN bit to enable low power mode */
+    data |= ICM_20948_BIT_LP_EN;
+  } else {
+    /* Enable continuous mode */
+    ICM_20948_cycleModeEnable(false);
+
+    /* Clear the LP_EN bit to disable low power mode */
+    data &= ~ICM_20948_BIT_LP_EN;
+  }
+
+  /* Write the updated value to the PWR_MGNT_1 register */
+  ICM_20948_registerWrite(ICM_20948_REG_PWR_MGMT_1, data);
+
+  return NRF_SUCCESS;
+}
+
+uint32_t ICM_20948_interruptEnable(bool dataReadyEnable, bool womEnable)
+{
+  uint8_t intEnable;
+
+  /* All interrupts disabled by default */
+  intEnable = 0;
+
+  /* Enable one or both of the interrupt sources if required */
+  if ( womEnable ) {
+    intEnable = ICM_20948_BIT_WOM_INT_EN;
+  }
+  /* Write value to register */
+  ICM_20948_registerWrite(ICM_20948_REG_INT_ENABLE, intEnable);
+
+//   uint8_t temp[2];
+// ICM_20948_registerRead(ICM_20948_REG_INT_ENABLE, 1, &temp[0]);
+
+  /* All interrupts disabled by default */
+  intEnable = 0;
+
+  if ( dataReadyEnable ) {
+    intEnable = ICM_20948_BIT_RAW_DATA_0_RDY_EN;
+  }
+
+  /* Write value to register */
+  ICM_20948_registerWrite(ICM_20948_REG_INT_ENABLE_1, intEnable);
+
+
+// ICM_20948_registerRead(ICM_20948_REG_INT_ENABLE_1, 1, &temp[1]);
+
+
+  return NRF_SUCCESS;
+}
+
+uint32_t ICM_20948_accelBandwidthSet(uint8_t accelBw)
+{
+  uint8_t reg;
+
+  /* Read the GYRO_CONFIG_1 register */
+  ICM_20948_registerRead(ICM_20948_REG_ACCEL_CONFIG, 1, &reg);
+  reg &= ~(ICM_20948_MASK_ACCEL_BW);
+
+  /* Write the new bandwidth value to the gyro config register */
+  reg |= (accelBw & ICM_20948_MASK_ACCEL_BW);
+  ICM_20948_registerWrite(ICM_20948_REG_ACCEL_CONFIG, reg);
+
+  return NRF_SUCCESS;
+}
+
+uint32_t ICM_20948_accelFullscaleSet(uint8_t accelFs)
+{
+  uint8_t reg;
+
+  accelFs &= ICM_20948_MASK_ACCEL_FULLSCALE;
+  ICM_20948_registerRead(ICM_20948_REG_ACCEL_CONFIG, 1, &reg);
+  reg &= ~(ICM_20948_MASK_ACCEL_FULLSCALE);
+  reg |= accelFs;
+  ICM_20948_registerWrite(ICM_20948_REG_ACCEL_CONFIG, reg);
+
+  return NRF_SUCCESS;
+}
+
+uint32_t ICM_20948_sampleRateSet(float sampleRate)
+{
+//   ICM_20948_gyroSampleRateSet(sampleRate);
+  ICM_20948_accelSampleRateSet(sampleRate);
+
+  return NRF_SUCCESS;
+}
+
+float ICM_20948_accelSampleRateSet(float sampleRate)
+{
+  uint16_t accelDiv;
+  float accelSampleRate;
+
+  /* Calculate the sample rate divider */
+  accelSampleRate = (1125.0 / sampleRate) - 1.0;
+
+  /* Check if it fits in the divider registers */
+  if ( accelSampleRate > 4095.0 ) {
+    accelSampleRate = 4095.0;
+  }
+
+  if ( accelSampleRate < 0 ) {
+    accelSampleRate = 0.0;
+  }
+
+  /* Write the value to the registers */
+  accelDiv = (uint16_t) accelSampleRate;
+  ICM_20948_registerWrite(ICM_20948_REG_ACCEL_SMPLRT_DIV_1, (uint8_t) (accelDiv >> 8) );
+  ICM_20948_registerWrite(ICM_20948_REG_ACCEL_SMPLRT_DIV_2, (uint8_t) (accelDiv & 0xFF) );
+
+  /* Calculate the actual sample rate from the divider value */
+  accelSampleRate = 1125.0 / (accelDiv + 1);
+
+  return accelSampleRate;
+}
+
+
+void ICM_20948_wakeOnMotionITEnable(uint8_t womThreshold, float sampleRate)
+{
+	/* Make sure that the chip is not in sleep */
+    ICM_20948_sleepModeEnable(false);
+
+	/* And in continuous mode */
+    ICM_20948_cycleModeEnable(false);
+
+	/* Enable only the accelerometer */
+	ICM_20948_sensorEnable(true, false, false);
+
+	/* Set sample rate */
+	ICM_20948_sampleRateSet(sampleRate);
+
+	/* Set the bandwidth to 1210Hz */
+	ICM_20948_accelBandwidthSet(ICM_20948_ACCEL_BW_1210HZ);
+
+	/* Accel: 2G full scale */
+	ICM_20948_accelFullscaleSet(ICM_20948_ACCEL_FULLSCALE_2G);
+
+	/* Enable the Wake On Motion interrupt */
+	ICM_20948_interruptEnable(false, true);
+	nrf_delay_ms(50);
+
+	/* Enable Wake On Motion feature */
+	ICM_20948_registerWrite(ICM_20948_REG_ACCEL_INTEL_CTRL, ICM_20948_BIT_ACCEL_INTEL_EN | ICM_20948_BIT_ACCEL_INTEL_MODE);
+
+	/* Set the wake on motion threshold value */
+	ICM_20948_registerWrite(ICM_20948_REG_ACCEL_WOM_THR, womThreshold);
+
+	/* Enable low power mode */
+	ICM_20948_lowPowerModeEnter(true, false, false);
+
+	// Keep track of WoM state
+	imu_set_in_wom(true);
 }
 
 

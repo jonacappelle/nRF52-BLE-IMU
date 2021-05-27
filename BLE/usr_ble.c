@@ -609,7 +609,10 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
             break;
         case BLE_ADV_EVT_IDLE:
             NRF_LOG_DEBUG("Advertising idle");
-            sleep_mode_enter();
+
+            // TODO need to enter sleep mode
+            // sleep_mode_enter();
+            idle_state_handle();
             break;
         default:
             break;
@@ -630,8 +633,8 @@ void sleep(void * p_event_data, uint16_t event_size)
     APP_ERROR_CHECK(err_code);
 
     // Attempt to busy wait until timeslot is closed
-
     do{
+        NRF_LOG_INFO("ts_timeslot_open");
         NRF_LOG_FLUSH();
     }
     while( ts_timeslot_open() == 1 );
@@ -644,13 +647,24 @@ void sleep(void * p_event_data, uint16_t event_size)
     APP_ERROR_CHECK(err_code);
     NRF_LOG_INFO("Advertising stopped");
 
+    imu_set_in_shutdown(true);
+
     // Shutdown IMU
     imu_deinit();
 
-                // Power cycle TWI peripheral to reduce current by +-250uA
-            *(volatile uint32_t *)0x40003FFC = 0;
-            *(volatile uint32_t *)0x40003FFC;
-            *(volatile uint32_t *)0x40003FFC = 1;
+    // Prepare for WoM
+    ICM20948_reset();
+    ICM_20948_wakeOnMotionITEnable(50, 2.2);
+
+    imu_set_in_shutdown(false);
+
+
+    // Power cycle TWI peripheral to reduce current by +-250uA
+    *(volatile uint32_t *)0x40003FFC = 0;
+    *(volatile uint32_t *)0x40003FFC;
+    *(volatile uint32_t *)0x40003FFC = 1;
+    // *(volatile uint32_t *)0x40003FFC;
+    // *(volatile uint32_t *)0x40003FFC = 0;
 
 }
 
@@ -938,6 +952,16 @@ void TimeSync_re_enable()
     APP_ERROR_CHECK(err_code);
 
     NRF_LOG_INFO("ts_re_enable");
+}
+
+void TimeSync_enable()
+{
+    ret_code_t err_code;
+
+    err_code =  ts_enable(&rf_config);
+    APP_ERROR_CHECK(err_code);
+
+    NRF_LOG_INFO("ts_enable");
 }
 
 
@@ -1446,8 +1470,6 @@ ret_code_t advertising_stop(void)
     {
         return err_code;
     }
-	
-
 }
 
 void usr_ble_init(void)

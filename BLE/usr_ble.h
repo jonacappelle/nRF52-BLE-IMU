@@ -27,6 +27,7 @@ void ble_send_euler(ble_tms_euler_t * data);
 // void advertising_stop(void);
 
 void TimeSync_re_enable();
+void TimeSync_enable();
 void ts_set_receiver_started_packet();
 
 void ble_disconnect(void);
