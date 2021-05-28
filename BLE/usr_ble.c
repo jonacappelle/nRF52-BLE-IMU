@@ -75,6 +75,9 @@ extern imu_data_t imu_data;
 // BLE NUS Service
 #include "usr_ble_nus.h"
 
+// ADC
+#include "usr_adc.h"
+
 // Struct to keep track of TimeSync variables
 typedef struct{
     uint32_t sync_interval_int_time; // How much time between measurements - (In increments of 2.5 ms)
@@ -82,6 +85,8 @@ typedef struct{
     bool m_imu_trigger_enabled;
     bool m_ts_packet_received;
 } time_sync_t;
+
+
 
 time_sync_t ts = {
     .sync_interval_int_time = 4, // Default 100 Hz transmission rate
@@ -613,7 +618,7 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
             // TODO need to enter sleep mode
             // sleep_mode_enter();
             // idle_state_handle();
-            
+
             err_code = app_sched_event_put(0, 0, sleep);
             APP_ERROR_CHECK(err_code);
             break;
@@ -661,6 +666,9 @@ void sleep(void * p_event_data, uint16_t event_size)
 
     // Shutdown IMU and enable WoM
     imu_sleep_wom();
+
+    // Shutdown ADC
+    usr_adc_deinit();
 }
 
 

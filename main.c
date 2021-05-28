@@ -68,6 +68,10 @@ int main(void)
 	
 		// Initialize IMU
 		imu_init();
+
+		// Initialize ADC
+		usr_adc_init();
+
 		
 		//////////////////////////////////////////
 		// SPI TODO

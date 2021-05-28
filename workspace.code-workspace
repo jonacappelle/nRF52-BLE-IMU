@@ -29,7 +29,10 @@
 			"app_gpiote.h": "c",
 			"main.h": "c",
 			"fds_internal_defs.h": "c",
-			"fds.h": "c"
+			"fds.h": "c",
+			"nrf_drv_ppi.h": "c",
+			"nrf_drv_saadc.h": "c",
+			"nrf_drv_timer.h": "c"
 		}
 	}
 }

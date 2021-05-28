@@ -127,6 +127,9 @@
 // Flash
 #include "usr_flash.h"
 
+// ADC
+#include "usr_adc.h"
+
 
 ////////////////
 //  DEFINES   //

@@ -26,6 +26,9 @@ SRC_FILES += $(wildcard $(PROJ_DIR)/Invn/VSensor/*.c)
 
 # Source files common to all targets
 SRC_FILES += \
+  $(SDK_ROOT)/integration/nrfx/legacy/nrf_drv_ppi.c \
+  $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_saadc.c \
+  $(PROJ_DIR)/UTIL/usr_adc.c \
   $(PROJ_DIR)/IMU/usr_flash.c \
   $(SDK_ROOT)/components/libraries/fstorage/nrf_fstorage.c \
   $(SDK_ROOT)/components/libraries/fstorage/nrf_fstorage_sd.c \
@@ -270,7 +273,8 @@ INC_FOLDERS += \
   $(PROJ_DIR)/EMG \
   $(SDK_ROOT)/components/libraries/fds \
   $(SDK_ROOT)/components/libraries/fstorage \
-
+  $(SDK_ROOT)/modules/nrfx/drivers/src \
+  $(SDK_ROOT)/integration/nrfx/legacy \
 
 # Libraries common to all targets
 LIB_FILES += \

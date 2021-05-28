@@ -784,6 +784,9 @@ void imu_evt_poll_sceduled(void * p_event_data, uint16_t event_size)
 			// Disable time synchronization
 			TimeSync_enable();
 
+			// Initialize ADC
+			usr_adc_init();
+
 		}else{
 			// Poll all data from IMU
 			inv_device_poll(device);
