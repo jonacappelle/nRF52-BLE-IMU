@@ -971,8 +971,11 @@ static void ts_evt_callback(const ts_evt_t* evt)
             NRF_LOG_INFO("TS_EVT_SYNC_PACKET_RECEIVED");
 
             // Temp disable TimeSync for x seconds to disable power
-            err_code = ts_temp_disable();
-            APP_ERROR_CHECK(err_code);
+            do{
+                err_code = ts_temp_disable();
+                APP_ERROR_CHECK(err_code);
+            }while(err_code == NRF_ERROR_BUSY);
+
             ts_start_idle_timer(10);
 
             break;
