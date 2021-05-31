@@ -633,9 +633,15 @@ uint32_t ts_set_trigger(uint32_t target_tick, uint32_t ppi_endpoint)
     //     return NRF_ERROR_INVALID_STATE;
     // }
 
-    if (ppi_sync_trigger_configure(ppi_endpoint) != NRF_SUCCESS)
+    uint32_t err_code;
+
+    err_code = ppi_sync_trigger_configure(ppi_endpoint);
+
+
+    if (err_code != NRF_SUCCESS)
     {
-        return NRF_ERROR_INVALID_PARAM;
+        // return NRF_ERROR_INVALID_PARAM;
+        return err_code;
     }
 
     nrf_atomic_u32_store(&m_sync_packet_count, 0);
