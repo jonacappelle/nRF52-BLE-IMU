@@ -24,6 +24,9 @@ NRF_LOG_MODULE_REGISTER();
 
 #include "usr_ble.h"
 
+// Use of round() function
+#include <math.h>
+
 
 typedef struct{
     float voltage;
@@ -190,6 +193,20 @@ uint8_t usr_adc_voltage_to_percent(float voltage)
     else return 0;
 }
 
+uint8_t usr_map_adc_to_uint8(float voltage)
+{
+    // Subtract 2.8V from total voltage
+    // Measurement range of 2.8V - 4.2V
+    voltage -= 2.8;
+
+    // 1.4V range -> need to spread over uint8_t with max value 0xFF (255)
+    float range = 4.2 - 2.8;
+
+    voltage = (voltage / range) * 255.0;
+
+    return (uint8_t) round(voltage);
+}
+
 
 void saadc_callback(nrf_drv_saadc_evt_t const * p_event)
 {
@@ -220,10 +237,13 @@ void saadc_callback(nrf_drv_saadc_evt_t const * p_event)
         }
 
         batt.voltage = value;
-        uint8_t percent = usr_adc_voltage_to_percent(batt.voltage);
+        // uint8_t percent = usr_adc_voltage_to_percent(batt.voltage);
+
+        // Fit in range 0-0xFF
+        uint8_t lvl = usr_map_adc_to_uint8(batt.voltage);
 
         // Send out battery level
-        batt_level_update(percent);
+        batt_level_update(lvl);
     }
 }
 

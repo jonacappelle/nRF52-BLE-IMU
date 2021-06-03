@@ -85,6 +85,9 @@ NRF_LOG_MODULE_REGISTER();
 // Flash manager
 #include "usr_flash.h"
 
+// ADC battery measurements
+#include "usr_adc.h"
+
 
 static bool in_wom = false;
 static bool in_shutdown = false;
