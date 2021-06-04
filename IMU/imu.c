@@ -784,8 +784,10 @@ void imu_evt_poll_sceduled(void * p_event_data, uint16_t event_size)
 			// Start advertising again
 			advertising_start();
 
-			// Disable time synchronization
-			TimeSync_enable();
+			// Enable time syncrhonization
+			sync_timer_init();
+
+			// TimeSync_enable();
 
 			// Initialize ADC
 			usr_adc_init();

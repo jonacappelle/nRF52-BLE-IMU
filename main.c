@@ -50,6 +50,12 @@ IMU imu = {
 int main(void)
 {
 		ret_code_t err_code;
+
+		// Logging to RTT functionality
+    	log_init();
+
+		// Initialize the async SVCI interface to bootloader before any interrupts are enabled.
+		dfu_async_init();
 		
 		// Initialize everything related to BLE
 		usr_ble_init();

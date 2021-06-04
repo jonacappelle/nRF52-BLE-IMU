@@ -1103,6 +1103,28 @@ uint32_t ts_init(const ts_init_t * p_init)
     return NRF_SUCCESS;
 }
 
+
+uint32_t ts_deinit()
+{
+    nrfx_err_t ret = nrfx_ppi_group_free(m_params.ppi_chg);
+    if (ret != NRFX_SUCCESS)
+    {
+        return NRF_ERROR_INTERNAL;
+    }
+
+    for (size_t i = 0; i < sizeof(m_params.ppi_chns) / sizeof(m_params.ppi_chns[0]); i++)
+    {
+        ret = nrfx_ppi_channel_free(m_params.ppi_chns[i]);
+        if (ret != NRFX_SUCCESS)
+        {
+            return NRF_ERROR_INTERNAL;
+        }
+    }
+
+    return NRF_SUCCESS;
+}
+
+
 uint32_t ts_enable(const ts_rf_config_t* p_rf_config)
 {
     uint32_t err_code;

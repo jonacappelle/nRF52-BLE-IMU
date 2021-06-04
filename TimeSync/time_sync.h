@@ -150,6 +150,7 @@ typedef struct
  * @retval NRF_SUCCESS if successful
  */
 uint32_t ts_init(const ts_init_t * p_init);
+uint32_t ts_deinit();
 
 typedef struct
 {

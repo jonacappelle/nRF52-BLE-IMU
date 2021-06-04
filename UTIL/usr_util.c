@@ -55,8 +55,8 @@ bool shutdown_handler(nrf_pwr_mgmt_evt_t event)
             break;
 
         case NRF_PWR_MGMT_EVT_PREPARE_DFU:
-            NRF_LOG_ERROR("Entering DFU is not supported by this example.");
-            APP_ERROR_HANDLER(NRF_ERROR_API_NOT_IMPLEMENTED);
+            NRF_LOG_INFO("Power management wants to reset to DFU mode.");
+            // APP_ERROR_HANDLER(NRF_ERROR_API_NOT_IMPLEMENTED);
             break;
 
         case NRF_PWR_MGMT_EVT_PREPARE_RESET:

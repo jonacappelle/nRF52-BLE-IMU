@@ -6,6 +6,8 @@
 
 #include "ble_tms.h"
 
+#include "ble_advertising.h"
+
 void usr_ble_init(void);
 
 void usr_ble_nus_init();
@@ -34,5 +36,17 @@ void ble_disconnect(void);
 
 void advertising_start(void);
 void advertising_stop(void);
+
+void log_init(void);
+
+void dfu_async_init();
+
+void ble_dfu_init();
+
+void peer_manager_init();
+
+void advertising_config_get(ble_adv_modes_config_t * p_config);
+
+void sync_timer_init(void);
 
 #endif

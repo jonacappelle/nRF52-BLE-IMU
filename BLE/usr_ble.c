@@ -78,6 +78,49 @@ extern imu_data_t imu_data;
 // ADC
 #include "usr_adc.h"
 
+
+
+#include <stdbool.h>
+#include <stdint.h>
+#include <string.h>
+
+#include "nrf_dfu_ble_svci_bond_sharing.h"
+#include "nrf_svci_async_function.h"
+#include "nrf_svci_async_handler.h"
+
+#include "nordic_common.h"
+#include "nrf.h"
+#include "app_error.h"
+#include "ble.h"
+#include "ble_hci.h"
+#include "ble_srv_common.h"
+#include "ble_advdata.h"
+#include "ble_advertising.h"
+#include "ble_conn_params.h"
+#include "nrf_sdh.h"
+#include "nrf_sdh_soc.h"
+#include "nrf_sdh_ble.h"
+#include "app_timer.h"
+#include "peer_manager.h"
+#include "peer_manager_handler.h"
+#include "bsp_btn_ble.h"
+#include "ble_hci.h"
+#include "ble_advdata.h"
+#include "ble_advertising.h"
+#include "ble_conn_state.h"
+#include "ble_dfu.h"
+#include "nrf_ble_gatt.h"
+#include "nrf_ble_qwr.h"
+#include "fds.h"
+#include "nrf_pwr_mgmt.h"
+#include "nrf_drv_clock.h"
+#include "nrf_power.h"
+#include "nrf_log.h"
+#include "nrf_log_ctrl.h"
+#include "nrf_log_default_backends.h"
+#include "nrf_bootloader_info.h"
+
+
 // Struct to keep track of TimeSync variables
 typedef struct{
     uint32_t sync_interval_int_time; // How much time between measurements - (In increments of 2.5 ms)
@@ -517,6 +560,9 @@ static void services_init(void)
 
     // Initialize Battery service
     usr_bas_init();
+
+    // Init DFU service
+    ble_dfu_init();
 }
 
 
@@ -589,6 +635,11 @@ void sleep_mode_enter(void)
     err_code = bsp_btn_ble_sleep_mode_prepare();
     APP_ERROR_CHECK(err_code);
 
+    //Disable SoftDevice. It is required to be able to write to GPREGRET2 register (SoftDevice API blocks it).
+    //GPREGRET2 register holds the information about skipping CRC check on next boot.
+    err_code = nrf_sdh_disable_request();
+    APP_ERROR_CHECK(err_code);
+
     // Go to system-off mode (this function will not return; wakeup will cause a reset).
     err_code = sd_power_system_off();
     APP_ERROR_CHECK(err_code);
@@ -650,6 +701,9 @@ void sleep(void * p_event_data, uint16_t event_size)
 
     // Disable time synchronization
     err_code = ts_disable();
+    APP_ERROR_CHECK(err_code);
+
+    err_code = ts_deinit();
     APP_ERROR_CHECK(err_code);
 
     // Attempt to busy wait until timeslot is closed
@@ -1036,7 +1090,7 @@ static void ts_evt_callback(const ts_evt_t* evt)
     }
 }
 
-static void sync_timer_init(void)
+void sync_timer_init(void)
 {
     ret_code_t err_code;
 
@@ -1351,7 +1405,7 @@ static void uart_init(void)
 
 /**@brief Function for initializing the Advertising functionality.
  */
-static void advertising_init(void)
+void advertising_init(void)
 {
     uint32_t               err_code;
     ble_advertising_init_t init;
@@ -1374,9 +1428,11 @@ static void advertising_init(void)
     init.srdata.uuids_more_available.p_uuids = &m_adv_uuids[1];
     // End Costum
 
-    init.config.ble_adv_fast_enabled  = true;
-    init.config.ble_adv_fast_interval = APP_ADV_INTERVAL;
-    init.config.ble_adv_fast_timeout  = APP_ADV_DURATION;
+    advertising_config_get(&init.config);
+
+    // init.config.ble_adv_fast_enabled  = true;
+    // init.config.ble_adv_fast_interval = APP_ADV_INTERVAL;
+    // init.config.ble_adv_fast_timeout  = APP_ADV_DURATION;
     init.evt_handler = on_adv_evt;
 
     err_code = ble_advertising_init(&m_advertising, &init);
@@ -1406,7 +1462,7 @@ static void buttons_leds_init(bool * p_erase_bonds)
 
 /**@brief Function for initializing the nrf log module.
  */
-static void log_init(void)
+void log_init(void)
 {
     ret_code_t err_code = NRF_LOG_INIT(NULL);
     APP_ERROR_CHECK(err_code);
@@ -1466,9 +1522,6 @@ void usr_ble_init(void)
     // UART Init - (not really necessary) -  used by BLE NUS
     // uart_init();
 
-    // Logging to RTT functionality
-    log_init();
-
     // Initialize application timers
     timers_init();
 
@@ -1481,6 +1534,9 @@ void usr_ble_init(void)
 
     // Initialize BLE stack
     ble_stack_init();
+
+    // for DFU
+    // peer_manager_init();
 
     // Init Gap connection parameters
     gap_params_init();
@@ -1504,3 +1560,192 @@ void usr_ble_init(void)
     // Start advertising
     advertising_start();
 }
+
+
+
+void advertising_config_get(ble_adv_modes_config_t * p_config)
+{
+    memset(p_config, 0, sizeof(ble_adv_modes_config_t));
+
+    p_config->ble_adv_fast_enabled  = true;
+    p_config->ble_adv_fast_interval = APP_ADV_INTERVAL;
+    p_config->ble_adv_fast_timeout  = APP_ADV_DURATION;
+}
+
+void dfu_async_init()
+{
+    ret_code_t err_code;
+ 
+    // Initialize the async SVCI interface to bootloader before any interrupts are enabled.
+    err_code = ble_dfu_buttonless_async_svci_init();
+    APP_ERROR_CHECK(err_code);
+}
+
+
+
+
+static void buttonless_dfu_sdh_state_observer(nrf_sdh_state_evt_t state, void * p_context)
+{
+    if (state == NRF_SDH_EVT_STATE_DISABLED)
+    {
+        // Softdevice was disabled before going into reset. Inform bootloader to skip CRC on next boot.
+        nrf_power_gpregret2_set(BOOTLOADER_DFU_SKIP_CRC);
+
+        //Go to system off.
+        nrf_pwr_mgmt_shutdown(NRF_PWR_MGMT_SHUTDOWN_GOTO_SYSOFF);
+    }
+}
+
+/* nrf_sdh state observer. */
+NRF_SDH_STATE_OBSERVER(m_buttonless_dfu_state_obs, 0) =
+{
+    .handler = buttonless_dfu_sdh_state_observer,
+};
+
+static void disconnect(uint16_t conn_handle, void * p_context)
+{
+    UNUSED_PARAMETER(p_context);
+
+    ret_code_t err_code = sd_ble_gap_disconnect(conn_handle, BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
+    if (err_code != NRF_SUCCESS)
+    {
+        NRF_LOG_WARNING("Failed to disconnect connection. Connection handle: %d Error: %d", conn_handle, err_code);
+    }
+    else
+    {
+        NRF_LOG_DEBUG("Disconnected connection handle %d", conn_handle);
+    }
+}
+
+// YOUR_JOB: Update this code if you want to do anything given a DFU event (optional).
+/**@brief Function for handling dfu events from the Buttonless Secure DFU service
+ *
+ * @param[in]   event   Event from the Buttonless Secure DFU service.
+ */
+static void ble_dfu_evt_handler(ble_dfu_buttonless_evt_type_t event)
+{
+    switch (event)
+    {
+        case BLE_DFU_EVT_BOOTLOADER_ENTER_PREPARE:
+        {
+            NRF_LOG_INFO("Device is preparing to enter bootloader mode.");
+
+            // Prevent device from advertising on disconnect.
+            ble_adv_modes_config_t config;
+            advertising_config_get(&config);
+            config.ble_adv_on_disconnect_disabled = true;
+            ble_advertising_modes_config_set(&m_advertising, &config);
+
+            // Disconnect all other bonded devices that currently are connected.
+            // This is required to receive a service changed indication
+            // on bootup after a successful (or aborted) Device Firmware Update.
+            uint32_t conn_count = ble_conn_state_for_each_connected(disconnect, NULL);
+            NRF_LOG_INFO("Disconnected %d links.", conn_count);
+            break;
+        }
+
+        case BLE_DFU_EVT_BOOTLOADER_ENTER:
+            // YOUR_JOB: Write app-specific unwritten data to FLASH, control finalization of this
+            //           by delaying reset by reporting false in app_shutdown_handler
+            NRF_LOG_INFO("Device will enter bootloader mode.");
+            break;
+
+        case BLE_DFU_EVT_BOOTLOADER_ENTER_FAILED:
+            NRF_LOG_ERROR("Request to enter bootloader mode failed asynchroneously.");
+            // YOUR_JOB: Take corrective measures to resolve the issue
+            //           like calling APP_ERROR_CHECK to reset the device.
+            break;
+
+        case BLE_DFU_EVT_RESPONSE_SEND_ERROR:
+            NRF_LOG_ERROR("Request to send a response to client failed.");
+            // YOUR_JOB: Take corrective measures to resolve the issue
+            //           like calling APP_ERROR_CHECK to reset the device.
+            APP_ERROR_CHECK(false);
+            break;
+
+        default:
+            NRF_LOG_ERROR("Unknown event from ble_dfu_buttonless.");
+            break;
+    }
+}
+
+
+
+/**@brief Function for handling Peer Manager events.
+ *
+ * @param[in] p_evt  Peer Manager event.
+ */
+static void pm_evt_handler(pm_evt_t const * p_evt)
+{
+    pm_handler_on_pm_evt(p_evt);
+    pm_handler_flash_clean(p_evt);
+}
+
+#define SEC_PARAM_BOND                  1                                           /**< Perform bonding. */
+#define SEC_PARAM_MITM                  0                                           /**< Man In The Middle protection not required. */
+#define SEC_PARAM_LESC                  0                                           /**< LE Secure Connections not enabled. */
+#define SEC_PARAM_KEYPRESS              0                                           /**< Keypress notifications not enabled. */
+#define SEC_PARAM_IO_CAPABILITIES       BLE_GAP_IO_CAPS_NONE                        /**< No I/O capabilities. */
+#define SEC_PARAM_OOB                   0                                           /**< Out Of Band data not available. */
+#define SEC_PARAM_MIN_KEY_SIZE          7                                           /**< Minimum encryption key size. */
+#define SEC_PARAM_MAX_KEY_SIZE          16                                          /**< Maximum encryption key size. */
+
+/**@brief Function for the Peer Manager initialization.
+ */
+void peer_manager_init()
+{
+    ble_gap_sec_params_t sec_param;
+    ret_code_t           err_code;
+
+    err_code = pm_init();
+    APP_ERROR_CHECK(err_code);
+
+    memset(&sec_param, 0, sizeof(ble_gap_sec_params_t));
+
+    // Security parameters to be used for all security procedures.
+    sec_param.bond           = SEC_PARAM_BOND;
+    sec_param.mitm           = SEC_PARAM_MITM;
+    sec_param.lesc           = SEC_PARAM_LESC;
+    sec_param.keypress       = SEC_PARAM_KEYPRESS;
+    sec_param.io_caps        = SEC_PARAM_IO_CAPABILITIES;
+    sec_param.oob            = SEC_PARAM_OOB;
+    sec_param.min_key_size   = SEC_PARAM_MIN_KEY_SIZE;
+    sec_param.max_key_size   = SEC_PARAM_MAX_KEY_SIZE;
+    sec_param.kdist_own.enc  = 1;
+    sec_param.kdist_own.id   = 1;
+    sec_param.kdist_peer.enc = 1;
+    sec_param.kdist_peer.id  = 1;
+
+    err_code = pm_sec_params_set(&sec_param);
+    APP_ERROR_CHECK(err_code);
+
+    err_code = pm_register(pm_evt_handler);
+    APP_ERROR_CHECK(err_code);
+}
+
+
+/** @brief Clear bonding information from persistent storage.
+ */
+static void delete_bonds(void)
+{
+    ret_code_t err_code;
+
+    NRF_LOG_INFO("Erase bonds!");
+
+    err_code = pm_peers_delete();
+    APP_ERROR_CHECK(err_code);
+}
+
+
+void ble_dfu_init()
+{
+    ret_code_t err_code;
+
+    ble_dfu_buttonless_init_t dfus_init = {0};
+
+    dfus_init.evt_handler = ble_dfu_evt_handler;
+
+    err_code = ble_dfu_buttonless_init(&dfus_init);
+    APP_ERROR_CHECK(err_code);
+}
+

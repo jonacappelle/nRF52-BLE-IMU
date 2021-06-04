@@ -26,6 +26,21 @@ SRC_FILES += $(wildcard $(PROJ_DIR)/Invn/VSensor/*.c)
 
 # Source files common to all targets
 SRC_FILES += \
+  $(SDK_ROOT)/components/libraries/bootloader/dfu/nrf_dfu_svci.c \
+  $(SDK_ROOT)/components/ble/peer_manager/gatt_cache_manager.c \
+  $(SDK_ROOT)/components/ble/peer_manager/gatts_cache_manager.c \
+  $(SDK_ROOT)/components/ble/peer_manager/id_manager.c \
+  $(SDK_ROOT)/components/ble/peer_manager/peer_data_storage.c \
+  $(SDK_ROOT)/components/ble/peer_manager/peer_database.c \
+  $(SDK_ROOT)/components/ble/peer_manager/peer_id.c \
+  $(SDK_ROOT)/components/ble/peer_manager/peer_manager.c \
+  $(SDK_ROOT)/components/ble/peer_manager/peer_manager_handler.c \
+  $(SDK_ROOT)/components/ble/peer_manager/pm_buffer.c \
+  $(SDK_ROOT)/components/ble/peer_manager/security_dispatcher.c \
+  $(SDK_ROOT)/components/ble/peer_manager/security_manager.c \
+  $(SDK_ROOT)/components/ble/ble_services/ble_dfu/ble_dfu.c \
+  $(SDK_ROOT)/components/ble/ble_services/ble_dfu/ble_dfu_bonded.c \
+  $(SDK_ROOT)/components/ble/ble_services/ble_dfu/ble_dfu_unbonded.c \
   $(SDK_ROOT)/integration/nrfx/legacy/nrf_drv_ppi.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_saadc.c \
   $(PROJ_DIR)/UTIL/usr_adc.c \
@@ -275,6 +290,12 @@ INC_FOLDERS += \
   $(SDK_ROOT)/components/libraries/fstorage \
   $(SDK_ROOT)/modules/nrfx/drivers/src \
   $(SDK_ROOT)/integration/nrfx/legacy \
+  $(SDK_ROOT)/components/libraries/bootloader/dfu \
+  $(SDK_ROOT)/components/libraries/bootloader/ble_dfu \
+  $(SDK_ROOT)/components/ble/ble_services/ble_dfu \
+  $(SDK_ROOT)/components/ble/peer_manager \
+  $(SDK_ROOT)/components/libraries/bootloader \
+
 
 # Libraries common to all targets
 LIB_FILES += \
@@ -307,6 +328,9 @@ CFLAGS += -mfloat-abi=hard -mfpu=fpv4-sp-d16
 CFLAGS += -ffunction-sections -fdata-sections -fno-strict-aliasing
 CFLAGS += -fno-builtin -fshort-enums
 CFLAGS += -DEBUG
+CFLAGS += -DNRF_DFU_SVCI_ENABLED
+CFLAGS += -DBL_SETTINGS_ACCESS_ONLY
+CFLAGS += -DNRF_DFU_TRANSPORT_BLE=1
 
 # C++ flags common to all targets
 CXXFLAGS += $(OPT)
@@ -326,6 +350,10 @@ ASMFLAGS += -DNRF52_PAN_74
 ASMFLAGS += -DNRF_SD_BLE_API_VERSION=7
 ASMFLAGS += -DS132
 ASMFLAGS += -DSOFTDEVICE_PRESENT
+ASMFLAGS += -DNRF_DFU_SVCI_ENABLED
+ASMFLAGS += -DBL_SETTINGS_ACCESS_ONLY
+ASMFLAGS += -DNRF_DFU_TRANSPORT_BLE=1
+
 
 # Linker flags
 LDFLAGS += $(OPT)
