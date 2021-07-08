@@ -200,7 +200,7 @@ void usr_flash_write(uint8_t const * data, uint32_t len)
 
         memcpy(temp, data, len);
 
-        static const len1 = 84;
+        static const uint32_t len1 = 84;
 
 
         /* A record containing dummy configuration data. */

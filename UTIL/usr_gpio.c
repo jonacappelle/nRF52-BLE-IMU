@@ -74,7 +74,7 @@ void gpio_init(void)
 
 static void led_flash()
 {
-	for(uint8_t c=0; c<2; c++)
+	for(uint8_t c=0; c<4; c++)
 	{
 		for(uint8_t i=0; i<2; i++)
 		{
@@ -95,7 +95,16 @@ void led_init()
 	nrf_gpio_cfg_output(TIMESYNC_PIN);
 
 	// LED blink on startup
+
 	led_flash();
+
+	// while(1){
+	// 	nrf_gpio_pin_set(TIMESYNC_PIN);
+	// 	nrf_delay_ms(1000);
+	// 	nrf_gpio_pin_clear(TIMESYNC_PIN);
+	// 	nrf_delay_ms(1000);
+	// }
+
 
 	// Some delay - may not be necessary
 	// nrf_delay_ms(10000);

@@ -47,5 +47,6 @@ void idle_state_handle(void);
 void app_scheduler_init(void);
 
 void lfclk_config(void);
+void clocks_start(void);
 
 #endif

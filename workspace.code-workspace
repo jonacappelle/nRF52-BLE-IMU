@@ -35,7 +35,10 @@
 			"nrf_drv_timer.h": "c",
 			"nrf_bootloader_info.h": "c",
 			"nrf_dfu_ble_svci_bond_sharing.h": "c",
-			"typeinfo": "cpp"
+			"typeinfo": "cpp",
+			"boards.h": "c",
+			"pca10040.h": "c",
+			"ble_dfu.h": "c"
 		}
 	}
 }

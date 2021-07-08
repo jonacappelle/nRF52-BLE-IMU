@@ -100,3 +100,16 @@ void lfclk_config(void)
 
     nrf_drv_clock_lfclk_request(NULL);
 }
+
+void clocks_start(void)
+{
+    // Start HFCLK and wait for it to start.
+    NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
+    NRF_CLOCK->TASKS_HFCLKSTART = 1;
+    while (NRF_CLOCK->EVENTS_HFCLKSTARTED == 0);
+
+    // Start LFXO and wait for it to start
+    NRF_CLOCK->LFCLKSRC = CLOCK_LFCLKSRC_SRC_Xtal << CLOCK_LFCLKSRC_SRC_Pos;
+    NRF_CLOCK->TASKS_LFCLKSTART = 1;
+    while (NRF_CLOCK->EVENTS_LFCLKSTARTED == 0);
+}

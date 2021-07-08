@@ -41,8 +41,8 @@ battery_t batt =
 #define ADC_INPUT_PIN   NRF_SAADC_INPUT_AIN1
 #define SAADC_CHANNEL   0
 
-#define R1              4.75    // in MOhm
-#define R2              8.2     // in MOhm
+#define R1              5.6    // in MOhm
+#define R2              10     // in MOhm
 
 #define VOLTAGE_DIVIDER_FACTOR (R1 / (R1 + R2))
 
