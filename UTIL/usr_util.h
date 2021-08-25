@@ -49,4 +49,6 @@ void app_scheduler_init(void);
 void lfclk_config(void);
 void clocks_start(void);
 
+void usr_set_poweroff_mode();
+
 #endif

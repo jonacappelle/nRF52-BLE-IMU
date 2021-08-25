@@ -51,6 +51,14 @@ int main(void)
 {
 		ret_code_t err_code;
 
+		// nrf_delay_ms(1000);
+
+		sd_power_dcdc_mode_set(NRF_POWER_DCDC_ENABLE);
+
+		// usr_set_poweroff_mode();
+
+		// idle_state_handle();
+
 		// clocks_start();
 
 		// Logging to RTT functionality
@@ -79,20 +87,6 @@ int main(void)
 
 		// Initialize ADC
 		usr_adc_init();
-
-		
-		//////////////////////////////////////////
-		// SPI TODO
-		//////////////////////////////////////////
-		// Delay before starting
-		// nrf_delay_ms(2000);
-		// err_code = spi_init();
-		// NRF_LOG_INFO("spi err_code; %d", err_code);
-		// NRF_LOG_FLUSH();
-		// nrf_delay_ms(100);
-		// spi_write(0x0A, 0x12);
-		// nrf_delay_ms(2000);
-		//////////////////////////////////////////
 		
 		// Main loop	
 		while(1)

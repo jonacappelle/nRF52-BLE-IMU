@@ -103,13 +103,27 @@ void lfclk_config(void)
 
 void clocks_start(void)
 {
-    // Start HFCLK and wait for it to start.
-    NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
-    NRF_CLOCK->TASKS_HFCLKSTART = 1;
-    while (NRF_CLOCK->EVENTS_HFCLKSTARTED == 0);
 
     // Start LFXO and wait for it to start
     NRF_CLOCK->LFCLKSRC = CLOCK_LFCLKSRC_SRC_Xtal << CLOCK_LFCLKSRC_SRC_Pos;
     NRF_CLOCK->TASKS_LFCLKSTART = 1;
     while (NRF_CLOCK->EVENTS_LFCLKSTARTED == 0);
+
+    // Start HFCLK and wait for it to start.
+    NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
+    NRF_CLOCK->TASKS_HFCLKSTART = 1;
+    while (NRF_CLOCK->EVENTS_HFCLKSTARTED == 0);
+
+    while(1);
+
+}
+
+
+void usr_set_poweroff_mode()
+{
+    int32_t ret = sd_power_system_off();
+
+    NRF_POWER->TASKS_LOWPWR = 1;
+    NRF_POWER->SYSTEMOFF = POWER_SYSTEMOFF_SYSTEMOFF_Enter;
+    // while(1); // Check if this while is necessary
 }

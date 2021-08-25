@@ -311,6 +311,9 @@ uint8_t test_troughput_array[132];
  */
 static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 {
+
+NRF_LOG_INFO("IMU CALLBACK");
+
         /* arg will contained the value provided at init time */
         (void)arg;
         
@@ -492,11 +495,11 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 		case INV_SENSOR_TYPE_ROTATION_VECTOR:
 		case INV_SENSOR_TYPE_GEOMAG_ROTATION_VECTOR:
 		{			
-			// NRF_LOG_INFO("%s:	%d %d %d %d", inv_sensor_str(event->sensor),
-			// 		(int)(event->data.quaternion.quat[0]*1000),
-			// 		(int)(event->data.quaternion.quat[1]*1000),
-			// 		(int)(event->data.quaternion.quat[2]*1000),
-			// 		(int)(event->data.quaternion.quat[3]*1000));
+			NRF_LOG_INFO("%s:	%d %d %d %d", inv_sensor_str(event->sensor),
+					(int)(event->data.quaternion.quat[0]*1000),
+					(int)(event->data.quaternion.quat[1]*1000),
+					(int)(event->data.quaternion.quat[2]*1000),
+					(int)(event->data.quaternion.quat[3]*1000));
 //					(int)(event->data.gyr.accuracy_flag),
 //					(int)(event->data.acc.accuracy_flag),	
 //					(int)(event->data.mag.accuracy_flag), // 0 - 3: not calibrated - fully calibrated
@@ -791,6 +794,14 @@ void imu_evt_poll_sceduled(void * p_event_data, uint16_t event_size)
 
 			// Initialize ADC
 			usr_adc_init();
+
+			nrf_gpio_pin_set(TIMESYNC_PIN);
+			nrf_delay_ms(50);
+			nrf_gpio_pin_clear(TIMESYNC_PIN);
+			nrf_delay_ms(50);
+			nrf_gpio_pin_set(TIMESYNC_PIN);
+			nrf_delay_ms(50);
+			nrf_gpio_pin_clear(TIMESYNC_PIN);
 
 		}else{
 			// Poll all data from IMU

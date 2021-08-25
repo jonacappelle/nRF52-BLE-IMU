@@ -749,6 +749,11 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             m_conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
             err_code = nrf_ble_qwr_conn_handle_assign(&m_qwr, m_conn_handle);
             APP_ERROR_CHECK(err_code);
+
+            // Set transmit power to +4dBm
+            err_code = sd_ble_gap_tx_power_set(BLE_GAP_TX_POWER_ROLE_CONN, m_conn_handle, RADIO_TXPOWER_TXPOWER_Pos4dBm);
+            APP_ERROR_CHECK(err_code);
+            
             break;
 
         case BLE_GAP_EVT_DISCONNECTED:
@@ -1517,6 +1522,13 @@ void advertising_stop(void)
     }
 }
 
+void set_transmit_power_4dbm()
+{
+    ret_code_t err_code;
+    err_code = sd_ble_gap_tx_power_set(BLE_GAP_TX_POWER_ROLE_ADV, m_advertising.adv_handle, RADIO_TXPOWER_TXPOWER_Pos4dBm);
+    APP_ERROR_CHECK(err_code);
+}
+
 void usr_ble_init(void)
 {
     // UART Init - (not really necessary) -  used by BLE NUS
@@ -1549,6 +1561,9 @@ void usr_ble_init(void)
 
     // Init Advertising
     advertising_init();
+
+    // Longer range for advertising - need to set this also in connection
+    set_transmit_power_4dbm();
 
     // Init connection parameters
     conn_params_init();
