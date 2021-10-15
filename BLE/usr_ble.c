@@ -1029,10 +1029,10 @@ static void ts_evt_callback(const ts_evt_t* evt)
             time_now_msec = TIME_SYNC_TIMESTAMP_TO_USEC(time_now_ticks) / 1000;
 
             uint32_t time_target;
-            time_target = TIME_SYNC_MSEC_TO_TICK(time_now_msec) + (1000 * 2);
-            time_target = (time_target / 1000) * 1000;
+            time_target = TIME_SYNC_MSEC_TO_TICK(time_now_msec) + 100;
+            time_target = (time_target / 100) * 100;
 
-            err_code = ts_set_trigger(imu.sync_start_time, nrf_gpiote_task_addr_get(NRF_GPIOTE_TASKS_OUT_3));
+            err_code = ts_set_trigger(time_target, nrf_gpiote_task_addr_get(NRF_GPIOTE_TASKS_OUT_3));
             APP_ERROR_CHECK(err_code);
 
             break;
