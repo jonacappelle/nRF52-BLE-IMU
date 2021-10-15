@@ -12,9 +12,9 @@
 
 #define IMU_ENABLED 1
 
-#define COSTUM_BOARD    1
+#define COSTUM_BOARD    0
 #define SPARKFUN_BOARD  0
-#define NRF_DEV_BOARD   0
+#define NRF_DEV_BOARD   1
 
 #if COSTUM_BOARD == 1
 #define TIMESYNC_PIN    13

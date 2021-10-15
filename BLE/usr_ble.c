@@ -1018,8 +1018,23 @@ static void ts_evt_callback(const ts_evt_t* evt)
     {
         case TS_EVT_SYNCHRONIZED:
             NRF_LOG_INFO("TS_EVT_SYNCHRONIZED");
+            NRF_LOG_FLUSH();
             // ts_imu_trigger_enable();
             ts_evt_synchronized_enable();
+
+            uint64_t time_now_ticks;
+            uint32_t time_now_msec;
+
+            time_now_ticks = ts_timestamp_get_ticks_u64();
+            time_now_msec = TIME_SYNC_TIMESTAMP_TO_USEC(time_now_ticks) / 1000;
+
+            uint32_t time_target;
+            time_target = TIME_SYNC_MSEC_TO_TICK(time_now_msec) + (1000 * 2);
+            time_target = (time_target / 1000) * 1000;
+
+            err_code = ts_set_trigger(imu.sync_start_time, nrf_gpiote_task_addr_get(NRF_GPIOTE_TASKS_OUT_3));
+            APP_ERROR_CHECK(err_code);
+
             break;
         case TS_EVT_DESYNCHRONIZED:
             NRF_LOG_INFO("TS_EVT_DESYNCHRONIZED");
@@ -1039,7 +1054,7 @@ static void ts_evt_callback(const ts_evt_t* evt)
 
             break;
         case TS_EVT_TRIGGERED:
-            // NRF_LOG_INFO("TS_EVT_TRIGGERED");
+            NRF_LOG_INFO("TS_EVT_TRIGGERED");
             {
                 uint32_t tick_target;
 
@@ -1076,6 +1091,23 @@ static void ts_evt_callback(const ts_evt_t* evt)
 
                     // Process IMU BLE packet for sending
                     imu_send_data();
+                }
+                else if (ts_evt_synchronized()) // When synchronized but not yet measuring
+                {
+
+                    NRF_LOG_INFO("Synchronized LED toggle");
+
+                    tick_target = evt->params.triggered.tick_target + 100;
+
+                    ret_code_t err_code = ts_set_trigger(tick_target, nrf_gpiote_task_addr_get(NRF_GPIOTE_TASKS_OUT_3));
+                    if(err_code != NRF_SUCCESS)
+                    {
+                        NRF_LOG_INFO("err_code: %d", err_code);
+                    }
+                    APP_ERROR_CHECK(err_code);
+
+                    nrf_gpio_pin_toggle(TIMESYNC_PIN);
+
                 }
                 else
                 {
