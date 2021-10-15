@@ -26,10 +26,12 @@
 #define USR_TX_PIN_NUMBER   12
 #endif
 #if SPARKFUN_BOARD == 1
+#define IMU_POWER_PIN 14
 #define TIMESYNC_PIN    17
 #define INT_PIN	8
 #define USR_TWI_SCL 15
 #define USR_TWI_SDA 14
+
 #define USR_RX_PIN_NUMBER   26
 #define USR_TX_PIN_NUMBER   27
 #endif

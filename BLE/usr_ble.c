@@ -562,7 +562,7 @@ static void services_init(void)
     usr_bas_init();
 
     // Init DFU service
-    ble_dfu_init();
+    // ble_dfu_init();
 }
 
 
