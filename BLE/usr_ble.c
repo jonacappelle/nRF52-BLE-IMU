@@ -423,6 +423,9 @@ static void ts_start_trigger(IMU imu)
 {
     ret_code_t err_code;
 
+    // Set timesync pin low
+    nrf_gpio_pin_clear(TIMESYNC_PIN);
+
     // Print start time
     NRF_LOG_INFO("time.sync_start_time %d", imu.sync_start_time);
 
@@ -1038,6 +1041,7 @@ static void ts_evt_callback(const ts_evt_t* evt)
             break;
         case TS_EVT_DESYNCHRONIZED:
             NRF_LOG_INFO("TS_EVT_DESYNCHRONIZED");
+            nrf_gpio_pin_clear(TIMESYNC_PIN);
             ts_imu_trigger_disable();
             ts_evt_synchronized_disable();
             break;

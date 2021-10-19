@@ -68,7 +68,7 @@ extern "C" {
 #endif
 
 #ifndef TIME_SYNC_DESYNC_TIMEOUT
-#define TIME_SYNC_DESYNC_TIMEOUT 30000000 // 30 sec timeout for synchronization to get out of sync   //10 000 000 /* Timeout for desynchronization [us] */
+#define TIME_SYNC_DESYNC_TIMEOUT 15000000 // 30000000 // 30 sec timeout for synchronization to get out of sync   //10 000 000 /* Timeout for desynchronization [us] */
 #endif
 
 #ifndef TIME_SYNC_EVT_HANDLER_IRQ_PRIORITY
