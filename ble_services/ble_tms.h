@@ -207,6 +207,7 @@ typedef struct
     uint64_t                  sync_start_time;
     bool                      stop;
     bool                      adc_enabled;
+    bool                      start_calibration;
 } ble_tms_config_t;
 
 #define BLE_TMS_CONFIG_PEDO_INT_MIN   100   ///< Minimum pedometer interval [ms].

@@ -87,6 +87,10 @@ int main(void)
 
 		// Initialize ADC
 		usr_adc_init();
+
+		// Initialize calibration timer
+		NRF_LOG_INFO("create_calibration_timer");
+		create_calibration_timer();
 		
 		// Main loop	
 		while(1)

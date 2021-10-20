@@ -111,6 +111,7 @@ typedef struct imu
     bool adc;
     uint32_t evt_scheduled;
     bool wom;
+    bool start_calibration;
 }IMU;
 
 
@@ -154,8 +155,11 @@ typedef struct
 {
     imu_quat_t   quat;
     imu_gyro_t gyro;
+    uint8_t gyro_accuracy;
     imu_accel_t accel;
+    uint8_t accel_accuracy;
     imu_mag_t mag;
+    uint8_t mag_accuracy;
     imu_euler_t euler;
 } imu_data_t;
 
@@ -215,6 +219,11 @@ bool imu_in_wom(void);
 void imu_set_in_wom(bool enable);
 bool imu_in_shutdown(void);
 void imu_set_in_shutdown(bool enable);
+
+
+void create_calibration_timer();
+void start_calibration_timer(uint32_t ms);
+void stop_calibration_timer();
 
  #define ICM_20948_WHO_AM_I              0x00                                               
  #define ICM_20948_REG_BANK_SEL  0x7F                        

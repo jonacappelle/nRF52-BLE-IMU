@@ -232,6 +232,7 @@ static void print_config(ble_tms_config_t config)
     if(config.euler_enabled) NRF_LOG_INFO("Euler enabled");
     if(config.quat6_enabled) NRF_LOG_INFO("QUAT6 enabled");
     if(config.quat9_enabled) NRF_LOG_INFO("QUAT9 enabled");
+    if(config.quat9_enabled) NRF_LOG_INFO("Calibration start enabled");
     NRF_LOG_INFO("Frequency: %d", config.motion_freq_hz);
 
     if(config.adc_enabled) NRF_LOG_INFO("ADC enabled");
@@ -312,6 +313,7 @@ static void ble_tms_evt_handler(ble_tms_t        * p_tms,
             imu.adc = received_config.adc_enabled;
             imu.sync_start_time = received_config.sync_start_time;
             imu.wom = received_config.wom_enabled;
+            imu.start_calibration = received_config.start_calibration;
 
             // If wake on motion command is received
             // - Break the BLE connection
@@ -324,7 +326,7 @@ static void ble_tms_evt_handler(ble_tms_t        * p_tms,
             }
 
             // Print out received config over RTT
-            // print_config(received_config);
+            print_config(received_config);
 
             // Pass change IMU settings to event handler
             err_code = app_sched_event_put(0, 0, imu_config_evt_sceduled);
@@ -1799,4 +1801,7 @@ void ble_dfu_init()
     err_code = ble_dfu_buttonless_init(&dfus_init);
     APP_ERROR_CHECK(err_code);
 }
+
+
+
 

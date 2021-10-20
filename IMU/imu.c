@@ -99,6 +99,8 @@ BUFFER buff;
 imu_data_t imu_data;
 
 
+
+
 // Initialisation of IMU struct
 extern IMU imu;
 
@@ -304,6 +306,35 @@ static void check_rc(int rc)
 uint8_t test_troughput_array[132];
 
 
+void calibration_callback()
+{
+	// Set LED blink according to calibration scheme
+	// Blink slow when starting -> 1s
+	// Blink faster when gyro is calibrated -> 500ms
+	// Blink faster when accel is callibrated -> 200ms
+	// Full led when mag is callibrated -> 0ms
+	if(imu_data.gyro_accuracy != 3 && imu_data.accel_accuracy != 3 && imu_data.mag_accuracy != 3)
+	{
+		NRF_LOG_INFO("Start timer 1s");
+		// Start timer with period of 1 sec
+		start_calibration_timer(1000);		
+	}else if (imu_data.gyro_accuracy == 3 && imu_data.accel_accuracy == 3 && imu_data.mag_accuracy == 3)
+	{
+		NRF_LOG_INFO("Stop timer");
+		stop_calibration_timer();
+	}else if (imu_data.gyro_accuracy == 3 && imu_data.accel_accuracy == 3)
+	{
+		NRF_LOG_INFO("Start timer 200ms");
+		stop_calibration_timer();
+		start_calibration_timer(200);
+	}else if (imu_data.gyro_accuracy == 3)
+	{
+		NRF_LOG_INFO("Start timer 500ms");
+		stop_calibration_timer();
+		start_calibration_timer(500);
+	}
+}
+
 
 /*
  * Callback called upon sensor event reception
@@ -313,6 +344,11 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 {
 
 NRF_LOG_INFO("IMU CALLBACK");
+
+// Data processed in 
+/* static inv_bool_t build_sensor_event_data(inv_device_icm20948_t * self, 
+		uint8_t sensortype, const void * data, const void *arg, 
+		inv_sensor_event_t * event) */
 
         /* arg will contained the value provided at init time */
         (void)arg;
@@ -327,6 +363,12 @@ NRF_LOG_INFO("IMU CALLBACK");
 		
 		// Temp
 // imu_send_data();
+
+// NRF_LOG_INFO("accuracy gyr: %d - acc: %d - mag: %d: quat: %d", 
+// 		(int)(event->data.gyr.accuracy_flag), 
+// 		(int)(event->data.acc.accuracy_flag), 
+// 		(int)(event->data.mag.accuracy_flag), 
+// 		(int)(event->data.quaternion.accuracy_flag));
 		
 		ret_code_t err_code;
 		size_t len_in;
@@ -384,10 +426,20 @@ NRF_LOG_INFO("IMU CALLBACK");
 				}
 				#endif
 
+				NRF_LOG_INFO("accel accuracy: %d", (int)(event->data.acc.accuracy_flag));
+
 				// Save latest data in buffer
 				imu_data.accel.x =      (int16_t)((event->data.acc.vect[0]) * (1 << RAW_Q_FORMAT_ACC_COMMA_BITS));
 				imu_data.accel.y =      (int16_t)((event->data.acc.vect[1]) * (1 << RAW_Q_FORMAT_ACC_COMMA_BITS));
 				imu_data.accel.z =      (int16_t)((event->data.acc.vect[2]) * (1 << RAW_Q_FORMAT_ACC_COMMA_BITS));
+
+				// Save accuracy flag if it changes
+				if(event->data.acc.accuracy_flag != imu_data.accel_accuracy)
+				{
+					imu_data.accel_accuracy = event->data.acc.accuracy_flag;
+					calibration_callback();
+				}
+				
 
 			break;
 		}
@@ -397,7 +449,7 @@ NRF_LOG_INFO("IMU CALLBACK");
 			// 		(int)(event->data.gyr.vect[0]*1000),
 			// 		(int)(event->data.gyr.vect[1]*1000),
 			// 		(int)(event->data.gyr.vect[2]*1000),
-			// 		(int)(event->data.gyr.accuracy_flag));
+					// (int)(event->data.gyr.accuracy_flag));
 					
 				#ifdef USE_NUS
 				// Put data in the ringbuffer
@@ -423,10 +475,20 @@ NRF_LOG_INFO("IMU CALLBACK");
 				}
 				#endif
 
+				NRF_LOG_INFO("gyro accuracy: %d", (int)(event->data.gyr.accuracy_flag));
+
 				// Save latest data in buffer
 				imu_data.gyro.x =       (int16_t)((event->data.gyr.vect[0]) * (1 << RAW_Q_FORMAT_GYR_COMMA_BITS));
 				imu_data.gyro.y =       (int16_t)((event->data.gyr.vect[1]) * (1 << RAW_Q_FORMAT_GYR_COMMA_BITS));
 				imu_data.gyro.z =       (int16_t)((event->data.gyr.vect[2]) * (1 << RAW_Q_FORMAT_GYR_COMMA_BITS));
+
+				// Save accuracy flag
+				if(event->data.gyr.accuracy_flag != imu_data.gyro_accuracy)
+				{
+					imu_data.gyro_accuracy = event->data.gyr.accuracy_flag;
+					calibration_callback();
+				}
+				
 
 			break;
 		}
@@ -462,10 +524,19 @@ NRF_LOG_INFO("IMU CALLBACK");
 				}
 				#endif
 
+				NRF_LOG_INFO("mag accuracy: %d", (int)(event->data.mag.accuracy_flag));
+
 				// Save latest data in buffer
 				imu_data.mag.y =   -(int16_t)((event->data.mag.vect[0]) * (1 << RAW_Q_FORMAT_CMP_COMMA_BITS)); // Changed axes and inverted. Corrected for rotation of axes.
 				imu_data.mag.x =    (int16_t)((event->data.mag.vect[1]) * (1 << RAW_Q_FORMAT_CMP_COMMA_BITS)); // Changed axes. Corrected for rotation of axes.
 				imu_data.mag.z =    (int16_t)((event->data.mag.vect[2]) * (1 << RAW_Q_FORMAT_CMP_COMMA_BITS));
+
+				// Save accuracy flag
+				if(event->data.mag.accuracy_flag != imu_data.mag_accuracy) 
+				{
+					imu_data.mag_accuracy = event->data.mag.accuracy_flag;
+					calibration_callback();
+				}
 					
 			break;
 		}
@@ -491,21 +562,21 @@ NRF_LOG_INFO("IMU CALLBACK");
 					(int)(event->data.mag.bias[2]*1000));
 			break;
 		}
-		case INV_SENSOR_TYPE_GAME_ROTATION_VECTOR:
-		case INV_SENSOR_TYPE_ROTATION_VECTOR:
-		case INV_SENSOR_TYPE_GEOMAG_ROTATION_VECTOR:
+		case INV_SENSOR_TYPE_GAME_ROTATION_VECTOR: // 6 Axis sensor fusion -> No accuracy flag - no accuracy
+		case INV_SENSOR_TYPE_ROTATION_VECTOR: // 9 Axis sensor fusion - accuracy included (no accuracy flag)
+		case INV_SENSOR_TYPE_GEOMAG_ROTATION_VECTOR: // Accel + Mag based quaternions - accuracy included (no accuracy flag)
 		{			
-			NRF_LOG_INFO("%s:	%d %d %d %d", inv_sensor_str(event->sensor),
-					(int)(event->data.quaternion.quat[0]*1000),
-					(int)(event->data.quaternion.quat[1]*1000),
-					(int)(event->data.quaternion.quat[2]*1000),
-					(int)(event->data.quaternion.quat[3]*1000));
+			// NRF_LOG_INFO("%s:	%d %d %d %d", inv_sensor_str(event->sensor),
+					// (int)(event->data.quaternion.quat[0]*1000),
+					// (int)(event->data.quaternion.quat[1]*1000),
+					// (int)(event->data.quaternion.quat[2]*1000),
+					// (int)(event->data.quaternion.quat[3]*1000));
 //					(int)(event->data.gyr.accuracy_flag),
 //					(int)(event->data.acc.accuracy_flag),	
 //					(int)(event->data.mag.accuracy_flag), // 0 - 3: not calibrated - fully calibrated
 //					(int)(event->data.quaternion.accuracy_flag));
 				
-
+			NRF_LOG_INFO("accuracy: %d - %d", (int)(event->data.quaternion.accuracy_flag), (int)(event->data.quaternion.accuracy *1000));
 
 
 				#ifdef USE_NUS
@@ -958,6 +1029,35 @@ ret_code_t imu_enable_sensors(IMU imu)
 		NRF_LOG_INFO("Stop MAG");
 		rc += inv_device_stop_sensor(device, INV_SENSOR_TYPE_MAGNETOMETER);
 		check_rc(rc);
+		}
+
+		if(imu.start_calibration)
+		{
+			calibration_callback();
+
+			NRF_LOG_INFO("Start GYRO");
+			rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_GYROSCOPE);
+			check_rc(rc);
+			rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_GYROSCOPE, IMU_DEFAULT_SAMPL_FREQ);
+			check_rc(rc);
+			rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_GYROSCOPE);
+			check_rc(rc);
+
+			NRF_LOG_INFO("Start ACCEL");
+			rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_ACCELEROMETER);
+			check_rc(rc);
+			rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_ACCELEROMETER, IMU_DEFAULT_SAMPL_FREQ);
+			check_rc(rc);
+			rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_ACCELEROMETER);
+			check_rc(rc);
+
+			NRF_LOG_INFO("Start MAG");
+			rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_MAGNETOMETER);
+			check_rc(rc);
+			rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_MAGNETOMETER, IMU_DEFAULT_SAMPL_FREQ);
+			check_rc(rc);
+			rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_MAGNETOMETER);
+			check_rc(rc);
 		}
 		
 		return NRF_SUCCESS;
@@ -1751,7 +1851,7 @@ void apply_stored_offsets(void)
 
 }
 
-
+// TODO add sensor gain
 void store_offsets(void)
 {
 	int rc = 0;
@@ -1780,4 +1880,42 @@ void store_offsets(void)
 
 	NRF_LOG_INFO("Sensor bias written to flash:");
 	NRF_LOG_HEXDUMP_INFO(sensor_bias, 84);
+}
+
+
+/**@brief Timeout handler for the repeated timer.
+ */
+static void calibration_timer_handler(void * p_context)
+{
+    nrf_gpio_pin_toggle(TIMESYNC_PIN);
+}
+
+
+APP_TIMER_DEF(calibration_timer);     /**< Handler for repeated timer used to blink LED */
+
+void create_calibration_timer()
+{
+    ret_code_t err_code;
+
+    // Create timers
+    err_code = app_timer_create(&calibration_timer,
+                                APP_TIMER_MODE_REPEATED,
+                                calibration_timer_handler);
+    APP_ERROR_CHECK(err_code);
+}
+
+void start_calibration_timer(uint32_t ms)
+{
+    ret_code_t err_code;
+    err_code = app_timer_start(calibration_timer, APP_TIMER_TICKS(ms), NULL);
+    APP_ERROR_CHECK(err_code);
+}
+
+void stop_calibration_timer()
+{
+    ret_code_t err_code;
+    err_code = app_timer_stop(calibration_timer);
+    APP_ERROR_CHECK(err_code);
+
+    nrf_gpio_pin_clear(TIMESYNC_PIN);
 }
