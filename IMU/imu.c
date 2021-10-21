@@ -316,22 +316,30 @@ void calibration_callback()
 	if(imu_data.gyro_accuracy != 3 && imu_data.accel_accuracy != 3 && imu_data.mag_accuracy != 3)
 	{
 		NRF_LOG_INFO("Start timer 1s");
+		NRF_LOG_INFO("NOT CALIBRATED");
 		// Start timer with period of 1 sec
-		start_calibration_timer(1000);		
+		start_calibration_timer(1000);
+		send_calibration(true, false, false, false);
 	}else if (imu_data.gyro_accuracy == 3 && imu_data.accel_accuracy == 3 && imu_data.mag_accuracy == 3)
 	{
 		NRF_LOG_INFO("Stop timer");
+		NRF_LOG_INFO("FULLY CALIBRATED");
 		stop_calibration_timer();
+		send_calibration(false, true, true, true);
 	}else if (imu_data.gyro_accuracy == 3 && imu_data.accel_accuracy == 3)
 	{
 		NRF_LOG_INFO("Start timer 200ms");
+		NRF_LOG_INFO("ACCEL CALIBRATED");
 		stop_calibration_timer();
 		start_calibration_timer(200);
+		send_calibration(false, true, true, false);
 	}else if (imu_data.gyro_accuracy == 3)
 	{
 		NRF_LOG_INFO("Start timer 500ms");
+		NRF_LOG_INFO("GYRO CALIBRATED");
 		stop_calibration_timer();
 		start_calibration_timer(500);
+		send_calibration(false, true, false, false);
 	}
 }
 
@@ -426,7 +434,7 @@ NRF_LOG_INFO("IMU CALLBACK");
 				}
 				#endif
 
-				NRF_LOG_INFO("accel accuracy: %d", (int)(event->data.acc.accuracy_flag));
+				// NRF_LOG_INFO("accel accuracy: %d", (int)(event->data.acc.accuracy_flag));
 
 				// Save latest data in buffer
 				imu_data.accel.x =      (int16_t)((event->data.acc.vect[0]) * (1 << RAW_Q_FORMAT_ACC_COMMA_BITS));
@@ -475,7 +483,7 @@ NRF_LOG_INFO("IMU CALLBACK");
 				}
 				#endif
 
-				NRF_LOG_INFO("gyro accuracy: %d", (int)(event->data.gyr.accuracy_flag));
+				// NRF_LOG_INFO("gyro accuracy: %d", (int)(event->data.gyr.accuracy_flag));
 
 				// Save latest data in buffer
 				imu_data.gyro.x =       (int16_t)((event->data.gyr.vect[0]) * (1 << RAW_Q_FORMAT_GYR_COMMA_BITS));
@@ -524,7 +532,7 @@ NRF_LOG_INFO("IMU CALLBACK");
 				}
 				#endif
 
-				NRF_LOG_INFO("mag accuracy: %d", (int)(event->data.mag.accuracy_flag));
+				// NRF_LOG_INFO("mag accuracy: %d", (int)(event->data.mag.accuracy_flag));
 
 				// Save latest data in buffer
 				imu_data.mag.y =   -(int16_t)((event->data.mag.vect[0]) * (1 << RAW_Q_FORMAT_CMP_COMMA_BITS)); // Changed axes and inverted. Corrected for rotation of axes.
@@ -1058,6 +1066,10 @@ ret_code_t imu_enable_sensors(IMU imu)
 			check_rc(rc);
 			rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_MAGNETOMETER);
 			check_rc(rc);
+		}
+		if(!imu.start_calibration)
+		{
+			stop_calibration_timer();
 		}
 		
 		return NRF_SUCCESS;
@@ -1909,6 +1921,8 @@ void start_calibration_timer(uint32_t ms)
     ret_code_t err_code;
     err_code = app_timer_start(calibration_timer, APP_TIMER_TICKS(ms), NULL);
     APP_ERROR_CHECK(err_code);
+
+
 }
 
 void stop_calibration_timer()

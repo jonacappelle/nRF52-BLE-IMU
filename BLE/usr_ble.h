@@ -49,4 +49,6 @@ void advertising_config_get(ble_adv_modes_config_t * p_config);
 
 void sync_timer_init(void);
 
+void send_calibration(bool start, bool gyro_done, bool accel_done, bool mag_done);
+
 #endif

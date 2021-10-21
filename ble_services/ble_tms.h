@@ -166,6 +166,17 @@ typedef PACKED( struct
     ble_tms_single_quat_t quat[BLE_PACKET_BUFFER_COUNT];
 }) ble_tms_quat_t;
 
+
+typedef PACKED( struct
+{ 
+    bool calibration_start;
+    bool gyro_calibration_done;
+    bool accel_calibration_drone;
+    bool mag_calibration_done;
+    bool calibration_done;
+}) ble_tms_info_t;
+
+
 typedef PACKED( struct
 {
     int32_t roll;
@@ -233,6 +244,7 @@ typedef enum
     BLE_TMS_EVT_NOTIF_ROT_MAT,
     BLE_TMS_EVT_NOTIF_HEADING,
     BLE_TMS_EVT_NOTIF_GRAVITY,
+    BLE_TMS_EVT_NOTIF_INFO,
 }ble_tms_evt_type_t;
 
 /* Forward declaration of the ble_tms_t type. */
@@ -273,6 +285,7 @@ struct ble_tms_s
     ble_gatts_char_handles_t rot_mat_handles;              /**< Handles related to the rotation matrix characteristic (as provided by the S132 SoftDevice). */
     ble_gatts_char_handles_t heading_handles;              /**< Handles related to the compass heading characteristic (as provided by the S132 SoftDevice). */
     ble_gatts_char_handles_t gravity_handles;              /**< Handles related to the gravity vector characteristic (as provided by the S132 SoftDevice). */
+    ble_gatts_char_handles_t info_handles;
     uint16_t                 conn_handle;                  /**< Handle of the current connection (as provided by the S110 SoftDevice). BLE_CONN_HANDLE_INVALID if not in a connection. */
     bool                     is_tap_notif_enabled;         /**< Variable to indicate if the peer has enabled notification of the characteristic.*/
     bool                     is_adc_notif_enabled; /**< Variable to indicate if the peer has enabled notification of the characteristic.*/
@@ -283,6 +296,7 @@ struct ble_tms_s
     bool                     is_rot_mat_notif_enabled;     /**< Variable to indicate if the peer has enabled notification of the characteristic.*/
     bool                     is_heading_notif_enabled;     /**< Variable to indicate if the peer has enabled notification of the characteristic.*/
     bool                     is_gravity_notif_enabled;     /**< Variable to indicate if the peer has enabled notification of the characteristic.*/
+    bool                     is_info_notif_enabled;
     ble_tms_evt_handler_t    evt_handler;                  /**< Event handler to be called for handling received data. */
 };
 
@@ -342,6 +356,17 @@ uint32_t ble_tms_adc_set(ble_tms_t * p_tms, ble_tms_adc_t * p_data);
  * @retval NRF_SUCCESS If the string was sent successfully. Otherwise, an error code is returned.
  */
 uint32_t ble_tms_quat_set(ble_tms_t * p_tms, ble_tms_quat_t * p_data);
+
+/**@brief Function for sending info data.
+ *
+ * @details This function sends the input quaternion as an quaternion characteristic notification to the peer.
+ *
+ * @param[in] p_tms       Pointer to the Motion Service structure.
+ * @param[in] p_data      Pointer to the quaternion data.
+ *
+ * @retval NRF_SUCCESS If the string was sent successfully. Otherwise, an error code is returned.
+ */
+uint32_t ble_tms_info_set(ble_tms_t * p_tms, ble_tms_info_t * p_data);
 
 /**@brief Function for sending pedometer data.
  *

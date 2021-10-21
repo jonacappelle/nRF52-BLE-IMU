@@ -1803,5 +1803,41 @@ void ble_dfu_init()
 }
 
 
+void send_calibration(bool start, bool gyro_done, bool accel_done, bool mag_done)
+{
+    ret_code_t err_code;
+
+    ble_tms_info_t data;
+
+    // Initialize struct to all zeros
+    memset(&data, 0, sizeof(data));
+
+    data.calibration_start = start;
+
+    // Load calibration info data
+    data.gyro_calibration_done = gyro_done;
+    data.accel_calibration_drone = accel_done;
+    data.mag_calibration_done = mag_done;
+    
+    if(data.gyro_calibration_done && data.accel_calibration_drone && data.mag_calibration_done)
+    {
+        data.calibration_done = 1;
+    }
+
+    err_code = ble_tms_info_set(&m_tms, &data);
+    if(err_code != NRF_SUCCESS)
+    {
+        if(err_code == NRF_ERROR_RESOURCES)
+        {
+            NRF_LOG_INFO("Packet lost");
+        }else{
+            NRF_LOG_INFO("ble_tms_info_set err_code: %d", err_code);
+            APP_ERROR_CHECK(err_code);            
+        }
+    }
+    APP_ERROR_CHECK(err_code);
+
+    NRF_LOG_INFO("SEND_CALIBRATION!!!");
+}
 
 
