@@ -351,7 +351,7 @@ void calibration_callback()
 static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 {
 
-NRF_LOG_INFO("IMU CALLBACK");
+// NRF_LOG_INFO("IMU CALLBACK");
 
 // Data processed in 
 /* static inv_bool_t build_sensor_event_data(inv_device_icm20948_t * self, 
@@ -1041,6 +1041,8 @@ ret_code_t imu_enable_sensors(IMU imu)
 
 		if(imu.start_calibration)
 		{
+			NRF_LOG_INFO("Start calibration");
+
 			calibration_callback();
 
 			NRF_LOG_INFO("Start GYRO");
@@ -1069,6 +1071,7 @@ ret_code_t imu_enable_sensors(IMU imu)
 		}
 		if(!imu.start_calibration)
 		{
+			NRF_LOG_INFO("Stop calibration");
 			stop_calibration_timer();
 		}
 		
