@@ -715,6 +715,7 @@ void sleep(void * p_event_data, uint16_t event_size)
     do{
         // NRF_LOG_INFO("ts_timeslot_open");
         // NRF_LOG_FLUSH();
+        idle_state_handle(); // Sleep while waiting
     }
     while( ts_timeslot_open() == 1 );
     NRF_LOG_INFO("ts timeslot closed");
