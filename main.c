@@ -40,10 +40,6 @@ void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
     app_error_handler(DEAD_BEEF, line_num, p_file_name);
 }
 
-// Struct to keep track of which IMU function are activated
-IMU imu = {
-	.evt_scheduled = 0,
-};
 
 /**@brief Application main function.
  */

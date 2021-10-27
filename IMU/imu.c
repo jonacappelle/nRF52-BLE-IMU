@@ -99,10 +99,17 @@ BUFFER buff;
 imu_data_t imu_data;
 
 
+typedef struct
+{
+	uint32_t evt_scheduled;
+}imu_scheduled_t;
+
+imu_scheduled_t imu = {
+	.evt_scheduled = 0,
+};
 
 
-// Initialisation of IMU struct
-extern IMU imu;
+
 
 /*
  * States for icm20948 device object
@@ -899,11 +906,11 @@ void imu_evt_poll_sceduled(void * p_event_data, uint16_t event_size)
 
 
 
-ret_code_t imu_enable_sensors(IMU imu)
+ret_code_t imu_enable_sensors(ble_tms_config_t* p_evt)
 {
 		int rc = 0;
 
-		if(imu.wom)
+		if(p_evt->wom_enabled)
 		{
 			NRF_LOG_INFO("Start WOM");
 			rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_SMD);
@@ -913,14 +920,14 @@ ret_code_t imu_enable_sensors(IMU imu)
 			rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_SMD);
 			check_rc(rc);
 		}
-		else if(!imu.wom)
+		else if(!p_evt->wom_enabled)
 		{
 			NRF_LOG_INFO("Stop WOM");
 			rc += inv_device_stop_sensor(device, INV_SENSOR_TYPE_SMD);
 			check_rc(rc);
 		}
 
-		if(imu.stop)
+		if(p_evt->stop)
 		{
 		// Stop all sensors before enabling the new ones
 		rc += inv_device_stop_sensor(device, INV_SENSOR_TYPE_GAME_ROTATION_VECTOR);
@@ -937,7 +944,7 @@ ret_code_t imu_enable_sensors(IMU imu)
 		check_rc(rc);
 		}
 		// If enabled: Start 6DoF quaternion output
-		if(imu.quat6_enabled)
+		if(p_evt->quat6_enabled)
 		{
 		NRF_LOG_INFO("Start QUAT6");
 		rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_GAME_ROTATION_VECTOR);
@@ -947,14 +954,14 @@ ret_code_t imu_enable_sensors(IMU imu)
 		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_GAME_ROTATION_VECTOR);
 		check_rc(rc);
 		}
-		else if(!imu.quat6_enabled)
+		else if(!p_evt->quat6_enabled)
 		{
 		NRF_LOG_INFO("Stop QUAT6");
 		rc += inv_device_stop_sensor(device, INV_SENSOR_TYPE_GAME_ROTATION_VECTOR);
 		check_rc(rc);
 		}
 		// If enabled: Start 9DoF quaternion output
-		if(imu.quat9_enabled)
+		if(p_evt->quat9_enabled)
 		{
 		NRF_LOG_INFO("Start QUAT9");
 		rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_ROTATION_VECTOR);
@@ -964,14 +971,14 @@ ret_code_t imu_enable_sensors(IMU imu)
 		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_ROTATION_VECTOR);
 		check_rc(rc);
 		}
-		if(!imu.quat9_enabled)
+		if(!p_evt->quat9_enabled)
 		{
 		NRF_LOG_INFO("Stop QUAT9");
 		rc += inv_device_stop_sensor(device, INV_SENSOR_TYPE_ROTATION_VECTOR);
 		check_rc(rc);
 		}
 		// If enabled: Start Euler angles
-		if(imu.euler_enabled)
+		if(p_evt->euler_enabled)
 		{
 		NRF_LOG_INFO("Start 9DoF EULER");
 		rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_ORIENTATION);
@@ -981,14 +988,14 @@ ret_code_t imu_enable_sensors(IMU imu)
 		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_ORIENTATION);
 		check_rc(rc);
 		}
-		if(!imu.euler_enabled)
+		if(!p_evt->euler_enabled)
 		{
 		NRF_LOG_INFO("Stop 9DoF EULER");
 		rc += inv_device_stop_sensor(device, INV_SENSOR_TYPE_ORIENTATION);
 		check_rc(rc);
 		}
 		// If enabled: Start Calibrated Gyroscope output
-		if(imu.gyro_enabled)
+		if(p_evt->gyro_enabled)
 		{
 		NRF_LOG_INFO("Start GYRO");
 		rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_GYROSCOPE);
@@ -998,14 +1005,14 @@ ret_code_t imu_enable_sensors(IMU imu)
 		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_GYROSCOPE);
 		check_rc(rc);
 		}
-		if(!imu.gyro_enabled)
+		if(!p_evt->gyro_enabled)
 		{
 		NRF_LOG_INFO("Stop GYRO");
 		rc += inv_device_stop_sensor(device, INV_SENSOR_TYPE_GYROSCOPE);
 		check_rc(rc);
 		}
 		// If enabled: Start Calibrated Accelerometer output
-		if(imu.accel_enabled)
+		if(p_evt->accel_enabled)
 		{
 		NRF_LOG_INFO("Start ACCEL");
 		rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_ACCELEROMETER);
@@ -1015,14 +1022,14 @@ ret_code_t imu_enable_sensors(IMU imu)
 		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_ACCELEROMETER);
 		check_rc(rc);
 		}
-		if(!imu.accel_enabled)
+		if(!p_evt->accel_enabled)
 		{
 		NRF_LOG_INFO("Stop ACCEL");
 		rc += inv_device_stop_sensor(device, INV_SENSOR_TYPE_ACCELEROMETER);
 		check_rc(rc);
 		}
 		// If enabled: Start Calibrated Accelerometer output
-		if(imu.mag_enabled)
+		if(p_evt->mag_enabled)
 		{
 		NRF_LOG_INFO("Start MAG");
 		rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_MAGNETOMETER);
@@ -1032,14 +1039,14 @@ ret_code_t imu_enable_sensors(IMU imu)
 		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_MAGNETOMETER);
 		check_rc(rc);
 		}
-		if(!imu.mag_enabled)
+		if(!p_evt->mag_enabled)
 		{
 		NRF_LOG_INFO("Stop MAG");
 		rc += inv_device_stop_sensor(device, INV_SENSOR_TYPE_MAGNETOMETER);
 		check_rc(rc);
 		}
 
-		if(imu.start_calibration)
+		if(p_evt->start_calibration)
 		{
 			NRF_LOG_INFO("Start calibration");
 
@@ -1069,7 +1076,7 @@ ret_code_t imu_enable_sensors(IMU imu)
 			rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_MAGNETOMETER);
 			check_rc(rc);
 		}
-		if(!imu.start_calibration)
+		if(!p_evt->start_calibration)
 		{
 			NRF_LOG_INFO("Stop calibration");
 			stop_calibration_timer();
@@ -1311,11 +1318,11 @@ uint8_t number_of_raw_packets = 0;
 
 
 
-void imu_send_data()
+void imu_send_data(ble_tms_config_t* p_evt)
 {
 	ret_code_t err_code;
 
-	if(imu.quat6_enabled || imu.quat9_enabled)
+	if(p_evt->quat6_enabled || p_evt->quat9_enabled)
 	{
 		ble_tms_single_quat_t single_quat;
 		uint32_t single_quat_len = sizeof(single_quat);
@@ -1356,7 +1363,7 @@ void imu_send_data()
 		}
 
 	}
-	if(imu.gyro_enabled || imu.accel_enabled || imu.mag_enabled)
+	if(p_evt->gyro_enabled || p_evt->accel_enabled || p_evt->mag_enabled)
 	{
 		ble_tms_single_raw_t single_raw;
 		uint32_t single_raw_len = sizeof(single_raw);
@@ -1406,7 +1413,7 @@ void imu_send_data()
 			// NRF_LOG_INFO("quat set");
 		}
 	}
-	if(imu.euler_enabled)
+	if(p_evt->euler_enabled)
 	{
 		ble_tms_euler_t data;
 
@@ -1418,25 +1425,17 @@ void imu_send_data()
 		ble_send_euler(&data);
 
 	}
-	if(imu.adc)
+	// Not implemented yet
+	if(p_evt->adc_enabled)
 	{
 		ble_tms_adc_t data;
 
 		data.raw[0] = 1;
 
 		ble_send_adc(&data);
-
 	}
 }
 
-
-// void imu_get_config()
-// {
-// 	int rc = 0;
-		
-// 	rc += inv_device_get_sensor_config(device, );
-// 	check_rc(rc);
-// }
 
 void imu_set_config()
 {

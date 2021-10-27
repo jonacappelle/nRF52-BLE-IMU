@@ -60,7 +60,6 @@ NRF_LOG_MODULE_REGISTER();
 // IMU params
 #include "imu_params.h"
 #include "imu.h"
-extern IMU imu;
 extern imu_data_t imu_data;
 
 // Application scheduler
@@ -119,6 +118,9 @@ extern imu_data_t imu_data;
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
 #include "nrf_bootloader_info.h"
+
+
+ble_tms_config_t tms_cfg;
 
 
 // Struct to keep track of TimeSync variables
@@ -222,25 +224,25 @@ void ble_send_euler(ble_tms_euler_t * data)
 
 
 // Print received config
-static void print_config(ble_tms_config_t config)
+static void print_config(ble_tms_config_t* config)
 {
     NRF_LOG_INFO("---RECEIVED CONFIG---")
 
-    if(config.gyro_enabled) NRF_LOG_INFO("Gyro enabled");
-    if(config.accel_enabled) NRF_LOG_INFO("Accel enabled");
-    if(config.mag_enabled) NRF_LOG_INFO("Mag enabled");
-    if(config.euler_enabled) NRF_LOG_INFO("Euler enabled");
-    if(config.quat6_enabled) NRF_LOG_INFO("QUAT6 enabled");
-    if(config.quat9_enabled) NRF_LOG_INFO("QUAT9 enabled");
-    if(config.quat9_enabled) NRF_LOG_INFO("Calibration start enabled");
-    NRF_LOG_INFO("Frequency: %d", config.motion_freq_hz);
+    if(config->gyro_enabled) NRF_LOG_INFO("Gyro enabled");
+    if(config->accel_enabled) NRF_LOG_INFO("Accel enabled");
+    if(config->mag_enabled) NRF_LOG_INFO("Mag enabled");
+    if(config->euler_enabled) NRF_LOG_INFO("Euler enabled");
+    if(config->quat6_enabled) NRF_LOG_INFO("QUAT6 enabled");
+    if(config->quat9_enabled) NRF_LOG_INFO("QUAT9 enabled");
+    if(config->quat9_enabled) NRF_LOG_INFO("Calibration start enabled");
+    NRF_LOG_INFO("Frequency: %d", config->motion_freq_hz);
 
-    if(config.adc_enabled) NRF_LOG_INFO("ADC enabled");
+    if(config->adc_enabled) NRF_LOG_INFO("ADC enabled");
 
-    if(config.sync_enabled) NRF_LOG_INFO("SYNC enabled");
-    NRF_LOG_INFO("Sync start time: %d", config.sync_start_time);
+    if(config->sync_enabled) NRF_LOG_INFO("SYNC enabled");
+    NRF_LOG_INFO("Sync start time: %d", config->sync_start_time);
 
-    if(config.wom_enabled) NRF_LOG_INFO("WoM enabled");
+    if(config->wom_enabled) NRF_LOG_INFO("WoM enabled");
 }
 
 
@@ -297,39 +299,30 @@ static void ble_tms_evt_handler(ble_tms_t        * p_tms,
             APP_ERROR_CHECK_BOOL(length == sizeof(ble_tms_config_t));
 
             // Init struct for storing received data
-            ble_tms_config_t received_config;
-            memcpy(&received_config, p_data, length);
+            memcpy(&tms_cfg, p_data, length);
 
             // Copy data into IMU struct
-            imu.gyro_enabled = received_config.gyro_enabled;
-            imu.accel_enabled = received_config.accel_enabled;
-            imu.mag_enabled = received_config.mag_enabled;
-            imu.quat6_enabled = received_config.quat6_enabled;
-            imu.quat9_enabled = received_config.quat9_enabled;
-            imu.euler_enabled = received_config.euler_enabled;
-            if(received_config.motion_freq_hz != 0) imu.period = FREQ_TO_MS(received_config.motion_freq_hz); // Convert from frequency to period
-            imu.sync = received_config.sync_enabled;
-            imu.stop = received_config.stop;
-            imu.adc = received_config.adc_enabled;
-            imu.sync_start_time = received_config.sync_start_time;
-            imu.wom = received_config.wom_enabled;
-            imu.start_calibration = received_config.start_calibration;
+            if(tms_cfg.motion_freq_hz == 0)
+            {
+                err_code = NRF_ERROR_INVALID_DATA;
+                APP_ERROR_CHECK(err_code);
+            }
 
             // If wake on motion command is received
             // - Break the BLE connection
             // - Turn of wake-on-motion
             // - Setup interrupt pin to wake-up microcontroller
-            if (imu.wom)
+            if (tms_cfg.wom_enabled)
             {
-                NRF_LOG_INFO("in if(imu.wom) statement");
+                NRF_LOG_INFO("in if() statement");
                 ble_disconnect();
             }
 
             // Print out received config over RTT
-            print_config(received_config);
+            print_config(&tms_cfg);
 
             // Pass change IMU settings to event handler
-            err_code = app_sched_event_put(0, 0, imu_config_evt_sceduled);
+            err_code = app_sched_event_put(&tms_cfg, sizeof(tms_cfg), imu_config_evt_sceduled);
             APP_ERROR_CHECK(err_code);
             break;
 
@@ -416,12 +409,12 @@ static void ts_print_sync_time()
     NRF_LOG_INFO("Time: ticks %d - ms %d", time_ticks, time_now_msec);
 }
 
-static void ts_set_triggered_period(IMU imu)
+static void ts_set_triggered_period(ble_tms_config_t* self)
 {
-    ts.sync_interval_int_time = (imu.period / TIME_SYNC_TIMER_PERIOD_MS);
+    ts.sync_interval_int_time = (FREQ_TO_MS(self->motion_freq_hz) / TIME_SYNC_TIMER_PERIOD_MS);
 }
 
-static void ts_start_trigger(IMU imu)
+static void ts_start_trigger(ble_tms_config_t* p_evt)
 {
     ret_code_t err_code;
 
@@ -429,11 +422,11 @@ static void ts_start_trigger(IMU imu)
     nrf_gpio_pin_clear(TIMESYNC_PIN);
 
     // Print start time
-    NRF_LOG_INFO("time.sync_start_time %d", imu.sync_start_time);
+    NRF_LOG_INFO("time.sync_start_time %d", p_evt->sync_start_time);
 
-    if( ( imu.sync ) && ( imu.sync_start_time != 0) )
+    if( ( p_evt->sync_enabled ) && ( p_evt->sync_start_time != 0) )
     {
-        err_code = ts_set_trigger(imu.sync_start_time, nrf_gpiote_task_addr_get(NRF_GPIOTE_TASKS_OUT_3));
+        err_code = ts_set_trigger(p_evt->sync_start_time, nrf_gpiote_task_addr_get(NRF_GPIOTE_TASKS_OUT_3));
         APP_ERROR_CHECK(err_code);
         ts.m_imu_trigger_enabled = 1 ;
     }else{
@@ -450,24 +443,27 @@ void imu_config_evt_sceduled(void * p_event_data, uint16_t event_size)
 		// Enable sensor parameters based on received configuration
 		ret_code_t err_code;
 
+        ble_tms_config_t config;
+        memcpy(&config, p_event_data, event_size);
+
         // Clear all buffers before starting a new measurement
         imu_clear_buff();
 
         #if IMU_ENABLED == 1
-		err_code =  imu_enable_sensors(imu);
+		err_code =  imu_enable_sensors(&config);
 		APP_ERROR_CHECK(err_code);
         #endif
 
-        if( !imu.wom )
+        if( !config.wom_enabled )
         {
             // Set correct trigger period for TS_EVT_TRIGGERED
-            ts_set_triggered_period(imu);
+            ts_set_triggered_period(&config);
 
             // Temp for debugging
             ts_print_sync_time();
 
             // Set trigger if peripheral is synced
-            ts_start_trigger(imu);
+            ts_start_trigger(&config);
 
             // TODO: ADC needs to be implemented
             // adc_enable(imu);
@@ -683,9 +679,9 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
     }
 }
 
-static void imu_clear_struct(IMU * imu)
+static void imu_clear_struct(ble_tms_config_t* data)
 {
-    memset(imu, 0, sizeof(imu));
+    memset(data, 0, sizeof(data));
 }
 
 void sleep(void * p_event_data, uint16_t event_size)
@@ -693,7 +689,7 @@ void sleep(void * p_event_data, uint16_t event_size)
     ret_code_t err_code;
 
     // Clear IMU params
-    imu_clear_struct(&imu);
+    imu_clear_struct(&tms_cfg);
 
     // Clear all buffers before starting a new measurement
     imu_clear_buff();
@@ -1107,7 +1103,7 @@ static void ts_evt_callback(const ts_evt_t* evt)
                     timesync_pin_toggle(tick_target);
 
                     // Process IMU BLE packet for sending
-                    imu_send_data();
+                    imu_send_data(&tms_cfg);
                 }
                 else if (ts_evt_synchronized()) // When synchronized but not yet measuring
                 {

@@ -6,6 +6,8 @@
 
 #include "app_fifo.h"
 
+#include "ble_tms.h"
+
 /* Interrupt pin number */
 
 
@@ -96,23 +98,23 @@ typedef uint32_t drv_motion_feature_mask_t;
 #define DRV_MOTION_FEATURE_MASK_WAKE_ON_MOTION    (1UL << DRV_MOTION_FEATURE_WAKE_ON_MOTION)
 
 
-typedef struct imu
-{
-	bool gyro_enabled;
-	bool accel_enabled;
-	bool mag_enabled;
-	bool quat6_enabled;
-	bool quat9_enabled;
-	bool euler_enabled;
-	bool stop;
-    bool sync;
-    uint64_t sync_start_time;
-	uint32_t period; // period in milliseconds (ms)
-    bool adc;
-    uint32_t evt_scheduled;
-    bool wom;
-    bool start_calibration;
-}IMU;
+// typedef struct imu
+// {
+// 	bool gyro_enabled;
+// 	bool accel_enabled;
+// 	bool mag_enabled;
+// 	bool quat6_enabled;
+// 	bool quat9_enabled;
+// 	bool euler_enabled;
+// 	bool stop;
+//     bool sync;
+//     uint64_t sync_start_time;
+// 	uint32_t period; // period in milliseconds (ms)
+//     bool adc;
+//     uint32_t evt_scheduled;
+//     bool wom;
+//     bool start_calibration;
+// }IMU;
 
 
 typedef struct
@@ -187,9 +189,9 @@ void imu_re_init(void);
 void imu_deinit();
 void imu_power_en(bool enable);
 
-uint32_t imu_enable_sensors(IMU imu);
+uint32_t imu_enable_sensors(ble_tms_config_t* self);
 
-void imu_send_data();
+void imu_send_data(ble_tms_config_t* p_evt);
 
 // Init and de-init FIFO buffers
 static void imu_buff_init();

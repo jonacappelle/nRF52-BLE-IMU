@@ -52,7 +52,7 @@ void wdt_init()
 void feed_wdt()
 {
     nrf_drv_wdt_channel_feed(m_channel_id);
-    NRF_LOG_INFO("Feed WDT");
+    // NRF_LOG_INFO("Feed WDT");
 }
 
 

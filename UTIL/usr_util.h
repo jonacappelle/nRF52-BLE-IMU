@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #include "app_timer.h"
+#include "ble_tms.h"
 
 
 #define PIN_CPU_ACTIVITY    18
@@ -41,7 +42,8 @@ void check_cpu_activity();
 void idle_state_handle(void);
 
 
-#define SCHED_MAX_EVENT_DATA_SIZE   APP_TIMER_SCHED_EVENT_DATA_SIZE /**< Maximum size of scheduler events. */
+// #define SCHED_MAX_EVENT_DATA_SIZE   APP_TIMER_SCHED_EVENT_DATA_SIZE /**< Maximum size of scheduler events. */
+#define SCHED_MAX_EVENT_DATA_SIZE   sizeof(ble_tms_config_t) /**< Maximum size of scheduler events. */
 #define SCHED_QUEUE_SIZE            60  /**< Maximum number of events in the scheduler queue. */
 
 void app_scheduler_init(void);
