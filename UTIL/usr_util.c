@@ -127,3 +127,45 @@ void usr_set_poweroff_mode()
     NRF_POWER->SYSTEMOFF = POWER_SYSTEMOFF_SYSTEMOFF_Enter;
     // while(1); // Check if this while is necessary
 }
+
+#define RESET_REASON_HW_RESET   (1 << 0)
+#define RESET_REASON_SW_RESET   (1 << 2)
+#define RESET_REASON_WDT_RESET  (1 << 1)
+
+
+
+void check_reset_reason()
+{
+
+#ifdef DEBUG
+    // 1 -> HW reset
+    // 4 -> Software reset
+    uint32_t reset_reason = NRF_POWER->RESETREAS;
+    NRF_LOG_INFO("Reset: %d", reset_reason);
+
+    NRF_POWER->RESETREAS = 0xffffffff;
+
+    if( (reset_reason & RESET_REASON_WDT_RESET) == RESET_REASON_WDT_RESET )
+    {
+        NRF_LOG_INFO("Reset reason WDT reset.")
+    }
+
+
+    switch (reset_reason)
+    {
+    case RESET_REASON_HW_RESET:
+        NRF_LOG_INFO("Reset reason HW reset.")
+        break;
+    
+    case RESET_REASON_SW_RESET:
+        NRF_LOG_INFO("Reset reason SW reset.")
+        break;
+    
+    default:
+        NRF_LOG_INFO("Other reset reason: %d", reset_reason);
+        break;
+    }
+
+    NRF_LOG_FLUSH();
+#endif
+}

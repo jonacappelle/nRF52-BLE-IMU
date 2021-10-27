@@ -51,8 +51,6 @@ int main(void)
 {
 		ret_code_t err_code;
 
-		feed_wdt();
-
 		// nrf_delay_ms(1000);
 
 		sd_power_dcdc_mode_set(NRF_POWER_DCDC_ENABLE);
@@ -65,6 +63,8 @@ int main(void)
 
 		// Logging to RTT functionality
     	log_init();
+
+		check_reset_reason();
 
 		// Initialize the async SVCI interface to bootloader before any interrupts are enabled.
 		// dfu_async_init();
@@ -92,9 +92,9 @@ int main(void)
 			// Power cycle IMU
 			imu_power_en(false);
 			nrf_delay_ms(500);
-
-			imu_init();	
 		}
+
+		imu_init();	
 
 		// Initialize ADC
 		usr_adc_init();
@@ -109,6 +109,8 @@ int main(void)
 		while(1)
 		{
 			feed_wdt();
+
+			// nrf_delay_ms(6000);
 
 			// App scheduler: handle event in buffer
 			// Execute everything that can't be handled in interrupts - queued operations

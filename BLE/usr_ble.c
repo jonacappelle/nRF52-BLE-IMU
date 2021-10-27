@@ -713,21 +713,31 @@ void sleep(void * p_event_data, uint16_t event_size)
 
     // Attempt to busy wait until timeslot is closed
     do{
-        NRF_LOG_INFO("ts_timeslot_open");
-        NRF_LOG_FLUSH();
+        // NRF_LOG_INFO("ts_timeslot_open");
+        // NRF_LOG_FLUSH();
     }
     while( ts_timeslot_open() == 1 );
     NRF_LOG_INFO("ts timeslot closed");
+    NRF_LOG_FLUSH();
 
     // Stop advertising - otherwise, a new connection will be made
     // When waking up from IMU WoM interrupt, we need to start advertising again
     advertising_stop();
+    NRF_LOG_INFO("advertising_stop");
+    NRF_LOG_FLUSH();
 
     // Shutdown IMU and enable WoM
     imu_sleep_wom();
+    NRF_LOG_INFO("imu_sleep_wom");
+    NRF_LOG_FLUSH();
 
     // Shutdown ADC
     usr_adc_deinit();
+    NRF_LOG_INFO("usr_adc_deinit");
+    NRF_LOG_FLUSH();
+
+    NRF_LOG_INFO("Ready to go to sleep!");
+    NRF_LOG_FLUSH();
 }
 
 

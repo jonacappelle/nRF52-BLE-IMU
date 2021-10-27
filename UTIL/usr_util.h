@@ -50,5 +50,6 @@ void lfclk_config(void);
 void clocks_start(void);
 
 void usr_set_poweroff_mode();
+void check_reset_reason();
 
 #endif

@@ -95,9 +95,11 @@ void twi_handler(nrf_drv_twi_evt_t const * p_event, void * p_context)
             break;
         case NRF_DRV_TWI_EVT_ADDRESS_NACK:
 						NRF_LOG_INFO("Address NACK")
+            APP_ERROR_CHECK(NRF_ERROR_INVALID_ADDR);
             break;
         case NRF_DRV_TWI_EVT_DATA_NACK:
 						NRF_LOG_INFO("Data NACK");
+            APP_ERROR_CHECK(NRF_ERROR_INVALID_DATA);
             break;
         default:
             break;
