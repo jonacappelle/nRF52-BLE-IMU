@@ -130,6 +130,8 @@
 // ADC
 #include "usr_adc.h"
 
+// Watchdog timer
+#include "usr_wdt.h"
 
 ////////////////
 //  DEFINES   //

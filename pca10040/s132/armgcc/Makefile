@@ -26,6 +26,8 @@ SRC_FILES += $(wildcard $(PROJ_DIR)/Invn/VSensor/*.c)
 
 # Source files common to all targets
 SRC_FILES += \
+  $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_wdt.c \
+  $(PROJ_DIR)/UTIL/usr_wdt.c \
   $(PROJ_DIR)/ble_services/usr_dfu.c \
   $(SDK_ROOT)/components/libraries/bootloader/dfu/nrf_dfu_svci.c \
   $(SDK_ROOT)/components/ble/peer_manager/gatt_cache_manager.c \

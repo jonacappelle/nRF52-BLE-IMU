@@ -40,7 +40,8 @@
 			"pca10040.h": "c",
 			"ble_dfu.h": "c",
 			"imu.h": "c",
-			"streambuf": "c"
+			"streambuf": "c",
+			"nrf_log_ctrl.h": "c"
 		}
 	}
 }

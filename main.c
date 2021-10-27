@@ -51,6 +51,8 @@ int main(void)
 {
 		ret_code_t err_code;
 
+		feed_wdt();
+
 		// nrf_delay_ms(1000);
 
 		sd_power_dcdc_mode_set(NRF_POWER_DCDC_ENABLE);
@@ -83,23 +85,39 @@ int main(void)
 		imu_timers_init();
 	
 		// Initialize IMU
-		imu_init();
+		if(is_wdt_wakeup())
+		{
+			reset_wdt_wakeupt();
+
+			// Power cycle IMU
+			imu_power_en(false);
+			nrf_delay_ms(500);
+
+			imu_init();	
+		}
 
 		// Initialize ADC
 		usr_adc_init();
 
 		// Initialize calibration timer
 		create_calibration_timer();
+
+		// WDT
+		wdt_init();
 		
 		// Main loop	
 		while(1)
 		{
+			feed_wdt();
+
 			// App scheduler: handle event in buffer
 			// Execute everything that can't be handled in interrupts - queued operations
 			app_sched_execute();	
 
 			// Flush all the debug info to RTT
 			NRF_LOG_FLUSH();
+
+			feed_wdt();
 
 			// Enter low power mode when idle
 			idle_state_handle();
