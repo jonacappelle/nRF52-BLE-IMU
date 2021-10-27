@@ -243,6 +243,8 @@ static void print_config(ble_tms_config_t* config)
     NRF_LOG_INFO("Sync start time: %d", config->sync_start_time);
 
     if(config->wom_enabled) NRF_LOG_INFO("WoM enabled");
+
+    NRF_LOG_FLUSH();
 }
 
 
@@ -300,13 +302,6 @@ static void ble_tms_evt_handler(ble_tms_t        * p_tms,
 
             // Init struct for storing received data
             memcpy(&tms_cfg, p_data, length);
-
-            // Copy data into IMU struct
-            if(tms_cfg.motion_freq_hz == 0)
-            {
-                err_code = NRF_ERROR_INVALID_DATA;
-                APP_ERROR_CHECK(err_code);
-            }
 
             // If wake on motion command is received
             // - Break the BLE connection
@@ -411,7 +406,13 @@ static void ts_print_sync_time()
 
 static void ts_set_triggered_period(ble_tms_config_t* self)
 {
-    ts.sync_interval_int_time = (FREQ_TO_MS(self->motion_freq_hz) / TIME_SYNC_TIMER_PERIOD_MS);
+    if(self->motion_freq_hz == 0)
+    {
+        NRF_LOG_INFO("Wrong frequency selected - set to default 0Hz");
+        ts.sync_interval_int_time = (FREQ_TO_MS(100) / TIME_SYNC_TIMER_PERIOD_MS);
+    }else{
+        ts.sync_interval_int_time = (FREQ_TO_MS(self->motion_freq_hz) / TIME_SYNC_TIMER_PERIOD_MS);
+    }
 }
 
 static void ts_start_trigger(ble_tms_config_t* p_evt)
