@@ -1229,6 +1229,9 @@ uint32_t ts_disable(void)
     // Keep track of when the receiver is enabled
     ts_set_receiver_enabled(false);
 
+    // When going to sleep / disabling time synchronization, set sync state to false - we're not synchronized any more
+    m_synchronized = false;
+
     // TODO:
     //       - Close SoftDevice radio session (sd_radio_session_close())
     //       - Stop radio activity
