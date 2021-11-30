@@ -95,8 +95,11 @@ void led_init()
 	nrf_gpio_cfg_output(TIMESYNC_PIN);
 
 	// LED blink on startup
-
-	led_flash();
+	// while(1)
+	// {
+		led_flash();
+	// }
+	
 
 	// while(1){
 	// 	nrf_gpio_pin_set(TIMESYNC_PIN);

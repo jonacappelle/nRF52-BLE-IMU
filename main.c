@@ -55,7 +55,7 @@ int main(void)
 
 		// idle_state_handle();
 
-		// clocks_start();
+		clocks_start();
 
 		// Logging to RTT functionality
     	log_init();
@@ -65,7 +65,7 @@ int main(void)
 		// Initialize the async SVCI interface to bootloader before any interrupts are enabled.
 		// dfu_async_init();
 		
-		// Initialize everything related to BLE
+		// Initialize everything related to BL
 		usr_ble_init();
 
 		// Application scheduler (soft interrupt like)

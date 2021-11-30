@@ -1021,7 +1021,7 @@ void TimeSync_enable()
 
 static void ts_evt_callback(const ts_evt_t* evt)
 {
-    NRF_LOG_INFO("ts_evt_callback");
+    // NRF_LOG_INFO("ts_evt_callback");
 
     APP_ERROR_CHECK_BOOL(evt != NULL);
 
@@ -1068,7 +1068,7 @@ static void ts_evt_callback(const ts_evt_t* evt)
 
             break;
         case TS_EVT_TRIGGERED:
-            NRF_LOG_INFO("TS_EVT_TRIGGERED");
+            // NRF_LOG_INFO("TS_EVT_TRIGGERED");
             {
                 uint32_t tick_target;
 
@@ -1109,7 +1109,7 @@ static void ts_evt_callback(const ts_evt_t* evt)
                 else if (ts_evt_synchronized()) // When synchronized but not yet measuring
                 {
 
-                    NRF_LOG_INFO("Synchronized LED toggle");
+                    // NRF_LOG_INFO("Synchronized LED toggle");
 
                     tick_target = evt->params.triggered.tick_target + 100;
 

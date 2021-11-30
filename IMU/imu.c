@@ -884,7 +884,7 @@ void imu_evt_poll_sceduled(void * p_event_data, uint16_t event_size)
 			nrf_gpio_pin_set(TIMESYNC_PIN);
 			nrf_delay_ms(50);
 			nrf_gpio_pin_clear(TIMESYNC_PIN);
-			nrf_delay_ms(50);
+			nrf_delay_ms(200);
 			nrf_gpio_pin_set(TIMESYNC_PIN);
 			nrf_delay_ms(50);
 			nrf_gpio_pin_clear(TIMESYNC_PIN);

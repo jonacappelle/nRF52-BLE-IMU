@@ -41,7 +41,8 @@
 			"ble_dfu.h": "c",
 			"imu.h": "c",
 			"streambuf": "c",
-			"nrf_log_ctrl.h": "c"
+			"nrf_log_ctrl.h": "c",
+			"usr_adc.h": "c"
 		}
 	}
 }
