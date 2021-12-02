@@ -218,7 +218,7 @@ void ble_send_euler(ble_tms_euler_t * data)
     err_code = ble_tms_euler_set(&m_tms, data);
     if(err_code != NRF_SUCCESS)
     {
-        NRF_LOG_INFO("ble_tms_raw_set err_code: %d", err_code);
+        NRF_LOG_INFO("ble_tms_euler_set err_code: %d", err_code);
     }
 }
 
@@ -255,7 +255,7 @@ static void ble_tms_evt_handler(ble_tms_t        * p_tms,
                                 uint8_t          * p_data,
                                 uint16_t           length)
 {
-    NRF_LOG_DEBUG("ble_tms_evt_handler called");
+    NRF_LOG_DEBUG("ble_tms_evt_handler called: %d", evt_type);
     ret_code_t err_code;
     
     switch (evt_type)
@@ -294,6 +294,10 @@ static void ble_tms_evt_handler(ble_tms_t        * p_tms,
 
         case BLE_TMS_EVT_NOTIF_GRAVITY:
             NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_GRAVITY - %d\r\n", p_tms->is_gravity_notif_enabled);
+            break;
+
+        case BLE_TMS_EVT_NOTIF_INFO:
+            NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_INFO - %d\r\n", p_tms->is_info_notif_enabled);
             break;
 
         case BLE_TMS_EVT_CONFIG_RECEIVED:
@@ -1061,7 +1065,10 @@ static void ts_evt_callback(const ts_evt_t* evt)
             // Temp disable TimeSync for x seconds to disable power
             do{
                 err_code = ts_temp_disable();
-                if(err_code != NRF_ERROR_BUSY) APP_ERROR_CHECK(err_code);
+                
+                // Problem here: Receiver can't be disabled when it's already disabled
+                // NRF_ERROR_FORBIDDEN when this happens, just neglect this error code and we will be fine
+                if(err_code != NRF_ERROR_BUSY && err_code != NRF_ERROR_FORBIDDEN) APP_ERROR_CHECK(err_code);
             }while(err_code == NRF_ERROR_BUSY);
 
             ts_start_idle_timer(10);

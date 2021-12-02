@@ -139,7 +139,7 @@ static nrf_atomic_flag_t m_send_sync_pkt = false;
 static nrf_atomic_flag_t m_timer_update_in_progress = false;
 
 static bool m_synchronized = false;
-static bool receiver_enabled = false;
+static volatile bool receiver_enabled = false;
 
 static volatile int64_t  m_master_counter_diff = 0;
 static nrf_atomic_u32_t  m_rcv_count      = 0;

@@ -46,7 +46,7 @@
 
 #define BLE_UUID_TMS_CONFIG_CHAR      0x0401                      /**< The UUID of the config Characteristic. */
 #define BLE_UUID_TMS_TAP_CHAR         0x0402                      /**< The UUID of the tap Characteristic. */
-#define BLE_UUID_TMS_ADC_CHAR 0x0403                      /**< The UUID of the adc Characteristic. */
+#define BLE_UUID_TMS_ADC_CHAR         0x0403                      /**< The UUID of the adc Characteristic. */
 #define BLE_UUID_TMS_QUATERNION_CHAR  0x0404                      /**< The UUID of the quaternion Characteristic. */
 #define BLE_UUID_TMS_PEDOMETER_CHAR   0x0405                      /**< The UUID of the pedometer Characteristic. */
 #define BLE_UUID_TMS_RAW_CHAR         0x0406                      /**< The UUID of the raw data Characteristic. */
