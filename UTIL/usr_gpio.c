@@ -30,6 +30,12 @@
 
 #include "app_gpiote.h"
 
+// Softblink LED
+#include "led_softblink.h"
+#include "app_timer.h"
+#include "nrf_drv_clock.h"
+#include "app_util_platform.h"
+
 
 /**
  * @brief Function for configuring: PIN_IN pin for input, PIN_OUT pin for output,
@@ -119,4 +125,47 @@ void led_deinit()
 	nrf_gpio_pin_clear(TIMESYNC_PIN);
 	// Set to default pin configuration: input with no pull resistors
 	// nrf_gpio_cfg_default(TIMESYNC_PIN);
+}
+
+
+void LED_softblink_start()
+{
+    ret_code_t err_code;
+
+	// Normally gets initialized by Softdevice
+    // lfclk_init();
+
+	// Is already initialized elsewhere before
+    // // Start APP_TIMER to generate timeouts.
+    // err_code = app_timer_init();
+    // APP_ERROR_CHECK(err_code);
+
+
+
+	led_sb_init_params_t led_sb_init_param = LED_SB_INIT_DEFAULT_PARAMS(13);
+
+	led_sb_init_param.active_high = true;
+
+	// {                                                                   \
+	// 	.active_high        = LED_SB_INIT_PARAMS_ACTIVE_HIGH,           \
+	// 	.duty_cycle_max     = 220,        \
+	// 	.duty_cycle_min     = 0,        \
+	// 	.duty_cycle_step    = 5,       \
+	// 	.off_time_ticks     = 65536,        \
+	// 	.on_time_ticks      = 0,         \
+	// 	.leds_pin_bm        = TIMESYNC_PIN,     \
+	// 	.p_leds_port        = NRF_GPIO              \
+	// };
+	
+	NRF_LOG_INFO("Led Softblink Init");
+
+	err_code = led_softblink_init(&led_sb_init_param);
+	APP_ERROR_CHECK(err_code);
+
+	NRF_LOG_INFO("Led Softblink Start");
+
+	err_code = led_softblink_start(13);
+	APP_ERROR_CHECK(err_code);
+
+	NRF_LOG_INFO("Led Softblink Enabled");
 }
