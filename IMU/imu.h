@@ -22,6 +22,7 @@
 #define TIMESYNC_PIN    13
 #define IMU_POWER_PIN 14
 #define INT_PIN	20
+#define QI_CHG_PIN 7
 #define USR_TWI_SCL 16
 #define USR_TWI_SDA 15
 #define USR_RX_PIN_NUMBER   11

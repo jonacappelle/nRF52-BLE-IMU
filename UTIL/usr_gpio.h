@@ -33,14 +33,18 @@
 #include "nrf_delay.h"
 
 
-
-
 void gpio_init(void);
 void gpiote_evt_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action);
 
 void led_init();
 void led_deinit();
+void led_on();
+void led_off();
+void led_toggle();
+void led_flash2();
 
 void LED_softblink_start();
+void led_chg_start();
+void led_chg_stop();
 
 #endif

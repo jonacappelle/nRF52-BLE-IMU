@@ -39,6 +39,7 @@ NRF_LOG_MODULE_REGISTER();
 
 // GPIO
 #include "nrf_drv_gpiote.h"
+#include "usr_gpio.h"
 
 // Application scheduler
 #include "app_scheduler.h"
@@ -881,13 +882,8 @@ void imu_evt_poll_sceduled(void * p_event_data, uint16_t event_size)
 			// Initialize ADC
 			usr_adc_init();
 
-			nrf_gpio_pin_set(TIMESYNC_PIN);
-			nrf_delay_ms(50);
-			nrf_gpio_pin_clear(TIMESYNC_PIN);
-			nrf_delay_ms(200);
-			nrf_gpio_pin_set(TIMESYNC_PIN);
-			nrf_delay_ms(50);
-			nrf_gpio_pin_clear(TIMESYNC_PIN);
+			// Flash LED briefly
+			led_flash2();
 
 		}else{
 			// Poll all data from IMU
@@ -1901,7 +1897,7 @@ void store_offsets(void)
  */
 static void calibration_timer_handler(void * p_context)
 {
-    nrf_gpio_pin_toggle(TIMESYNC_PIN);
+    led_toggle();
 }
 
 
@@ -1933,5 +1929,5 @@ void stop_calibration_timer()
     err_code = app_timer_stop(calibration_timer);
     APP_ERROR_CHECK(err_code);
 
-    nrf_gpio_pin_clear(TIMESYNC_PIN);
+    led_off();
 }

@@ -424,7 +424,7 @@ static void ts_start_trigger(ble_tms_config_t* p_evt)
     ret_code_t err_code;
 
     // Set timesync pin low
-    nrf_gpio_pin_clear(TIMESYNC_PIN);
+    led_off();
 
     // Print start time
     NRF_LOG_INFO("time.sync_start_time %d", p_evt->sync_start_time);
@@ -982,7 +982,7 @@ void timesync_pin_toggle(uint32_t tick)
     // Toggle on multiples of 100 ticks
     if( (tick % 1000) == 0)
     {
-        nrf_gpio_pin_toggle(TIMESYNC_PIN);
+        led_toggle();
     }
 }
 
@@ -1055,7 +1055,7 @@ static void ts_evt_callback(const ts_evt_t* evt)
             break;
         case TS_EVT_DESYNCHRONIZED:
             NRF_LOG_INFO("TS_EVT_DESYNCHRONIZED");
-            nrf_gpio_pin_clear(TIMESYNC_PIN);
+            led_off();
             ts_imu_trigger_disable();
             ts_evt_synchronized_disable();
             break;
@@ -1127,7 +1127,7 @@ static void ts_evt_callback(const ts_evt_t* evt)
                     }
                     APP_ERROR_CHECK(err_code);
 
-                    nrf_gpio_pin_toggle(TIMESYNC_PIN);
+                    led_toggle();
 
                 }
                 else
@@ -1136,7 +1136,7 @@ static void ts_evt_callback(const ts_evt_t* evt)
                     nrf_gpiote_task_set(NRF_GPIOTE_TASKS_CLR_3);
 
                     // Set pin low when triggering is stopped
-                    nrf_gpio_pin_clear(TIMESYNC_PIN);
+                    led_off();
 
                     NRF_LOG_INFO("Triggering stopped");
                 }

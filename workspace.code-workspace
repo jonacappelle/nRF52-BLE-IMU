@@ -44,7 +44,9 @@
 			"nrf_log_ctrl.h": "c",
 			"usr_adc.h": "c",
 			"app_util_platform.h": "c",
-			"custom_board.h": "c"
+			"custom_board.h": "c",
+			"bsp_btn_ble.h": "c",
+			"led_softblink.h": "c"
 		}
 	}
 }

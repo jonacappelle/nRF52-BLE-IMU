@@ -74,11 +74,8 @@ int main(void)
 		/* Initialize GPIO pins */
 		gpio_init();
 
-		// Soft blink LED when wireless charging or measuring
-		LED_softblink_start();
-
 		/* Init LED */
-		//led_init();
+		led_init();
 
 		// Initialize all needed timers
 		imu_timers_init();
@@ -101,7 +98,8 @@ int main(void)
 		// Initialize calibration timer
 		create_calibration_timer();
 
-
+		// Soft blink LED when wireless charging or measuring
+		LED_softblink_start();
 
 		// WDT
 		wdt_init();

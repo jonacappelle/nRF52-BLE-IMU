@@ -36,6 +36,32 @@
 #include "nrf_drv_clock.h"
 #include "app_util_platform.h"
 
+// #define USR_LED_SOFTBLINK_ENABLED
+
+static bool qi_chg_enabled = 0;
+
+/* Interrupt pin handeler callback function */
+void qi_chg_evt_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action)
+{
+
+	NRF_LOG_INFO("Evt handler: QI CHG")
+	uint32_t state = 0;
+
+	// Read state
+	state = nrf_gpio_pin_read(QI_CHG_PIN);
+
+	if(!state) //  Active low
+	{
+		// Enable LED
+		led_chg_start();
+
+	}else{
+		// Disable LED
+		led_chg_stop();
+	}
+
+}
+
 
 /**
  * @brief Function for configuring: PIN_IN pin for input, PIN_OUT pin for output,
@@ -76,6 +102,20 @@ void gpio_init(void)
 	// nrf_gpio_cfg_output(PIN_CPU_ACTIVITY);
 	// nrf_gpio_cfg_output(PIN_IMU_ACTIVITY);
 
+
+
+	// CHARGING LED INDICATION
+	nrf_drv_gpiote_in_config_t qi_config = GPIOTE_CONFIG_IN_SENSE_TOGGLE(true);
+
+	err_code = nrf_drv_gpiote_in_init(QI_CHG_PIN, &qi_config, qi_chg_evt_handler);
+    APP_ERROR_CHECK(err_code);
+
+    nrf_drv_gpiote_in_event_enable(QI_CHG_PIN, true);
+
+	NRF_LOG_INFO("IMU GPIO Init");
+	
+
+
 }
 
 static void led_flash()
@@ -84,9 +124,9 @@ static void led_flash()
 	{
 		for(uint8_t i=0; i<2; i++)
 		{
-			nrf_gpio_pin_set(TIMESYNC_PIN);
+			led_on();
 			nrf_delay_ms(100);
-			nrf_gpio_pin_clear(TIMESYNC_PIN);
+			led_off();
 			nrf_delay_ms(100);
 		}
 		nrf_delay_ms(400);
@@ -97,6 +137,7 @@ void led_init()
 {
 	ret_code_t err_code;
 
+	#ifndef USR_LED_SOFTBLINK_ENABLED
 	// Set pin mode as output
 	nrf_gpio_cfg_output(TIMESYNC_PIN);
 
@@ -105,28 +146,64 @@ void led_init()
 	// {
 		led_flash();
 	// }
-	
-
-	// while(1){
-	// 	nrf_gpio_pin_set(TIMESYNC_PIN);
-	// 	nrf_delay_ms(1000);
-	// 	nrf_gpio_pin_clear(TIMESYNC_PIN);
-	// 	nrf_delay_ms(1000);
-	// }
-
 
 	// Some delay - may not be necessary
 	// nrf_delay_ms(10000);
+	#endif
 }
 
 void led_deinit()
 {
 	// Set pin low to disable LED
-	nrf_gpio_pin_clear(TIMESYNC_PIN);
+	led_off();
 	// Set to default pin configuration: input with no pull resistors
 	// nrf_gpio_cfg_default(TIMESYNC_PIN);
 }
 
+
+void led_on()
+{
+	#ifndef USR_LED_SOFTBLINK_ENABLED
+	if(!qi_chg_enabled) nrf_gpio_pin_set(TIMESYNC_PIN);
+	#endif
+}
+
+void led_off()
+{
+	#ifndef USR_LED_SOFTBLINK_ENABLED
+	if(!qi_chg_enabled) nrf_gpio_pin_clear(TIMESYNC_PIN);
+	#endif
+}
+
+void led_toggle()
+{
+	#ifndef USR_LED_SOFTBLINK_ENABLED
+	if(!qi_chg_enabled) nrf_gpio_pin_toggle(TIMESYNC_PIN);
+	#endif
+}
+
+void led_flash2()
+{
+	led_on();
+	nrf_delay_ms(50);
+	led_off();
+	nrf_delay_ms(200);
+	led_on();
+	nrf_delay_ms(50);
+	led_off();
+}
+
+static void lfclk_init(void)
+{
+    uint32_t err_code;
+    err_code = nrf_drv_clock_init();
+    APP_ERROR_CHECK(err_code);
+
+    nrf_drv_clock_lfclk_request(NULL);
+}
+
+
+#define TIMESYNC_PIN_MASK PIN_MASK(TIMESYNC_PIN)
 
 void LED_softblink_start()
 {
@@ -136,36 +213,53 @@ void LED_softblink_start()
     // lfclk_init();
 
 	// Is already initialized elsewhere before
-    // // Start APP_TIMER to generate timeouts.
+    // Start APP_TIMER to generate timeouts.
     // err_code = app_timer_init();
     // APP_ERROR_CHECK(err_code);
 
 
-
-	led_sb_init_params_t led_sb_init_param = LED_SB_INIT_DEFAULT_PARAMS(13);
+	led_sb_init_params_t led_sb_init_param = LED_SB_INIT_DEFAULT_PARAMS(TIMESYNC_PIN_MASK);
 
 	led_sb_init_param.active_high = true;
-
-	// {                                                                   \
-	// 	.active_high        = LED_SB_INIT_PARAMS_ACTIVE_HIGH,           \
-	// 	.duty_cycle_max     = 220,        \
-	// 	.duty_cycle_min     = 0,        \
-	// 	.duty_cycle_step    = 5,       \
-	// 	.off_time_ticks     = 65536,        \
-	// 	.on_time_ticks      = 0,         \
-	// 	.leds_pin_bm        = TIMESYNC_PIN,     \
-	// 	.p_leds_port        = NRF_GPIO              \
-	// };
+	led_sb_init_param.leds_pin_bm = TIMESYNC_PIN_MASK;
+	led_sb_init_param.duty_cycle_min = 10;
+	led_sb_init_param.duty_cycle_step = 2;
 	
 	NRF_LOG_INFO("Led Softblink Init");
 
 	err_code = led_softblink_init(&led_sb_init_param);
 	APP_ERROR_CHECK(err_code);
 
-	NRF_LOG_INFO("Led Softblink Start");
+	led_softblink_on_time_set(5000);
+	led_softblink_off_time_set(5000);
 
-	err_code = led_softblink_start(13);
-	APP_ERROR_CHECK(err_code);
+	// NRF_LOG_INFO("Led Softblink Start");
+	// err_code = led_softblink_start(TIMESYNC_PIN_MASK);
+	// APP_ERROR_CHECK(err_code);
 
 	NRF_LOG_INFO("Led Softblink Enabled");
+}
+
+void led_chg_start()
+{
+	ret_code_t err_code;
+
+	NRF_LOG_INFO("Led Softblink Start");
+
+	qi_chg_enabled = 1;
+
+	err_code = led_softblink_start(TIMESYNC_PIN_MASK);
+	APP_ERROR_CHECK(err_code);
+}
+
+void led_chg_stop()
+{
+	ret_code_t err_code;
+
+	NRF_LOG_INFO("Led Softblink Stop");
+
+	err_code = led_softblink_stop();
+	APP_ERROR_CHECK(err_code);
+
+	qi_chg_enabled = 0;
 }
