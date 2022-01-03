@@ -222,16 +222,17 @@ void LED_softblink_start()
 
 	led_sb_init_param.active_high = true;
 	led_sb_init_param.leds_pin_bm = TIMESYNC_PIN_MASK;
-	led_sb_init_param.duty_cycle_min = 10;
+	led_sb_init_param.duty_cycle_min = 5;
 	led_sb_init_param.duty_cycle_step = 2;
+	led_sb_init_param.duty_cycle_max = 150;
 	
 	NRF_LOG_INFO("Led Softblink Init");
 
 	err_code = led_softblink_init(&led_sb_init_param);
 	APP_ERROR_CHECK(err_code);
 
-	led_softblink_on_time_set(5000);
-	led_softblink_off_time_set(5000);
+	led_softblink_on_time_set(0);
+	led_softblink_off_time_set(10000);
 
 	// NRF_LOG_INFO("Led Softblink Start");
 	// err_code = led_softblink_start(TIMESYNC_PIN_MASK);
