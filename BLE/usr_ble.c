@@ -172,6 +172,9 @@ static ble_uuid_t m_adv_uuids[]          =                                      
 };
 
 
+// Function prototypes
+static bool ts_evt_synchronized();
+
 
 
 void ble_send_quat(ble_tms_quat_t * data)
@@ -252,6 +255,17 @@ static void print_config(ble_tms_config_t* config)
 
 
 
+void sync_notif(void * p_event_data, uint16_t event_size)
+{
+    // Notify DCU that time is synced
+    if(ts_evt_synchronized())
+    {
+        NRF_LOG_INFO("sync_info_send conn_handle: %d", m_conn_handle);
+        sync_info_send(true);
+    }
+}
+
+
 // Motion service event handler
 static void ble_tms_evt_handler(ble_tms_t        * p_tms,
                                 ble_tms_evt_type_t evt_type,
@@ -301,6 +315,11 @@ static void ble_tms_evt_handler(ble_tms_t        * p_tms,
 
         case BLE_TMS_EVT_NOTIF_INFO:
             NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_INFO - %d\r\n", p_tms->is_info_notif_enabled);
+
+            // Pass change IMU settings to event handler
+            err_code = app_sched_event_put(0, 0, sync_notif);
+            APP_ERROR_CHECK(err_code);
+
             break;
 
         case BLE_TMS_EVT_CONFIG_RECEIVED:
@@ -1061,12 +1080,19 @@ static void ts_evt_callback(const ts_evt_t* evt)
             err_code = ts_set_trigger(time_target, nrf_gpiote_task_addr_get(NRF_GPIOTE_TASKS_OUT_3));
             APP_ERROR_CHECK(err_code);
 
+            // Let DCU know to state of sync of different sensors
+            sync_info_send(true);
+
             break;
         case TS_EVT_DESYNCHRONIZED:
             NRF_LOG_INFO("TS_EVT_DESYNCHRONIZED");
             led_off();
             ts_imu_trigger_disable();
             ts_evt_synchronized_disable();
+
+            // Let DCU know to state of sync of different sensors
+            sync_info_send(false);
+            
             break;
         case TS_EVT_SYNC_PACKET_RECEIVED:
             NRF_LOG_INFO("TS_EVT_SYNC_PACKET_RECEIVED");
@@ -1875,4 +1901,45 @@ void send_calibration(bool start, bool gyro_done, bool accel_done, bool mag_done
     NRF_LOG_INFO("---");
 }
 
+void sync_info_send(bool state)
+{
+    ret_code_t err_code;
 
+    ble_tms_info_t data;
+
+    // Initialize struct to all zeros
+    memset(&data, 0, sizeof(data));
+
+    if(state)
+    {
+        data.sync_complete = true;
+    }else{
+        data.sync_lost = true;
+    }
+
+    NRF_LOG_INFO("sync_info_send conn_handle: %d", m_conn_handle);
+    NRF_LOG_INFO("sync_info_send conn_handle enabled: %d", m_tms.is_info_notif_enabled);
+
+    // Send packet only when in a connection
+    if(m_conn_handle != BLE_CONN_HANDLE_INVALID)
+    {
+        err_code = ble_tms_info_set(&m_tms, &data);
+        if(err_code != NRF_SUCCESS)
+        {
+            if(err_code == NRF_ERROR_RESOURCES)
+            {
+                NRF_LOG_INFO("Packet lost");
+            }else{
+                NRF_LOG_INFO("ble_tms_info_set err_code: %d", err_code);
+                APP_ERROR_CHECK(err_code);            
+            }
+        }
+        APP_ERROR_CHECK(err_code);
+
+        NRF_LOG_INFO("---");
+        NRF_LOG_INFO("Send Sync Packet Info");
+        NRF_LOG_INFO("---");
+        NRF_LOG_INFO("Sync: %d", data.sync_complete);
+        NRF_LOG_INFO("---");
+    }
+}

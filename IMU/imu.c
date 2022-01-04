@@ -592,7 +592,7 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 //					(int)(event->data.mag.accuracy_flag), // 0 - 3: not calibrated - fully calibrated
 //					(int)(event->data.quaternion.accuracy_flag));
 				
-			NRF_LOG_INFO("accuracy: %d - %d", (int)(event->data.quaternion.accuracy_flag), (int)(event->data.quaternion.accuracy *1000));
+			// NRF_LOG_INFO("accuracy: %d - %d", (int)(event->data.quaternion.accuracy_flag), (int)(event->data.quaternion.accuracy *1000));
 
 
 				#ifdef USE_NUS

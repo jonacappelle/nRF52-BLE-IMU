@@ -1016,6 +1016,7 @@ void ble_tms_on_ble_evt(ble_tms_t * p_tms, ble_evt_t * p_ble_evt)
         case BLE_GAP_EVT_CONNECTED:
             on_connect(p_tms, p_ble_evt);
             NRF_LOG_DEBUG("BLE_GAP_EVT_CONNECTED");
+
             break;
 
         case BLE_GAP_EVT_DISCONNECTED:

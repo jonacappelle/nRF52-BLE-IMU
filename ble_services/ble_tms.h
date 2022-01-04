@@ -174,6 +174,8 @@ typedef PACKED( struct
     bool accel_calibration_drone;
     bool mag_calibration_done;
     bool calibration_done;
+    bool sync_complete;
+    bool sync_lost;
 }) ble_tms_info_t;
 
 
