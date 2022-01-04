@@ -1048,7 +1048,7 @@ ret_code_t imu_enable_sensors(ble_tms_config_t* p_evt)
 
 			calibration_callback();
 
-			NRF_LOG_INFO("Start GYRO");
+			NRF_LOG_INFO("Start GYRO for calibration");
 			rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_GYROSCOPE);
 			check_rc(rc);
 			rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_GYROSCOPE, IMU_DEFAULT_SAMPL_FREQ);
@@ -1056,7 +1056,7 @@ ret_code_t imu_enable_sensors(ble_tms_config_t* p_evt)
 			rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_GYROSCOPE);
 			check_rc(rc);
 
-			NRF_LOG_INFO("Start ACCEL");
+			NRF_LOG_INFO("Start ACCEL for calibration");
 			rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_ACCELEROMETER);
 			check_rc(rc);
 			rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_ACCELEROMETER, IMU_DEFAULT_SAMPL_FREQ);
@@ -1064,7 +1064,7 @@ ret_code_t imu_enable_sensors(ble_tms_config_t* p_evt)
 			rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_ACCELEROMETER);
 			check_rc(rc);
 
-			NRF_LOG_INFO("Start MAG");
+			NRF_LOG_INFO("Start MAG for calibration");
 			rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_MAGNETOMETER);
 			check_rc(rc);
 			rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_MAGNETOMETER, IMU_DEFAULT_SAMPL_FREQ);
@@ -1217,6 +1217,11 @@ void imu_init(void)
 
 		// Apply stored IMU offsets from flash
 		apply_stored_offsets();
+
+		NRF_LOG_INFO("Stored offsets applied");
+
+		NRF_LOG_INFO("IMU Initialized successfully");
+		NRF_LOG_FLUSH();
 
 
 #endif
@@ -1914,20 +1919,36 @@ void create_calibration_timer()
     APP_ERROR_CHECK(err_code);
 }
 
+
+
+bool calibration_timer_running = false;
+
 void start_calibration_timer(uint32_t ms)
 {
     ret_code_t err_code;
-    err_code = app_timer_start(calibration_timer, APP_TIMER_TICKS(ms), NULL);
-    APP_ERROR_CHECK(err_code);
 
+	// Only start when not running already
+	if(!calibration_timer_running)
+	{
+	    err_code = app_timer_start(calibration_timer, APP_TIMER_TICKS(ms), NULL);
+    	APP_ERROR_CHECK(err_code);	
 
+		calibration_timer_running = true;
+	}	
 }
 
 void stop_calibration_timer()
 {
     ret_code_t err_code;
-    err_code = app_timer_stop(calibration_timer);
-    APP_ERROR_CHECK(err_code);
+
+	// Only stop timer when timer is running
+	if(calibration_timer_running)
+	{
+		err_code = app_timer_stop(calibration_timer);
+    	APP_ERROR_CHECK(err_code);
+
+		calibration_timer_running = false;
+	}
 
     led_off();
 }

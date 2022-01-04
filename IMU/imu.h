@@ -14,9 +14,9 @@
 
 #define IMU_ENABLED 1
 
-#define COSTUM_BOARD    1
+#define COSTUM_BOARD    0
 #define SPARKFUN_BOARD  0
-#define NRF_DEV_BOARD   0
+#define NRF_DEV_BOARD   1
 
 #if COSTUM_BOARD == 1
 #define TIMESYNC_PIN    13
@@ -42,6 +42,7 @@
 #define TIMESYNC_PIN    17
 #define IMU_POWER_PIN 14
 #define INT_PIN	2
+#define QI_CHG_PIN 7
 #define USR_TWI_SCL 27
 #define USR_TWI_SDA 26
 #define USR_RX_PIN_NUMBER  8

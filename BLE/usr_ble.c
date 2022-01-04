@@ -120,8 +120,11 @@ extern imu_data_t imu_data;
 #include "nrf_bootloader_info.h"
 
 
+extern bool calibration_timer_running;
+
 ble_tms_config_t tms_cfg;
 
+static bool calibration_started = false;
 
 // Struct to keep track of TimeSync variables
 typedef struct{
@@ -234,7 +237,7 @@ static void print_config(ble_tms_config_t* config)
     if(config->euler_enabled) NRF_LOG_INFO("Euler enabled");
     if(config->quat6_enabled) NRF_LOG_INFO("QUAT6 enabled");
     if(config->quat9_enabled) NRF_LOG_INFO("QUAT9 enabled");
-    if(config->quat9_enabled) NRF_LOG_INFO("Calibration start enabled");
+    if(config->start_calibration) NRF_LOG_INFO("Calibration start enabled");
     NRF_LOG_INFO("Frequency: %d", config->motion_freq_hz);
 
     if(config->adc_enabled) NRF_LOG_INFO("ADC enabled");
@@ -316,6 +319,9 @@ static void ble_tms_evt_handler(ble_tms_t        * p_tms,
                 NRF_LOG_INFO("in if() statement");
                 ble_disconnect();
             }
+
+            // Keep track of when calibration has been started
+            calibration_started = tms_cfg.start_calibration;
 
             // Print out received config over RTT
             print_config(&tms_cfg);
@@ -459,7 +465,7 @@ void imu_config_evt_sceduled(void * p_event_data, uint16_t event_size)
 		APP_ERROR_CHECK(err_code);
         #endif
 
-        if( !config.wom_enabled )
+        if( !config.wom_enabled && !config.start_calibration )
         {
             // Set correct trigger period for TS_EVT_TRIGGERED
             ts_set_triggered_period(&config);
@@ -727,6 +733,9 @@ void sleep(void * p_event_data, uint16_t event_size)
     advertising_stop();
     NRF_LOG_INFO("advertising_stop");
     NRF_LOG_FLUSH();
+
+    // When in calibration mode - exit calibration mode when going to sleep
+    stop_calibration_timer();
 
     // Shutdown IMU and enable WoM
     imu_sleep_wom();
@@ -1127,7 +1136,12 @@ static void ts_evt_callback(const ts_evt_t* evt)
                     }
                     APP_ERROR_CHECK(err_code);
 
-                    led_toggle();
+                    // Only toggle LED when calibration is not running
+                    if(!calibration_timer_running)
+                    {
+                        led_toggle();
+                    }
+
 
                 }
                 else
@@ -1852,7 +1866,13 @@ void send_calibration(bool start, bool gyro_done, bool accel_done, bool mag_done
     }
     APP_ERROR_CHECK(err_code);
 
-    NRF_LOG_INFO("SEND_CALIBRATION!!!");
+    NRF_LOG_INFO("---");
+    NRF_LOG_INFO("Send Calibration Packet");
+    NRF_LOG_INFO("---");
+    NRF_LOG_INFO("Gyro: %d", data.gyro_calibration_done);
+    NRF_LOG_INFO("Accel: %d", data.accel_calibration_drone);
+    NRF_LOG_INFO("Mag: %d", data.mag_calibration_done);
+    NRF_LOG_INFO("---");
 }
 
 
