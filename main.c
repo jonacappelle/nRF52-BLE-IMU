@@ -63,7 +63,7 @@ int main(void)
 		check_reset_reason();
 
 		// Initialize the async SVCI interface to bootloader before any interrupts are enabled.
-		// dfu_async_init();
+		dfu_async_init();
 		
 		// Initialize everything related to BL
 		usr_ble_init();
