@@ -5,6 +5,8 @@
 
 #include "usr_ble_settings.h"
 
+#include "settings.h"
+
 #include <stdint.h>
 #include <string.h>
 #include "nordic_common.h"
@@ -1682,11 +1684,13 @@ void advertising_config_get(ble_adv_modes_config_t * p_config)
 
 void dfu_async_init()
 {
+#if DFU_ENABLED == 1
     ret_code_t err_code;
  
     // Initialize the async SVCI interface to bootloader before any interrupts are enabled.
     err_code = ble_dfu_buttonless_async_svci_init();
     APP_ERROR_CHECK(err_code);
+#endif
 }
 
 
@@ -1836,12 +1840,14 @@ void peer_manager_init()
  */
 static void delete_bonds(void)
 {
+#if DFU_ENABLED == 1
     ret_code_t err_code;
 
     NRF_LOG_INFO("Erase bonds!");
 
     err_code = pm_peers_delete();
     APP_ERROR_CHECK(err_code);
+#endif
 }
 
 

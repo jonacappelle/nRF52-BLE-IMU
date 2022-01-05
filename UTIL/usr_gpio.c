@@ -103,6 +103,7 @@ void gpio_init(void)
 	// nrf_gpio_cfg_output(PIN_IMU_ACTIVITY);
 
 
+#if QI_CHG_DETECTION_ENABLED == 1
 
 	// CHARGING LED INDICATION
 	nrf_drv_gpiote_in_config_t qi_config = GPIOTE_CONFIG_IN_SENSE_TOGGLE(true);
@@ -114,7 +115,7 @@ void gpio_init(void)
 
 	NRF_LOG_INFO("IMU GPIO Init");
 	
-
+#endif
 
 }
 

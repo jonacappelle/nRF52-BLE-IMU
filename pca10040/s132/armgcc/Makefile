@@ -274,6 +274,7 @@ INC_FOLDERS += \
   $(SDK_ROOT)/components/libraries/stack_guard \
   $(SDK_ROOT)/components/libraries/log/src \
   $(PROJ_DIR)/Invn \
+  $(PROJ_DIR) \
   $(PROJ_DIR)/Invn/Devices \
   $(PROJ_DIR)/Invn/Devices/Drivers \
   $(PROJ_DIR)/Invn/Devices/Drivers/Icm20948 \
