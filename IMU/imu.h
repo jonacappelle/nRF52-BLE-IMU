@@ -49,7 +49,7 @@
 #define USR_TX_PIN_NUMBER  6
 #endif
 
-#define IMU_DEFAULT_SAMPL_FREQ  4 // 225 Hz
+#define IMU_DEFAULT_SAMPL_FREQ  10 // 225 Hz
 
 
 #include "usr_util.h"

@@ -1638,35 +1638,35 @@ void usr_ble_init(void)
     power_management_init();
 
     // Initialize BLE stack
-    ble_stack_init();
+    // ble_stack_init();
 
     // for DFU
     // peer_manager_init();
 
     // Init Gap connection parameters
-    gap_params_init();
+    // gap_params_init();
 
     // Init GATT
-    gatt_init();
+    // gatt_init();
     
     // Init Queued write - NUS - Motion - Battery services
-    services_init();
+    // services_init();
 
     // Init Advertising
-    advertising_init();
+    // advertising_init();
 
     // Longer range for advertising - need to set this also in connection
-    set_transmit_power_4dbm();
+    // set_transmit_power_4dbm();
 
     // Init connection parameters
-    conn_params_init();
+    // conn_params_init();
 
     // Initialize time synchronization functionality
-    sync_timer_init();
-    ts_timer_init();
+    // sync_timer_init();
+    // ts_timer_init();
 
     // Start advertising
-    advertising_start();
+    // advertising_start();
 }
 
 

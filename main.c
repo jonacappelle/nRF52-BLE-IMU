@@ -81,34 +81,40 @@ int main(void)
 		imu_timers_init();
 	
 		// Initialize IMU
-		if(is_wdt_wakeup())
-		{
-			reset_wdt_wakeupt();
+		// if(is_wdt_wakeup())
+		// {
+		// 	reset_wdt_wakeupt();
 
-			// Power cycle IMU
-			imu_power_en(false);
-			nrf_delay_ms(500);
-		}
+		// 	// Power cycle IMU
+		// 	imu_power_en(false);
+		// 	nrf_delay_ms(500);
+		// }
 
-		imu_init();	
+		imu_init();
+
+		ble_tms_config_t evt;
+		evt.quat6_enabled = true;
+
+		imu_enable_sensors(&evt);
+
 
 		// Initialize ADC
-		usr_adc_init();
+		// usr_adc_init();
 
 		// Initialize calibration timer
-		create_calibration_timer();
+		// create_calibration_timer();
 
 		// Soft blink LED when wireless charging or measuring
-		LED_softblink_start();
+		// LED_softblink_start();
 
 		// WDT
-		wdt_init();
+		// wdt_init();
 
 		
 		// Main loop	
 		while(1)
 		{
-			feed_wdt();
+			// feed_wdt();
 
 			// nrf_delay_ms(6000);
 
@@ -119,7 +125,7 @@ int main(void)
 			// Flush all the debug info to RTT
 			NRF_LOG_FLUSH();
 
-			feed_wdt();
+			// feed_wdt();
 
 			// Enter low power mode when idle
 			idle_state_handle();

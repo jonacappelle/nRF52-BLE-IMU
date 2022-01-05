@@ -864,31 +864,31 @@ void imu_evt_poll_sceduled(void * p_event_data, uint16_t event_size)
     {
 		// nrf_gpio_pin_set(PIN_IMU_ACTIVITY);
 
-		if(imu_in_wom())
-		{
-			NRF_LOG_INFO("WoM wake-up");
+		// if(imu_in_wom())
+		// {
+		// 	NRF_LOG_INFO("WoM wake-up");
 
-			// Initialize IMU with DMP (Invensense Driver)
-			imu_re_init();
+		// 	// Initialize IMU with DMP (Invensense Driver)
+		// 	imu_re_init();
 
-			// Start advertising again
-			advertising_start();
+		// 	// Start advertising again
+		// 	advertising_start();
 
-			// Enable time syncrhonization
-			sync_timer_init();
+		// 	// Enable time syncrhonization
+		// 	sync_timer_init();
 
-			// TimeSync_enable();
+		// 	// TimeSync_enable();
 
-			// Initialize ADC
-			usr_adc_init();
+		// 	// Initialize ADC
+		// 	usr_adc_init();
 
-			// Flash LED briefly
-			led_flash2();
+		// 	// Flash LED briefly
+		// 	led_flash2();
 
-		}else{
+		// }else{
 			// Poll all data from IMU
 			inv_device_poll(device);
-		}
+		// }
 
 				// 		uint8_t temp[1];
 				// ICM_20948_registerRead(ICM_20948_REG_INT_STATUS, 1, temp);
@@ -1203,11 +1203,15 @@ void imu_init(void)
 		NRF_LOG_INFO("Data: 0x%x", whoami);
 		NRF_LOG_FLUSH();
 
+		nrf_delay_ms(500);
+
 		/* Configure and initialize the Icm20948 device */
 		NRF_LOG_INFO("Setting up ICM20948");
 		NRF_LOG_FLUSH();
 		rc += inv_device_setup(device);
 		check_rc(rc);
+
+		nrf_delay_ms(500);
 		
 		rc += inv_device_load(device, (int) NULL, dmp3_image, sizeof(dmp3_image), true /* verify */, (int) NULL);
 		check_rc(rc);
