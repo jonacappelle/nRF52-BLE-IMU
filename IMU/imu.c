@@ -334,6 +334,12 @@ void calibration_callback()
 		NRF_LOG_INFO("FULLY CALIBRATED");
 		stop_calibration_timer();
 		send_calibration(false, true, true, true);
+
+		// Reset accuracy when fully calibrated
+		imu_data.gyro_accuracy = 0;
+		imu_data.accel_accuracy = 0;
+		imu_data.mag_accuracy = 0;
+
 	}else if (imu_data.gyro_accuracy == 3 && imu_data.accel_accuracy == 3)
 	{
 		NRF_LOG_INFO("Start timer 200ms");

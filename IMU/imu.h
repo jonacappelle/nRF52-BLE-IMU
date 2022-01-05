@@ -63,6 +63,8 @@
 #define RAW_Q_FORMAT_GYR_COMMA_BITS 5    // Number of bits used for comma part of raw data.
 #define RAW_Q_FORMAT_CMP_COMMA_BITS 4    // Number of bits used for comma part of raw data.
 
+#define IMU_FULLY_CALIBRATED_VALUE  3
+
 
 /**@brief Motion features.
  */
