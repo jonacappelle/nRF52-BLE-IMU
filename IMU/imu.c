@@ -316,6 +316,8 @@ uint8_t test_troughput_array[132];
 
 void calibration_callback()
 {
+	ret_code_t err_code;
+
 	NRF_LOG_INFO("calibration callback");
 	// Set LED blink according to calibration scheme
 	// Blink slow when starting -> 1s
@@ -336,10 +338,16 @@ void calibration_callback()
 		stop_calibration_timer();
 		send_calibration(false, true, true, true);
 
+		// Stop IMU
+		ble_tms_config_t temp;
+		memset(&temp, 0, sizeof(temp)); // Reset values to zero -> Turn off all sensors
+		err_code = imu_enable_sensors(&temp);
+		APP_ERROR_CHECK(err_code);
+
 		// Reset accuracy when fully calibrated
-		imu_data.gyro_accuracy = 0;
-		imu_data.accel_accuracy = 0;
-		imu_data.mag_accuracy = 0;
+		// imu_data.gyro_accuracy = 0;
+		// imu_data.accel_accuracy = 0;
+		// imu_data.mag_accuracy = 0;
 
 	}else if (imu_data.gyro_accuracy == 3 && imu_data.accel_accuracy == 3)
 	{
@@ -1058,6 +1066,11 @@ ret_code_t imu_enable_sensors(ble_tms_config_t* p_evt)
 		if(p_evt->start_calibration)
 		{
 			NRF_LOG_INFO("Start calibration");
+
+			// Reset status before starting calibration
+			imu_data.gyro_accuracy = 0;
+			imu_data.accel_accuracy = 0;
+			imu_data.mag_accuracy = 0;
 
 			calibration_callback();
 
