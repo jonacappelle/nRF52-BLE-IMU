@@ -316,6 +316,7 @@ uint8_t test_troughput_array[132];
 
 void calibration_callback()
 {
+	NRF_LOG_INFO("calibration callback");
 	// Set LED blink according to calibration scheme
 	// Blink slow when starting -> 1s
 	// Blink faster when gyro is calibrated -> 500ms
@@ -455,6 +456,8 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 				imu_data.accel.y =      (int16_t)((event->data.acc.vect[1]) * (1 << RAW_Q_FORMAT_ACC_COMMA_BITS));
 				imu_data.accel.z =      (int16_t)((event->data.acc.vect[2]) * (1 << RAW_Q_FORMAT_ACC_COMMA_BITS));
 
+				NRF_LOG_INFO("Cal status: accel: %d", event->data.acc.accuracy_flag);
+
 				// Save accuracy flag if it changes
 				if(event->data.acc.accuracy_flag != imu_data.accel_accuracy)
 				{
@@ -504,6 +507,8 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 				imu_data.gyro.y =       (int16_t)((event->data.gyr.vect[1]) * (1 << RAW_Q_FORMAT_GYR_COMMA_BITS));
 				imu_data.gyro.z =       (int16_t)((event->data.gyr.vect[2]) * (1 << RAW_Q_FORMAT_GYR_COMMA_BITS));
 
+				NRF_LOG_INFO("Cal status: gyro: %d", event->data.gyr.accuracy_flag);
+
 				// Save accuracy flag
 				if(event->data.gyr.accuracy_flag != imu_data.gyro_accuracy)
 				{
@@ -552,6 +557,8 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 				imu_data.mag.y =   -(int16_t)((event->data.mag.vect[0]) * (1 << RAW_Q_FORMAT_CMP_COMMA_BITS)); // Changed axes and inverted. Corrected for rotation of axes.
 				imu_data.mag.x =    (int16_t)((event->data.mag.vect[1]) * (1 << RAW_Q_FORMAT_CMP_COMMA_BITS)); // Changed axes. Corrected for rotation of axes.
 				imu_data.mag.z =    (int16_t)((event->data.mag.vect[2]) * (1 << RAW_Q_FORMAT_CMP_COMMA_BITS));
+
+				NRF_LOG_INFO("Cal status: mag: %d", event->data.mag.accuracy_flag);
 
 				// Save accuracy flag
 				if(event->data.mag.accuracy_flag != imu_data.mag_accuracy) 
@@ -1123,6 +1130,12 @@ void imu_power_en(bool enable)
 {
 	ret_code_t err_code;
 
+#if BYPASS_IMU_VDD == 1
+	nrf_gpio_cfg_input(IMU_POWER_PIN, NRF_GPIO_PIN_NOPULL);
+#endif
+
+#if BYPASS_IMU_VDD == 0
+
 	if(enable)
 	{
 		// Set pin modes - set high drive strength
@@ -1147,6 +1160,8 @@ void imu_power_en(bool enable)
 
 	// Some delay - may not be necessary
 	nrf_delay_ms(100);
+	
+#endif
 }
 
 
@@ -1909,6 +1924,8 @@ void store_offsets(void)
 static void calibration_timer_handler(void * p_context)
 {
     led_toggle();
+
+	// NRF_LOG_INFO("Cal status: g: %d, a: %d, m: %d", imu_data.gyro_accuracy, imu_data.accel_accuracy, imu_data.mag_accuracy);
 }
 
 

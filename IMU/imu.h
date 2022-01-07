@@ -10,12 +10,13 @@
 
 /* Interrupt pin number */
 
-#define IMU_ENABLED 1
-#define QI_CHG_DETECTION_ENABLED 0
+#define IMU_ENABLED                 1
+#define BYPASS_IMU_VDD              1
+#define QI_CHG_DETECTION_ENABLED    0
 
-#define COSTUM_BOARD    1
-#define SPARKFUN_BOARD  0
-#define NRF_DEV_BOARD   0
+#define COSTUM_BOARD                1
+#define SPARKFUN_BOARD              0
+#define NRF_DEV_BOARD               0
 
 #if COSTUM_BOARD == 1
 #define TIMESYNC_PIN    13

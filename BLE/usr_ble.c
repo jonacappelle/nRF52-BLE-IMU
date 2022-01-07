@@ -1840,19 +1840,20 @@ void peer_manager_init()
  */
 static void delete_bonds(void)
 {
-#if DFU_ENABLED == 1
+
     ret_code_t err_code;
 
     NRF_LOG_INFO("Erase bonds!");
 
     err_code = pm_peers_delete();
     APP_ERROR_CHECK(err_code);
-#endif
+
 }
 
 
 void ble_dfu_init()
 {
+#if DFU_ENABLED == 1
     ret_code_t err_code;
 
     ble_dfu_buttonless_init_t dfus_init = {0};
@@ -1861,6 +1862,7 @@ void ble_dfu_init()
 
     err_code = ble_dfu_buttonless_init(&dfus_init);
     APP_ERROR_CHECK(err_code);
+#endif
 }
 
 
