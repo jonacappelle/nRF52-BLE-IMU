@@ -12,7 +12,7 @@
 
 #define IMU_ENABLED                 1
 #define BYPASS_IMU_VDD              1
-#define QI_CHG_DETECTION_ENABLED    0
+#define QI_CHG_DETECTION_ENABLED    1
 
 #define COSTUM_BOARD                1
 #define SPARKFUN_BOARD              0
@@ -195,7 +195,7 @@ void imu_power_en(bool enable);
 
 uint32_t imu_enable_sensors(ble_tms_config_t* self);
 
-void imu_send_data(ble_tms_config_t* p_evt);
+void imu_send_data(ble_tms_config_t* p_evt, uint32_t sample_time_ms);
 
 // Init and de-init FIFO buffers
 static void imu_buff_init();

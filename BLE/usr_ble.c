@@ -128,6 +128,8 @@ ble_tms_config_t tms_cfg;
 
 static bool calibration_started = false;
 
+uint64_t data_sampling_time_start = 0;
+
 // Struct to keep track of TimeSync variables
 typedef struct{
     uint32_t sync_interval_int_time; // How much time between measurements - (In increments of 2.5 ms)
@@ -183,15 +185,18 @@ void ble_send_quat(ble_tms_quat_t * data)
 {
     ret_code_t err_code;
 
-    err_code = ble_tms_quat_set(&m_tms, data);
-    if(err_code != NRF_SUCCESS)
+    if(m_conn_handle != BLE_CONN_HANDLE_INVALID)
     {
-        if(err_code == NRF_ERROR_RESOURCES)
+        err_code = ble_tms_quat_set(&m_tms, data);
+        if(err_code != NRF_SUCCESS)
         {
-            NRF_LOG_INFO("Packet lost");
-        }else{
-            NRF_LOG_INFO("ble_tms_quat_set err_code: %d", err_code);
-            APP_ERROR_CHECK(err_code);            
+            if(err_code == NRF_ERROR_RESOURCES)
+            {
+                NRF_LOG_INFO("Packet lost");
+            }else{
+                NRF_LOG_INFO("ble_tms_quat_set err_code: %d", err_code);
+                APP_ERROR_CHECK(err_code);            
+            }
         }
     }
 }
@@ -200,33 +205,42 @@ void ble_send_raw(ble_tms_raw_t * data)
 {
     ret_code_t err_code;
 
-    err_code = ble_tms_raw_set(&m_tms, data);	
-    if(err_code != NRF_SUCCESS)
+    if(m_conn_handle != BLE_CONN_HANDLE_INVALID)
     {
-        NRF_LOG_INFO("ble_tms_raw_set err_code: %d", err_code);
-        APP_ERROR_CHECK(err_code);
-    }    
+        err_code = ble_tms_raw_set(&m_tms, data);	
+        if(err_code != NRF_SUCCESS)
+        {
+            NRF_LOG_INFO("ble_tms_raw_set err_code: %d", err_code);
+            APP_ERROR_CHECK(err_code);
+        }    
+    }
 }
 
 void ble_send_adc(ble_tms_adc_t * data)
 {
     ret_code_t err_code;
 
-    err_code = ble_tms_adc_set(&m_tms, data);
-    if(err_code != NRF_SUCCESS)
+    if(m_conn_handle != BLE_CONN_HANDLE_INVALID)
     {
-        NRF_LOG_INFO("ble_tms_adc_set err_code: %d", err_code);
-    } 
+        err_code = ble_tms_adc_set(&m_tms, data);
+        if(err_code != NRF_SUCCESS)
+        {
+            NRF_LOG_INFO("ble_tms_adc_set err_code: %d", err_code);
+        } 
+    }
 }
 
 void ble_send_euler(ble_tms_euler_t * data)
 {
     ret_code_t err_code;
 
-    err_code = ble_tms_euler_set(&m_tms, data);
-    if(err_code != NRF_SUCCESS)
+    if(m_conn_handle != BLE_CONN_HANDLE_INVALID)
     {
-        NRF_LOG_INFO("ble_tms_euler_set err_code: %d", err_code);
+        err_code = ble_tms_euler_set(&m_tms, data);
+        if(err_code != NRF_SUCCESS)
+        {
+            NRF_LOG_INFO("ble_tms_euler_set err_code: %d", err_code);
+        }
     }
 }
 
@@ -446,6 +460,7 @@ static void ts_set_triggered_period(ble_tms_config_t* self)
     }
 }
 
+
 static void ts_start_trigger(ble_tms_config_t* p_evt)
 {
     ret_code_t err_code;
@@ -460,7 +475,11 @@ static void ts_start_trigger(ble_tms_config_t* p_evt)
     {
         err_code = ts_set_trigger(p_evt->sync_start_time, nrf_gpiote_task_addr_get(NRF_GPIOTE_TASKS_OUT_3));
         APP_ERROR_CHECK(err_code);
-        ts.m_imu_trigger_enabled = 1 ;
+        ts.m_imu_trigger_enabled = 1;
+
+        // Set start data sampling time
+        data_sampling_time_start = p_evt->sync_start_time;
+
     }else{
         ts.m_imu_trigger_enabled = 0;
     }
@@ -719,6 +738,9 @@ static void imu_clear_struct(ble_tms_config_t* data)
 void sleep(void * p_event_data, uint16_t event_size)
 {
     ret_code_t err_code;
+
+    // Stop trigger from starting packet transmission when syncronization is enabled
+    ts.m_imu_trigger_enabled = 0;
 
     // Clear IMU params
     imu_clear_struct(&tms_cfg);
@@ -1108,7 +1130,7 @@ static void ts_evt_callback(const ts_evt_t* evt)
                 if(err_code != NRF_ERROR_BUSY && err_code != NRF_ERROR_FORBIDDEN) APP_ERROR_CHECK(err_code);
             }while(err_code == NRF_ERROR_BUSY);
 
-            ts_start_idle_timer(10);
+            ts_start_idle_timer(30);
 
             break;
         case TS_EVT_TRIGGERED:
@@ -1147,8 +1169,19 @@ static void ts_evt_callback(const ts_evt_t* evt)
                     // Toggle LED to measure TimeSync
                     timesync_pin_toggle(tick_target);
 
+                    // Convert sample time of IMU packet to ms
+                    // imu_sample_time_tick => ticks since start of measurement
+                    uint64_t imu_sample_time_ms = evt->params.triggered.tick_target - data_sampling_time_start;
+
+
                     // Process IMU BLE packet for sending
-                    imu_send_data(&tms_cfg);
+                    imu_send_data(&tms_cfg, (uint32_t) imu_sample_time_ms);
+
+                    // NRF_LOG_INFO("tick target: %d", evt->params.triggered.tick_target);
+                    // NRF_LOG_INFO("start tick: %d", data_sampling_time_start);
+
+                    // NRF_LOG_INFO("time: %d", imu_sample_time_ms);
+
                 }
                 else if (ts_evt_synchronized()) // When synchronized but not yet measuring
                 {

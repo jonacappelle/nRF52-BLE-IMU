@@ -132,6 +132,7 @@ typedef PACKED( struct
     ble_tms_raw_accel_t   accel;
     ble_tms_raw_gyro_t    gyro;
     ble_tms_raw_compass_t compass;
+    uint32_t timestamp_ms;
 }) ble_tms_single_raw_t;
 
 typedef PACKED( struct
@@ -150,6 +151,7 @@ typedef PACKED( struct
 typedef PACKED( struct
 {
     uint32_t raw[40];
+    uint32_t timestamp_ms;
 })ble_tms_adc_t;
 
 typedef PACKED( struct
@@ -159,6 +161,7 @@ typedef PACKED( struct
     int32_t x;
     int32_t y;
     int32_t z;
+    uint32_t timestamp_ms;
 }) ble_tms_single_quat_t;
 
 typedef PACKED( struct
@@ -184,6 +187,7 @@ typedef PACKED( struct
     int32_t roll;
     int32_t pitch;
     int32_t yaw;
+    uint32_t timestamp_ms;
 }) ble_tms_euler_t;
 
 typedef PACKED( struct

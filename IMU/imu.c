@@ -1353,7 +1353,7 @@ uint8_t number_of_raw_packets = 0;
 
 
 
-void imu_send_data(ble_tms_config_t* p_evt)
+void imu_send_data(ble_tms_config_t* p_evt, uint32_t sample_time_ms)
 {
 	ret_code_t err_code;
 
@@ -1370,6 +1370,9 @@ void imu_send_data(ble_tms_config_t* p_evt)
 		single_quat.x = imu_data.quat.x;
 		single_quat.y = imu_data.quat.y;
 		single_quat.z = imu_data.quat.z;
+
+		// Add timestamp
+		single_quat.timestamp_ms = sample_time_ms;
 
 		// Put data in send buffer
 		err_code = app_fifo_write(&buff.quat_fifo, (uint8_t *) &single_quat, &single_quat_len);
@@ -1422,6 +1425,9 @@ void imu_send_data(ble_tms_config_t* p_evt)
 		single_raw.compass.y = imu_data.mag.y;
 		single_raw.compass.z = imu_data.mag.z;
 
+		// Add timestamp
+		single_raw.timestamp_ms = sample_time_ms;
+
 		// Put data in send buffer
 		err_code = app_fifo_write(&buff.raw_fifo, (uint8_t *) &single_raw, &single_raw_len);
 		if (err_code == NRF_ERROR_NO_MEM)
@@ -1456,6 +1462,9 @@ void imu_send_data(ble_tms_config_t* p_evt)
 		data.pitch = imu_data.euler.pitch;
 		data.roll = imu_data.euler.roll;
 
+		// Add timestamp
+		data.timestamp_ms = sample_time_ms;
+
 		// Send data over BLE
 		ble_send_euler(&data);
 
@@ -1466,6 +1475,9 @@ void imu_send_data(ble_tms_config_t* p_evt)
 		ble_tms_adc_t data;
 
 		data.raw[0] = 1;
+
+		// Add timestamp
+		data.timestamp_ms = sample_time_ms;
 
 		ble_send_adc(&data);
 	}
