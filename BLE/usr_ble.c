@@ -486,6 +486,8 @@ static void ts_start_trigger(ble_tms_config_t* p_evt)
     NRF_LOG_INFO("ts.sync_interval_int_time: %d", ts.sync_interval_int_time);
 }
 
+
+
 // Event handler DIY
 /**@brief GPIOTE sceduled handler, executed in main-context.
  */
@@ -505,6 +507,8 @@ void imu_config_evt_sceduled(void * p_event_data, uint16_t event_size)
 		APP_ERROR_CHECK(err_code);
         #endif
 
+        set_config_calibration(config.start_calibration);
+
         if( !config.wom_enabled && !config.start_calibration )
         {
             // Set correct trigger period for TS_EVT_TRIGGERED
@@ -519,6 +523,17 @@ void imu_config_evt_sceduled(void * p_event_data, uint16_t event_size)
             // TODO: ADC needs to be implemented
             // adc_enable(imu);
         }
+}
+
+static bool is_config_calibration = false;
+bool config_is_calibration_active()
+{
+    return is_config_calibration;
+}
+
+void set_config_calibration(bool state)
+{
+    is_config_calibration = state;
 }
 
 

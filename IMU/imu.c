@@ -464,13 +464,18 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 				imu_data.accel.y =      (int16_t)((event->data.acc.vect[1]) * (1 << RAW_Q_FORMAT_ACC_COMMA_BITS));
 				imu_data.accel.z =      (int16_t)((event->data.acc.vect[2]) * (1 << RAW_Q_FORMAT_ACC_COMMA_BITS));
 
-				NRF_LOG_INFO("Cal status: accel: %d", event->data.acc.accuracy_flag);
+				
 
 				// Save accuracy flag if it changes
 				if(event->data.acc.accuracy_flag != imu_data.accel_accuracy)
 				{
-					imu_data.accel_accuracy = event->data.acc.accuracy_flag;
-					calibration_callback();
+					
+					if(config_is_calibration_active())
+					{
+						NRF_LOG_INFO("Cal status: accel: %d", event->data.acc.accuracy_flag);
+						imu_data.accel_accuracy = event->data.acc.accuracy_flag;
+						calibration_callback();
+					}
 				}
 				
 
@@ -515,13 +520,18 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 				imu_data.gyro.y =       (int16_t)((event->data.gyr.vect[1]) * (1 << RAW_Q_FORMAT_GYR_COMMA_BITS));
 				imu_data.gyro.z =       (int16_t)((event->data.gyr.vect[2]) * (1 << RAW_Q_FORMAT_GYR_COMMA_BITS));
 
-				NRF_LOG_INFO("Cal status: gyro: %d", event->data.gyr.accuracy_flag);
+				
 
 				// Save accuracy flag
 				if(event->data.gyr.accuracy_flag != imu_data.gyro_accuracy)
 				{
-					imu_data.gyro_accuracy = event->data.gyr.accuracy_flag;
-					calibration_callback();
+					
+					if(config_is_calibration_active())
+					{
+						NRF_LOG_INFO("Cal status: gyro: %d", event->data.gyr.accuracy_flag);
+						imu_data.gyro_accuracy = event->data.gyr.accuracy_flag;
+						calibration_callback();
+					}
 				}
 				
 
@@ -566,13 +576,18 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 				imu_data.mag.x =    (int16_t)((event->data.mag.vect[1]) * (1 << RAW_Q_FORMAT_CMP_COMMA_BITS)); // Changed axes. Corrected for rotation of axes.
 				imu_data.mag.z =    (int16_t)((event->data.mag.vect[2]) * (1 << RAW_Q_FORMAT_CMP_COMMA_BITS));
 
-				NRF_LOG_INFO("Cal status: mag: %d", event->data.mag.accuracy_flag);
+				
 
 				// Save accuracy flag
 				if(event->data.mag.accuracy_flag != imu_data.mag_accuracy) 
 				{
-					imu_data.mag_accuracy = event->data.mag.accuracy_flag;
-					calibration_callback();
+					
+					if(config_is_calibration_active())
+					{
+						NRF_LOG_INFO("Cal status: mag: %d", event->data.mag.accuracy_flag);
+						imu_data.mag_accuracy = event->data.mag.accuracy_flag;
+						calibration_callback();
+					}
 				}
 					
 			break;

@@ -52,4 +52,8 @@ void sync_timer_init(void);
 void send_calibration(bool start, bool gyro_done, bool accel_done, bool mag_done);
 void sync_info_send(bool state);
 
+bool config_is_calibration_active();
+void set_config_calibration(bool state);
+
+
 #endif
