@@ -1443,6 +1443,8 @@ void imu_send_data(ble_tms_config_t* p_evt, uint32_t sample_time_ms)
 		// Add timestamp
 		single_raw.timestamp_ms = sample_time_ms;
 
+		NRF_LOG_INFO("timestamp raw: %d", single_raw.timestamp_ms);
+
 		// Put data in send buffer
 		err_code = app_fifo_write(&buff.raw_fifo, (uint8_t *) &single_raw, &single_raw_len);
 		if (err_code == NRF_ERROR_NO_MEM)
