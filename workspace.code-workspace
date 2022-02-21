@@ -47,7 +47,9 @@
 			"custom_board.h": "c",
 			"bsp_btn_ble.h": "c",
 			"led_softblink.h": "c",
-			"ble_tms.h": "c"
+			"ble_tms.h": "c",
+			"sdk_errors.h": "c",
+			"app_error.h": "c"
 		}
 	}
 }

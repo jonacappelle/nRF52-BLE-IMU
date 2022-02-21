@@ -12,7 +12,7 @@
 
 #define IMU_ENABLED                 1
 #define BYPASS_IMU_VDD              1
-#define QI_CHG_DETECTION_ENABLED    0
+#define QI_CHG_DETECTION_ENABLED    1
 
 #define COSTUM_BOARD                1
 #define SPARKFUN_BOARD              0
