@@ -1,3 +1,27 @@
+/*  ____  ____      _    __  __  ____ ___
+ * |  _ \|  _ \    / \  |  \/  |/ ___/ _ \
+ * | | | | |_) |  / _ \ | |\/| | |  | | | |
+ * | |_| |  _ <  / ___ \| |  | | |__| |_| |
+ * |____/|_| \_\/_/   \_\_|  |_|\____\___/
+ *                           research group
+ *                             dramco.be/
+ *
+ *  KU Leuven - Technology Campus Gent,
+ *  Gebroeders De Smetstraat 1,
+ *  B-9000 Gent, Belgium
+ *
+ *         File: usr_flash.c
+ *      Created: 2022-03-01
+ *       Author: Jona Cappelle
+ *      Version: 1.0
+ *
+ *  Description: Interaction with internal flash memory
+ *
+ *  Commissiond by Interreg NOMADe
+ *
+ */
+
+
 #include "usr_flash.h"
 #include "fds.h"
 
@@ -10,11 +34,8 @@
 #define NRF_LOG_LEVEL 4
 #include "nrf_log.h"
 NRF_LOG_MODULE_REGISTER();
-
-#include "nrf_log.h"
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
-
 #include "nrf_pwr_mgmt.h"
 
 /* Array to map FDS events to strings. */
@@ -44,33 +65,6 @@ static struct
     bool pending;       //!< Waiting for an fds FDS_EVT_DEL_RECORD event, to delete the next record.
 } m_delete_all;
 
-/* A dummy structure to save in flash. */
-typedef struct
-{
-    uint32_t boot_count;
-    char     device_name[16];
-    bool     config1_on;
-    bool     config2_on;
-} configuration_t;
-
-/* Dummy configuration data. */
-static configuration_t m_dummy_cfg =
-{
-    .config1_on  = false,
-    .config2_on  = true,
-    .boot_count  = 0x0,
-    .device_name = "dummy",
-};
-
-/* A record containing dummy configuration data. */
-static fds_record_t const m_dummy_record =
-{
-    .file_id           = CONFIG_FILE,
-    .key               = CONFIG_REC_KEY,
-    .data.p_data       = &m_dummy_cfg,
-    /* The length of a record is always expressed in 4-byte units (words). */
-    .data.length_words = (sizeof(m_dummy_cfg) + 3) / sizeof(uint32_t),
-};
 
 const char *fds_err_str(ret_code_t ret)
 {
@@ -177,31 +171,11 @@ void usr_flash_write(uint8_t const * data, uint32_t len)
 
     if (rc == NRF_SUCCESS)
     {
-        // /* A config file is in flash. Let's update it. */
-        // fds_flash_record_t config = {0};
-
-        // /* Open the record and read its contents. */
-        // rc = fds_record_open(&desc, &config);
-        // APP_ERROR_CHECK(rc);
-
-        // /* Copy the configuration from flash into m_dummy_cfg. */
-        // memcpy(data, config.p_data, len);
-
-        // NRF_LOG_INFO("Config file found, updating boot count to %d.", m_dummy_cfg.boot_count);
-
-        // /* Update boot count. */
-        // m_dummy_cfg.boot_count++;
-
-        // /* Close the record when done reading. */
-        // rc = fds_record_close(&desc);
-        // APP_ERROR_CHECK(rc);
-
         static uint8_t temp[84];
 
         memcpy(temp, data, len);
 
         static const uint32_t len1 = 84;
-
 
         /* A record containing dummy configuration data. */
         static fds_record_t const record =
@@ -245,7 +219,7 @@ void usr_flash_read(uint8_t * data, uint32_t len)
         rc = fds_record_open(&desc, &config);
         APP_ERROR_CHECK(rc);
 
-        /* Copy the configuration from flash into m_dummy_cfg. */
+        /* Copy the configuration from flash into config. */
         memcpy(data, config.p_data, len);
 
         NRF_LOG_INFO("Config file read");
@@ -293,68 +267,4 @@ void usr_flash_init()
 
     // Collect garbage records
     fds_gc();
-
-
-    // fds_stat_t stat = {0};
-
-    // rc = fds_stat(&stat);
-    // APP_ERROR_CHECK(rc);
-
-    // NRF_LOG_INFO("Found %d valid records.", stat.valid_records);
-    // NRF_LOG_INFO("Found %d dirty records (ready to be garbage collected).", stat.dirty_records);
-
-    // fds_record_desc_t desc = {0};
-    // fds_find_token_t  tok  = {0};
-
-    // rc = fds_record_find(CONFIG_FILE, CONFIG_REC_KEY, &desc, &tok);
-
-    // if (rc == NRF_SUCCESS)
-    //     {
-    //         /* A config file is in flash. Let's update it. */
-    //         fds_flash_record_t config = {0};
-
-    //         /* Open the record and read its contents. */
-    //         rc = fds_record_open(&desc, &config);
-    //         APP_ERROR_CHECK(rc);
-
-    //         /* Copy the configuration from flash into m_dummy_cfg. */
-    //         memcpy(&m_dummy_cfg, config.p_data, sizeof(configuration_t));
-
-    //         NRF_LOG_INFO("Config file found, updating boot count to %d.", m_dummy_cfg.boot_count);
-
-    //         /* Update boot count. */
-    //         m_dummy_cfg.boot_count++;
-
-    //         /* Close the record when done reading. */
-    //         rc = fds_record_close(&desc);
-    //         APP_ERROR_CHECK(rc);
-
-    //         /* Write the updated record to flash. */
-    //         rc = fds_record_update(&desc, &m_dummy_record);
-    //         if ((rc != NRF_SUCCESS) && (rc == FDS_ERR_NO_SPACE_IN_FLASH))
-    //         {
-    //             NRF_LOG_INFO("No space in flash, delete some records to update the config file.");
-    //         }
-    //         else
-    //         {
-    //             APP_ERROR_CHECK(rc);
-    //         }
-    //     }
-        // else
-        // {
-        //     /* System config not found; write a new one. */
-        //     NRF_LOG_INFO("Writing config file...");
-
-        //     rc = fds_record_write(&desc, &m_dummy_record);
-        //     if ((rc != NRF_SUCCESS) && (rc == FDS_ERR_NO_SPACE_IN_FLASH))
-        //     {
-        //         NRF_LOG_INFO("No space in flash, delete some records to update the config file.");
-        //     }
-        //     else
-        //     {
-        //         APP_ERROR_CHECK(rc);
-        //     }
-        // }
 }
-
-

@@ -1,3 +1,26 @@
+/*  ____  ____      _    __  __  ____ ___
+ * |  _ \|  _ \    / \  |  \/  |/ ___/ _ \
+ * | | | | |_) |  / _ \ | |\/| | |  | | | |
+ * | |_| |  _ <  / ___ \| |  | | |__| |_| |
+ * |____/|_| \_\/_/   \_\_|  |_|\____\___/
+ *                           research group
+ *                             dramco.be/
+ *
+ *  KU Leuven - Technology Campus Gent,
+ *  Gebroeders De Smetstraat 1,
+ *  B-9000 Gent, Belgium
+ *
+ *         File: time_sync.h
+ *      Created: 2022-03-01
+ *       Author: Jona Cappelle
+ *      Version: 1.0
+ *
+ *  Description: Time Synchronization between modules
+ *
+ *  Commissiond by Interreg NOMADe
+ *
+ */
+
 /**
  * Copyright (c) 2014 - 2017, Nordic Semiconductor ASA
  *
@@ -101,9 +124,7 @@ extern "C" {
  */
 #define TIME_SYNC_MSEC_TO_TICK(_msec) ROUNDED_DIV((_msec * ROUNDED_DIV(16000000, TIME_SYNC_TIMER_MAX_VAL)), 1000)
 
-
-
-
+// Automatic frequency selection: +- 30Hz
 #define TIME_SYNC_FREQ_AUTO ((uint32_t) -1)
 
 typedef enum
@@ -249,13 +270,17 @@ uint64_t ts_timestamp_get_ticks_u64(void);
 
 // Costum function for temp disabling and re-enabling TimeSync in an attempt to save power
 uint32_t ts_re_enable(const ts_rf_config_t* p_rf_config);
-uint32_t ts_temp_disable(void);
-bool ts_receiver_enabled(void);
-static void ts_set_receiver_enabled(bool enabled);
-uint32_t ts_timeslot_open(void);
 
-#ifdef __cplusplus
-}
-#endif
+// Temporary disable timesync - clocks keep running, but can drift, since active update with synchronization packets is not active
+uint32_t ts_temp_disable(void);
+
+// Check if receiver is enabled
+bool ts_receiver_enabled(void);
+
+// Enable or disable receiver
+static void ts_set_receiver_enabled(bool enabled);
+
+// Return the state of a timeslot: return uint32_t atomic flag: open or closed
+uint32_t ts_timeslot_open(void);
 
 #endif /* __TIME_SYNC_H__ */

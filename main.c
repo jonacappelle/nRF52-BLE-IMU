@@ -11,11 +11,11 @@
  *  B-9000 Gent, Belgium
  *
  *         File: main.c
- *      Created: YYYY-MM-DD
+ *      Created: 2022-03-01
  *       Author: Jona Cappelle
  *      Version: v1.0
  *
- *  Description: BLE Peripheral - IMU + ADC
+ *  Description: NOMADe sensors V2 - BLE + IMU (ICM20948)
  *
  *  Commissiond by Interreg NOMADe
  * 
@@ -53,8 +53,6 @@ int main(void)
 
 		// usr_set_poweroff_mode();
 
-		// idle_state_handle();
-
 		clocks_start();
 
 		// Logging to RTT functionality
@@ -81,7 +79,7 @@ int main(void)
 		imu_timers_init();
 	
 		// Initialize IMU
-		if(is_wdt_wakeup())
+		if(is_wdt_wakeup()) // Check if wakeup is from a WDT reset
 		{
 			reset_wdt_wakeupt();
 
@@ -103,14 +101,11 @@ int main(void)
 
 		// WDT
 		wdt_init();
-
 		
 		// Main loop	
 		while(1)
 		{
 			feed_wdt();
-
-			// nrf_delay_ms(6000);
 
 			// App scheduler: handle event in buffer
 			// Execute everything that can't be handled in interrupts - queued operations
@@ -123,7 +118,6 @@ int main(void)
 
 			// Enter low power mode when idle
 			idle_state_handle();
-			// sleep_mode_enter();
 			
 			// Check for activity of CPU
 			// check_cpu_activity();

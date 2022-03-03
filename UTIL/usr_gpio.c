@@ -11,7 +11,7 @@
  *  B-9000 Gent, Belgium
  *
  *         File: usr_gpio.c
- *      Created: YYYY-MM-DD
+ *      Created: 2022-03-01
  *       Author: Jona Cappelle
  *      Version: v1.0
  *
@@ -36,7 +36,7 @@
 #include "nrf_drv_clock.h"
 #include "app_util_platform.h"
 
-// #define USR_LED_SOFTBLINK_ENABLED
+// #define USR_LED_SOFTBLINK_DISABLED
 
 static bool qi_chg_enabled = 0;
 
@@ -96,12 +96,6 @@ void gpio_init(void)
 
 	NRF_LOG_INFO("IMU GPIO Init");
 #endif
-	
-	
-	// GPIO stuff for timing purposes
-	// nrf_gpio_cfg_output(PIN_CPU_ACTIVITY);
-	// nrf_gpio_cfg_output(PIN_IMU_ACTIVITY);
-
 
 #if QI_CHG_DETECTION_ENABLED == 1
 
@@ -138,7 +132,7 @@ void led_init()
 {
 	ret_code_t err_code;
 
-	#ifndef USR_LED_SOFTBLINK_ENABLED
+	#ifndef USR_LED_SOFTBLINK_DISABLED
 	// Set pin mode as output
 	nrf_gpio_cfg_output(TIMESYNC_PIN);
 
@@ -164,21 +158,21 @@ void led_deinit()
 
 void led_on()
 {
-	#ifndef USR_LED_SOFTBLINK_ENABLED
+	#ifndef USR_LED_SOFTBLINK_DISABLED
 	if(!qi_chg_enabled) nrf_gpio_pin_set(TIMESYNC_PIN);
 	#endif
 }
 
 void led_off()
 {
-	#ifndef USR_LED_SOFTBLINK_ENABLED
+	#ifndef USR_LED_SOFTBLINK_DISABLED
 	if(!qi_chg_enabled) nrf_gpio_pin_clear(TIMESYNC_PIN);
 	#endif
 }
 
 void led_toggle()
 {
-	#ifndef USR_LED_SOFTBLINK_ENABLED
+	#ifndef USR_LED_SOFTBLINK_DISABLED
 	if(!qi_chg_enabled) nrf_gpio_pin_toggle(TIMESYNC_PIN);
 	#endif
 }

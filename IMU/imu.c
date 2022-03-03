@@ -11,14 +11,14 @@
  *  B-9000 Gent, Belgium
  *
  *         File: imu.c
- *      Created: YYYY-MM-DD
+ *      Created: 2022-03-01
  *       Author: Jona Cappelle
- *      Version: v1.0
+ *      Version: 1.0
  *
- *  Description: IMU -> ICM20948
+ *  Description: Inferfacing with ICM-20948
  *
  *  Commissiond by Interreg NOMADe
- * 
+ *
  */
 
 #include "imu.h"
@@ -69,11 +69,8 @@ NRF_LOG_MODULE_REGISTER();
 #include "SensorConfig.h"
 #include "SensorConfig.h"
 
-
-#include "imu_params.h"
-
 // BLE Motion service
-#include "ble_tms.h"
+#include "ble_motion_service.h"
 
 #include "usr_ble.h"
 
@@ -93,13 +90,15 @@ NRF_LOG_MODULE_REGISTER();
 static bool in_wom = false;
 static bool in_shutdown = false;
 
+static uint8_t number_of_quat_packets = 0;
+static uint8_t number_of_raw_packets = 0;
 
 BUFFER buff;
 
 // Stuct buffer to keep track of latest IMU samples
 imu_data_t imu_data;
 
-
+// Keep track of scheduled tasks
 typedef struct
 {
 	uint32_t evt_scheduled;
@@ -108,9 +107,6 @@ typedef struct
 imu_scheduled_t imu = {
 	.evt_scheduled = 0,
 };
-
-
-
 
 /*
  * States for icm20948 device object
@@ -131,6 +127,10 @@ static void check_rc(int rc);
 void imu_evt_poll_sceduled(void * p_event_data, uint16_t event_size);
 void gpiote_evt_handler(nrf_drv_gpiote_pin_t pin, nrf_gpiote_polarity_t action);
 
+////////////////////////////
+// Extern I2C communication
+////////////////////////////
+
 extern volatile bool twi_tx_done ;
 extern volatile bool twi_rx_done;
 
@@ -139,10 +139,6 @@ extern const nrf_drv_twi_t m_twi;
 extern ret_code_t i2c_read_bytes(const nrf_drv_twi_t *twi_handle, uint8_t address, uint8_t sub_address, uint8_t * dest, uint8_t dest_count);
 extern ret_code_t i2c_write_byte(const nrf_drv_twi_t *twi_handle, uint8_t address, uint8_t sub_address, const uint8_t* data, uint32_t len, bool stop);
 extern void twi_handler(nrf_drv_twi_evt_t const * p_event, void * p_context);
-
-
-#define ICM_20948_I2C_ADDRESS		0x69U
-
 
 // forward declarations
 int my_serif_open_adapter(void);
@@ -211,19 +207,17 @@ int my_serif_open_write_reg(uint8_t reg, const uint8_t * wbuffer, uint32_t wlen)
 		return -1;	// shall return a negative value on error
 	}
 }
-
+///////////////////////////////////////////////////////////////////////
 
 // Timer
 #include <stdbool.h>
 #include <stdint.h>
-
 #include <stdio.h>
 
 #include "nrf.h"
 #include "nrf_drv_timer.h"
 #include "bsp.h"
 #include "app_error.h"
-
 #include "nrf_delay.h"
 
 extern const nrf_drv_timer_t TIMER_MICROS;
@@ -238,10 +232,6 @@ uint64_t inv_icm20948_get_time_us(void)
 				return time_us;
 }
 
-
-
-
-
 /* 
  * High resolution sleep implementation for Icm20948.
  * Used at initilization stage. ~100us is sufficient.
@@ -255,7 +245,7 @@ void inv_icm20948_sleep_us(int us)
 	
         (void)us;
 	
-				nrf_delay_us(us);
+		nrf_delay_us(us);
 }
 
 
@@ -293,7 +283,6 @@ const char * activityName(int act)
 	}
 }
 
-int counterr = 0;
 char stringsend[247];
 
 static void check_rc(int rc)
@@ -367,14 +356,16 @@ void calibration_callback()
 }
 
 
+///////////////////////////////////////
+// IMU CALLBACK
+///////////////////////////////////////
+
 /*
  * Callback called upon sensor event reception
  * This function is called in the same function than inv_device_poll()
  */
 static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 {
-
-// NRF_LOG_INFO("IMU CALLBACK");
 
 // Data processed in 
 /* static inv_bool_t build_sensor_event_data(inv_device_icm20948_t * self, 
@@ -405,8 +396,6 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 		size_t len_in;
 		
 		uint8_t config_data[1];
-		
-		counterr++;
 
 
 	switch(INV_SENSOR_ID_TO_TYPE(event->sensor)) {
@@ -427,44 +416,21 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 		case INV_SENSOR_TYPE_LINEAR_ACCELERATION:
 		case INV_SENSOR_TYPE_GRAVITY:
 		{
-			// NRF_LOG_INFO("data event %s (mg): %d %d %d %d", inv_sensor_str(event->sensor),
-			// 		(int)(event->data.acc.vect[0]*1000),
-			// 		(int)(event->data.acc.vect[1]*1000),
-			// 		(int)(event->data.acc.vect[2]*1000),
-			// 		(int)(event->data.acc.accuracy_flag));
-					
-				#ifdef USE_NUS
-				// Put data in the ringbuffer
-				config_data[0] = ENABLE_ACCEL;
-				len_in = sizeof(config_data);
 
-				uint32_t buffer_acc_len = sizeof(config_data) + sizeof(event->data.acc.vect);
-				uint8_t buffer_acc[buffer_acc_len];
-
-				// Copy data into buffer
-				memcpy(buffer_acc, config_data, sizeof(config_data));
-				memcpy(&buffer_acc[1], (event->data.acc.vect), sizeof(event->data.acc.vect));
-
-				// Put the data in FIFO buffer: APP_FIFO instead of ringbuff library
-            	err_code = app_fifo_write(&buff.imu_fifo, buffer_acc, &buffer_acc_len);
-				if (err_code == NRF_ERROR_NO_MEM)
-            	{
-                	NRF_LOG_INFO("IMU FIFO BUFFER FULL!");
-            	}
-				if (err_code == NRF_SUCCESS)
-				{
-					NRF_LOG_INFO("OK");
-				}
-				#endif
+#if PRINT_MEAS_VALUES == 1
+			NRF_LOG_INFO("data event %s (mg): %d %d %d %d", inv_sensor_str(event->sensor),
+					(int)(event->data.acc.vect[0]*1000),
+					(int)(event->data.acc.vect[1]*1000),
+					(int)(event->data.acc.vect[2]*1000),
+					(int)(event->data.acc.accuracy_flag));
+#endif
 
 				// NRF_LOG_INFO("accel accuracy: %d", (int)(event->data.acc.accuracy_flag));
 
 				// Save latest data in buffer
 				imu_data.accel.x =      (int16_t)((event->data.acc.vect[0]) * (1 << RAW_Q_FORMAT_ACC_COMMA_BITS));
 				imu_data.accel.y =      (int16_t)((event->data.acc.vect[1]) * (1 << RAW_Q_FORMAT_ACC_COMMA_BITS));
-				imu_data.accel.z =      (int16_t)((event->data.acc.vect[2]) * (1 << RAW_Q_FORMAT_ACC_COMMA_BITS));
-
-				
+				imu_data.accel.z =      (int16_t)((event->data.acc.vect[2]) * (1 << RAW_Q_FORMAT_ACC_COMMA_BITS));				
 
 				// Save accuracy flag if it changes
 				if(event->data.acc.accuracy_flag != imu_data.accel_accuracy)
@@ -483,35 +449,14 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 		}
 		case INV_SENSOR_TYPE_GYROSCOPE:
 		{
-			// NRF_LOG_INFO("data event %s (mdps): %d %d %d %d", inv_sensor_str(event->sensor),
-			// 		(int)(event->data.gyr.vect[0]*1000),
-			// 		(int)(event->data.gyr.vect[1]*1000),
-			// 		(int)(event->data.gyr.vect[2]*1000),
-					// (int)(event->data.gyr.accuracy_flag));
-					
-				#ifdef USE_NUS
-				// Put data in the ringbuffer
-				config_data[0] = ENABLE_GYRO;
-				len_in = sizeof(config_data);
 
-				uint32_t buffer_gyro_len = sizeof(config_data) + sizeof(event->data.gyr.vect);
-				uint8_t buffer_gyro[buffer_gyro_len];
-
-				// Copy data into buffer
-				memcpy(buffer_gyro, config_data, sizeof(config_data));
-				memcpy(&buffer_gyro[1], (event->data.gyr.vect), sizeof(event->data.gyr.vect));
-
-				// Put the data in FIFO buffer: APP_FIFO instead of ringbuff library
-            	err_code = app_fifo_write(&buff.imu_fifo, buffer_gyro, &buffer_gyro_len);
-				if (err_code == NRF_ERROR_NO_MEM)
-            	{
-                	NRF_LOG_INFO("IMU FIFO BUFFER FULL!");
-            	}
-				if (err_code == NRF_SUCCESS)
-				{
-					NRF_LOG_INFO("OK");
-				}
-				#endif
+#if PRINT_MEAS_VALUES == 1
+			NRF_LOG_INFO("data event %s (mdps): %d %d %d %d", inv_sensor_str(event->sensor),
+					(int)(event->data.gyr.vect[0]*1000),
+					(int)(event->data.gyr.vect[1]*1000),
+					(int)(event->data.gyr.vect[2]*1000),
+					(int)(event->data.gyr.accuracy_flag));
+#endif
 
 				// NRF_LOG_INFO("gyro accuracy: %d", (int)(event->data.gyr.accuracy_flag));
 
@@ -519,8 +464,6 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 				imu_data.gyro.x =       (int16_t)((event->data.gyr.vect[0]) * (1 << RAW_Q_FORMAT_GYR_COMMA_BITS));
 				imu_data.gyro.y =       (int16_t)((event->data.gyr.vect[1]) * (1 << RAW_Q_FORMAT_GYR_COMMA_BITS));
 				imu_data.gyro.z =       (int16_t)((event->data.gyr.vect[2]) * (1 << RAW_Q_FORMAT_GYR_COMMA_BITS));
-
-				
 
 				// Save accuracy flag
 				if(event->data.gyr.accuracy_flag != imu_data.gyro_accuracy)
@@ -539,35 +482,14 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 		}
 		case INV_SENSOR_TYPE_MAGNETOMETER:
 		{
-			// NRF_LOG_INFO("data event %s (nT): %d %d %d %d", inv_sensor_str(event->sensor),
-			// 		(int)(event->data.mag.vect[0]*1000),
-			// 		(int)(event->data.mag.vect[1]*1000),
-			// 		(int)(event->data.mag.vect[2]*1000),
-			// 		(int)(event->data.mag.accuracy_flag));
-					
-				#ifdef USE_NUS
-				// Put data in the ringbuffer
-				config_data[0] = ENABLE_MAG;
-				len_in = sizeof(config_data);
 
-				uint32_t buffer_mag_len = sizeof(config_data) + sizeof(event->data.mag.vect);
-				uint8_t buffer_mag[buffer_mag_len];
-
-				// Copy data into buffer
-				memcpy(buffer_mag, config_data, sizeof(config_data));
-				memcpy(&buffer_mag[1], (event->data.mag.vect), sizeof(event->data.mag.vect));
-
-				// Put the data in FIFO buffer: APP_FIFO instead of ringbuff library
-            	err_code = app_fifo_write(&buff.imu_fifo, buffer_mag, &buffer_mag_len);
-				if (err_code == NRF_ERROR_NO_MEM)
-            	{
-                	NRF_LOG_INFO("IMU FIFO BUFFER FULL!");
-            	}
-				if (err_code == NRF_SUCCESS)
-				{
-					NRF_LOG_INFO("OK");
-				}
-				#endif
+#if PRINT_MEAS_VALUES == 1
+			NRF_LOG_INFO("data event %s (nT): %d %d %d %d", inv_sensor_str(event->sensor),
+					(int)(event->data.mag.vect[0]*1000),
+					(int)(event->data.mag.vect[1]*1000),
+					(int)(event->data.mag.vect[2]*1000),
+					(int)(event->data.mag.accuracy_flag));
+#endif
 
 				// NRF_LOG_INFO("mag accuracy: %d", (int)(event->data.mag.accuracy_flag));
 
@@ -575,8 +497,6 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 				imu_data.mag.y =   -(int16_t)((event->data.mag.vect[0]) * (1 << RAW_Q_FORMAT_CMP_COMMA_BITS)); // Changed axes and inverted. Corrected for rotation of axes.
 				imu_data.mag.x =    (int16_t)((event->data.mag.vect[1]) * (1 << RAW_Q_FORMAT_CMP_COMMA_BITS)); // Changed axes. Corrected for rotation of axes.
 				imu_data.mag.z =    (int16_t)((event->data.mag.vect[2]) * (1 << RAW_Q_FORMAT_CMP_COMMA_BITS));
-
-				
 
 				// Save accuracy flag
 				if(event->data.mag.accuracy_flag != imu_data.mag_accuracy) 
@@ -617,44 +537,22 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 		case INV_SENSOR_TYPE_GAME_ROTATION_VECTOR: // 6 Axis sensor fusion -> No accuracy flag - no accuracy
 		case INV_SENSOR_TYPE_ROTATION_VECTOR: // 9 Axis sensor fusion - accuracy included (no accuracy flag)
 		case INV_SENSOR_TYPE_GEOMAG_ROTATION_VECTOR: // Accel + Mag based quaternions - accuracy included (no accuracy flag)
-		{			
-			// NRF_LOG_INFO("%s:	%d %d %d %d", inv_sensor_str(event->sensor),
-					// (int)(event->data.quaternion.quat[0]*1000),
-					// (int)(event->data.quaternion.quat[1]*1000),
-					// (int)(event->data.quaternion.quat[2]*1000),
-					// (int)(event->data.quaternion.quat[3]*1000));
+		{
+
+#if PRINT_MEAS_VALUES == 1
+			NRF_LOG_INFO("%s:	%d %d %d %d", inv_sensor_str(event->sensor),
+					(int)(event->data.quaternion.quat[0]*1000),
+					(int)(event->data.quaternion.quat[1]*1000),
+					(int)(event->data.quaternion.quat[2]*1000),
+					(int)(event->data.quaternion.quat[3]*1000));
 //					(int)(event->data.gyr.accuracy_flag),
 //					(int)(event->data.acc.accuracy_flag),	
 //					(int)(event->data.mag.accuracy_flag), // 0 - 3: not calibrated - fully calibrated
 //					(int)(event->data.quaternion.accuracy_flag));
+#endif
 				
 			// NRF_LOG_INFO("accuracy: %d - %d", (int)(event->data.quaternion.accuracy_flag), (int)(event->data.quaternion.accuracy *1000));
 
-
-				#ifdef USE_NUS
-				// Put data in the ringbuffer
-				config_data[0] = ENABLE_QUAT6;
-				len_in = sizeof(config_data);
-
-				uint32_t buffer_len = sizeof(config_data) + sizeof(event->data.quaternion.quat);
-				uint8_t buffer[buffer_len];
-
-				// Copy data into buffer
-				memcpy(buffer, config_data, sizeof(config_data));
-				memcpy(&buffer[1], (event->data.quaternion.quat), sizeof(event->data.quaternion.quat));
-
-				
-				// Put the data in FIFO buffer: APP_FIFO instead of ringbuff library
-            	err_code = app_fifo_write(&buff.imu_fifo, buffer, &buffer_len);
-				if (err_code == NRF_ERROR_NO_MEM)
-            	{
-                	NRF_LOG_INFO("IMU FIFO BUFFER FULL!");
-            	}
-				if (err_code == NRF_SUCCESS)
-				{
-					NRF_LOG_INFO("OK");
-				}
-				#endif
 
 				float quat[4];
 				memcpy(quat, (event->data.quaternion.quat), sizeof(event->data.quaternion.quat));
@@ -688,19 +586,6 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 					// (int)(event->data.gyr.accuracy_flag),
 					// (int)(event->data.acc.accuracy_flag),	
 					// (int)(event->data.mag.accuracy_flag)); // 0 - 3: not calibrated - fully calibrated
-					
-
-			#ifdef USE_NUS		
-				// 	float buffer_orientation[3];
-				// 	buffer_orientation[0] = event->data.orientation.x;
-				// 	buffer_orientation[1] = event->data.orientation.y;
-				// 	buffer_orientation[2] = event->data.orientation.z;
-					
-				// // Put data in the ringbuffer
-				// len_in = sizeof(buffer_orientation);					
-				// err_code = nrf_ringbuf_cpy_put(&m_ringbuf, (uint8_t *)(buffer_orientation), &len_in); //(uint8_t *)(event->data.quaternion.quat)
-				// APP_ERROR_CHECK(err_code);
-			#endif
 
 			fixed_point_t p_euler[3];
 
@@ -716,7 +601,7 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
             imu_data.euler.yaw   = p_euler[0];
             imu_data.euler.pitch  = p_euler[1];
             imu_data.euler.roll    = p_euler[2];
-					
+
 			break;
 		}
 		case INV_SENSOR_TYPE_BAC:
@@ -770,74 +655,6 @@ void msg_printer(int level, const char * str, va_list ap)
 	NRF_LOG_INFO(str);
 	NRF_LOG_FLUSH();
 }
-
-
-/**
- * @}
- */
-
-
-//void apply_stored_offsets(void)
-//{
-//	uint8_t sensor_bias[84];
-//	int32_t acc_bias_q16[6] = {0}, gyro_bias_q16[6] = {0};
-//	uint8_t i, idx = 0;
-//	int rc;
-//	
-//	
-//	// TODO own implementation needed
-//	/* Retrieve Sel-test offsets stored in NV memory */
-////	if(flash_manager_readData(sensor_bias) != 0) {
-////		INV_MSG(INV_MSG_LEVEL_WARNING, "No bias values retrieved from NV memory !");
-////		return;
-////	}
-//	
-//	for(i = 0; i < 6; i++)
-//		gyro_bias_q16[i] = inv_dc_little8_to_int32((const uint8_t *)(&sensor_bias[i * sizeof(uint32_t)]));
-//	idx += sizeof(gyro_bias_q16);
-//	rc = inv_device_set_sensor_config(device, INV_SENSOR_TYPE_GYROSCOPE,
-//		VSENSOR_CONFIG_TYPE_OFFSET, gyro_bias_q16, sizeof(gyro_bias_q16));
-//	check_rc(rc);
-//	
-//	for(i = 0; i < 6; i++)
-//		acc_bias_q16[i] = inv_dc_little8_to_int32((const uint8_t *)(&sensor_bias[idx + i * sizeof(uint32_t)]));
-//	idx += sizeof(acc_bias_q16);
-//	rc = inv_device_set_sensor_config(device, INV_SENSOR_TYPE_ACCELEROMETER,
-//		VSENSOR_CONFIG_TYPE_OFFSET, acc_bias_q16, sizeof(acc_bias_q16));
-
-//}
-
-
-
-//void store_offsets(void)
-//{
-//	int rc = 0;
-//	uint8_t i, idx = 0;
-//	int gyro_bias_q16[6] = {0}, acc_bias_q16[6] = {0};
-
-//	uint8_t sensor_bias[84] = {0};
-//	
-//	/* Strore Self-test bias in NV memory */
-//	rc = inv_device_get_sensor_config(device, INV_SENSOR_TYPE_GYROSCOPE,
-//			VSENSOR_CONFIG_TYPE_OFFSET, gyro_bias_q16, sizeof(gyro_bias_q16));
-//	check_rc(rc);
-//	for(i = 0; i < 6; i++)
-//		inv_dc_int32_to_little8(gyro_bias_q16[i], &sensor_bias[i * sizeof(uint32_t)]);
-//	idx += sizeof(gyro_bias_q16);
-//	
-//	rc = inv_device_get_sensor_config(device, INV_SENSOR_TYPE_ACCELEROMETER,
-//			VSENSOR_CONFIG_TYPE_OFFSET, acc_bias_q16, sizeof(acc_bias_q16));
-//	check_rc(rc);
-//	for(i = 0; i < 6; i++)
-//		inv_dc_int32_to_little8(acc_bias_q16[i], &sensor_bias[idx + i * sizeof(uint32_t)]);
-//	idx += sizeof(acc_bias_q16);
-
-//	// TODO own implementation needed to store sensor_bias in non volatile memory
-//	// flash_manager_writeData(sensor_bias);
-//}
-
-
-
 
 bool imu_in_shutdown(void)
 {
@@ -1126,10 +943,6 @@ static void imu_buff_init()
 {
 	ret_code_t err_code;
 
-	// Initialize IMU FIFO structure
-	err_code = app_fifo_init(&buff.imu_fifo, buff.imu_fifo_buff, (uint16_t)sizeof(buff.imu_fifo_buff));
-	APP_ERROR_CHECK(err_code);
-
 	// Initialize QUAT FIFO structure
 	err_code = app_fifo_init(&buff.quat_fifo, buff.quat_fifo_buff, (uint16_t)sizeof(buff.quat_fifo_buff));
 	APP_ERROR_CHECK(err_code);
@@ -1144,9 +957,6 @@ void imu_clear_buff()
 	ret_code_t err_code;
 
 	// Clear all data in buffers
-	err_code = app_fifo_flush(&buff.imu_fifo);
-	APP_ERROR_CHECK(err_code);
-
 	err_code = app_fifo_flush(&buff.quat_fifo);
 	APP_ERROR_CHECK(err_code);
 
@@ -1213,11 +1023,6 @@ void imu_init(void)
 		 */
 		INV_MSG_SETUP(MSG_LEVEL, msg_printer);
 
-		INV_MSG(INV_MSG_LEVEL_INFO, "###################################");
-		INV_MSG(INV_MSG_LEVEL_INFO, "#          20948 example          #");
-		INV_MSG(INV_MSG_LEVEL_INFO, "###################################");
-		NRF_LOG_FLUSH();
-
 		/* To keep track of errors */
 		int rc = 0;
 		
@@ -1228,9 +1033,6 @@ void imu_init(void)
 //		twi_init();
 		// rc = inv_host_serif_open(&my_serif_instance);
 		// check_rc(rc);
-		
-		NRF_LOG_INFO("i2c init");
-		NRF_LOG_FLUSH();
 		
 		/*
 		 * Create ICM20948 Device 
@@ -1251,6 +1053,10 @@ void imu_init(void)
 		check_rc(rc);
 		NRF_LOG_INFO("Data: 0x%x", whoami);
 		NRF_LOG_FLUSH();
+
+		// Reset to known state
+		rc += inv_device_reset(device);
+		check_rc(rc);
 
 		/* Configure and initialize the Icm20948 device */
 		NRF_LOG_INFO("Setting up ICM20948");
@@ -1294,11 +1100,6 @@ void imu_re_init(void)
 		 * Setup message facility to see internal traces from IDD
 		 */
 		INV_MSG_SETUP(MSG_LEVEL, msg_printer);
-
-		INV_MSG(INV_MSG_LEVEL_INFO, "###################################");
-		INV_MSG(INV_MSG_LEVEL_INFO, "#          20948 example          #");
-		INV_MSG(INV_MSG_LEVEL_INFO, "###################################");
-		NRF_LOG_FLUSH();
 
 		/* To keep track of errors */
 		int rc = 0;
@@ -1346,26 +1147,14 @@ void imu_re_init(void)
 		NRF_LOG_INFO("DMP Image loaded");
 		NRF_LOG_FLUSH();
 
-
 		// Apply stored IMU offsets from flash
 		apply_stored_offsets();
-
 
 		// Init IMU + reset device
 		// Keep track of WoM state
 		imu_set_in_wom(false);
 #endif
 }
-
-
-
-
-
-
-uint8_t number_of_quat_packets = 0;
-uint8_t number_of_raw_packets = 0;
-
-
 
 
 void imu_send_data(ble_tms_config_t* p_evt, uint32_t sample_time_ms)
@@ -1500,45 +1289,6 @@ void imu_send_data(ble_tms_config_t* p_evt, uint32_t sample_time_ms)
 	}
 }
 
-
-void imu_set_config()
-{
-	int rc = 0;
-
-	// 0 -> low power mode
-	// 1 -> low noise mode
-	inv_sensor_config_powermode_t power_mode;
-	power_mode.lowpower_or_highperformance = 0;
-    
-	// rc = inv_device_set_sensor_config(device, 0, INV_SENSOR_CONFIG_POWER_MODE, &power_mode, 1);
-	// check_rc(rc);
-
-	NRF_LOG_INFO("Ping SMD");
-	rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_SMD);
-	check_rc(rc);
-
-	NRF_LOG_INFO("Set SMD period");
-	rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_SMD, 0);
-	check_rc(rc);
-
-	NRF_LOG_INFO("Start SMD");
-	rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_SMD);
-	check_rc(rc);
-
-	// dmp_icm20948_set_wom_enable();
-}
-
-
-void imu_wom_enable(bool enable)
-{
-	int rc = 0;
-
-	rc += inv_device_set_running_state(device, false);
-	check_rc(rc);
-
-	// rc += inv_device_set_sensor_config();
-	// check_rc(rc);
-}
 
 void imu_twi_cycle()
 {
@@ -1958,62 +1708,4 @@ void store_offsets(void)
 
 	NRF_LOG_INFO("Sensor bias written to flash:");
 	NRF_LOG_HEXDUMP_INFO(sensor_bias, 84);
-}
-
-
-/**@brief Timeout handler for the repeated timer.
- */
-static void calibration_timer_handler(void * p_context)
-{
-    led_toggle();
-
-	// NRF_LOG_INFO("Cal status: g: %d, a: %d, m: %d", imu_data.gyro_accuracy, imu_data.accel_accuracy, imu_data.mag_accuracy);
-}
-
-
-APP_TIMER_DEF(calibration_timer);     /**< Handler for repeated timer used to blink LED */
-
-void create_calibration_timer()
-{
-    ret_code_t err_code;
-
-    // Create timers
-    err_code = app_timer_create(&calibration_timer,
-                                APP_TIMER_MODE_REPEATED,
-                                calibration_timer_handler);
-    APP_ERROR_CHECK(err_code);
-}
-
-
-
-bool calibration_timer_running = false;
-
-void start_calibration_timer(uint32_t ms)
-{
-    ret_code_t err_code;
-
-	// Only start when not running already
-	if(!calibration_timer_running)
-	{
-	    err_code = app_timer_start(calibration_timer, APP_TIMER_TICKS(ms), NULL);
-    	APP_ERROR_CHECK(err_code);	
-
-		calibration_timer_running = true;
-	}	
-}
-
-void stop_calibration_timer()
-{
-    ret_code_t err_code;
-
-	// Only stop timer when timer is running
-	if(calibration_timer_running)
-	{
-		err_code = app_timer_stop(calibration_timer);
-    	APP_ERROR_CHECK(err_code);
-
-		calibration_timer_running = false;
-	}
-
-    led_off();
 }

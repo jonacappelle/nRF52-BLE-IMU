@@ -30,7 +30,6 @@ SRC_FILES += \
   $(SDK_ROOT)/components/libraries/led_softblink/led_softblink.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_wdt.c \
   $(PROJ_DIR)/UTIL/usr_wdt.c \
-  $(PROJ_DIR)/ble_services/usr_dfu.c \
   $(SDK_ROOT)/components/libraries/bootloader/dfu/nrf_dfu_svci.c \
   $(SDK_ROOT)/components/ble/peer_manager/gatt_cache_manager.c \
   $(SDK_ROOT)/components/ble/peer_manager/gatts_cache_manager.c \
@@ -53,11 +52,10 @@ SRC_FILES += \
   $(SDK_ROOT)/components/libraries/fstorage/nrf_fstorage.c \
   $(SDK_ROOT)/components/libraries/fstorage/nrf_fstorage_sd.c \
   $(SDK_ROOT)/components/libraries/fds/fds.c \
-  $(PROJ_DIR)/ble_services/usr_ble_nus.c \
   $(PROJ_DIR)/EMG/emg.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_ppi.c \
   $(SDK_ROOT)/components/ble/ble_services/ble_bas/ble_bas.c \
-  $(PROJ_DIR)/ble_services/ble_tms.c \
+  $(PROJ_DIR)/ble_services/ble_motion_service.c \
   $(SDK_ROOT)/components/libraries/fifo/app_fifo.c \
   $(PROJ_DIR)/Invn/Devices/HostSerif.c \
   $(PROJ_DIR)/Invn/Devices/DeviceIcm20948.c \
@@ -66,7 +64,6 @@ SRC_FILES += \
   $(PROJ_DIR)/IMU/imu.c \
   $(PROJ_DIR)/IMU/usr_twi.c \
   $(PROJ_DIR)/TimeSync/time_sync.c \
-  $(PROJ_DIR)/UTIL/usr_fifo.c \
   $(PROJ_DIR)/UTIL/usr_gpio.c \
   $(PROJ_DIR)/UTIL/usr_tmr.c \
   $(PROJ_DIR)/UTIL/usr_util.c \

@@ -1,3 +1,26 @@
+/*  ____  ____      _    __  __  ____ ___
+ * |  _ \|  _ \    / \  |  \/  |/ ___/ _ \
+ * | | | | |_) |  / _ \ | |\/| | |  | | | |
+ * | |_| |  _ <  / ___ \| |  | | |__| |_| |
+ * |____/|_| \_\/_/   \_\_|  |_|\____\___/
+ *                           research group
+ *                             dramco.be/
+ *
+ *  KU Leuven - Technology Campus Gent,
+ *  Gebroeders De Smetstraat 1,
+ *  B-9000 Gent, Belgium
+ *
+ *         File: usr_adc.c
+ *      Created: 2022-03-01
+ *       Author: Jona Cappelle
+ *      Version: 1.0
+ *
+ *  Description: On-board ADC functionality for reading battery voltage
+ *
+ *  Commissiond by Interreg NOMADe
+ *
+ */
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -59,7 +82,6 @@ static nrf_ppi_channel_t     m_ppi_channel;
 
 static const nrf_saadc_oversample_t saadc_oversample = NRF_SAADC_OVERSAMPLE_32X;
 
-// TODO
 static const nrf_drv_saadc_config_t saadc_config = {                                                                               \
     .resolution         = (nrf_saadc_resolution_t)NRFX_SAADC_CONFIG_RESOLUTION, \
     .oversample         = (nrf_saadc_oversample_t)saadc_oversample, \
@@ -79,9 +101,6 @@ static const nrf_saadc_channel_config_t channel_config = {
     .pin_p      = (nrf_saadc_input_t)(ADC_INPUT_PIN),
     .pin_n      = NRF_SAADC_INPUT_DISABLED,
 };
-
-
-
 
 void timer_handler(nrf_timer_event_t event_type, void * p_context)
 {

@@ -11,11 +11,11 @@
  *  B-9000 Gent, Belgium
  *
  *         File: main.h
- *      Created: YYYY-MM-DD
+ *      Created: 2022-03-01
  *       Author: Jona Cappelle
  *      Version: v1.0
  *
- *  Description: BLE Peripheral - IMU + ADC
+ *  Description: NOMADe sensors V2 - BLE + IMU (ICM20948)
  *
  *  Commissiond by Interreg NOMADe
  * 
@@ -39,7 +39,6 @@
 #include "nrf_ble_gatt.h"
 #include "nrf_ble_qwr.h"
 #include "app_timer.h"
-#include "ble_nus.h"
 #include "app_uart.h"
 #include "app_util_platform.h"
 #include "bsp_btn_ble.h"
@@ -108,21 +107,14 @@
 // Ringbuffer
 #include "nrf_ringbuf.h"
 
-// IMU params
-#include "imu_params.h"
-
 // TMS Service
-#include "ble_tms.h"
+#include "ble_motion_service.h"
 
 // BLE Battery service
 #include "ble_bas.h"
 
 // EMG
 #include "emg.h"
-
-// BLE NUS Functionality
-#include "usr_ble_nus.h"
-
 
 // Flash
 #include "usr_flash.h"
@@ -133,14 +125,10 @@
 // Watchdog timer
 #include "usr_wdt.h"
 
-
-
 ////////////////
 //  DEFINES   //
 ////////////////
 
 #define DEAD_BEEF   0xDEADBEEF          /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
-
-
 
 #endif

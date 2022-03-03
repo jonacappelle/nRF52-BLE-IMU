@@ -1,3 +1,27 @@
+/*  ____  ____      _    __  __  ____ ___
+ * |  _ \|  _ \    / \  |  \/  |/ ___/ _ \
+ * | | | | |_) |  / _ \ | |\/| | |  | | | |
+ * | |_| |  _ <  / ___ \| |  | | |__| |_| |
+ * |____/|_| \_\/_/   \_\_|  |_|\____\___/
+ *                           research group
+ *                             dramco.be/
+ *
+ *  KU Leuven - Technology Campus Gent,
+ *  Gebroeders De Smetstraat 1,
+ *  B-9000 Gent, Belgium
+ *
+ *         File: usr_ble.c
+ *      Created: 2022-03-01
+ *       Author: Jona Cappelle
+ *      Version: 1.0
+ *
+ *  Description: Bluetooth Low Energy communication
+ *
+ *  Commissiond by Interreg NOMADe
+ *
+ */
+
+
 #include "usr_ble.h"
 
 // Include utilities
@@ -21,7 +45,6 @@
 #include "nrf_ble_gatt.h"
 #include "nrf_ble_qwr.h"
 #include "app_timer.h"
-#include "ble_nus.h"
 #include "app_uart.h"
 #include "app_util_platform.h"
 #include "bsp_btn_ble.h"
@@ -60,7 +83,6 @@ NRF_LOG_MODULE_REGISTER();
 #include "usr_tmr.h"
 
 // IMU params
-#include "imu_params.h"
 #include "imu.h"
 extern imu_data_t imu_data;
 
@@ -68,18 +90,13 @@ extern imu_data_t imu_data;
 #include "app_scheduler.h"
 
 // Add TMS service for transmitting IMU data
-#include "ble_tms.h"
+#include "ble_motion_service.h"
 
 // BLE Battery service
 #include "ble_bas.h"
 
-// BLE NUS Service
-#include "usr_ble_nus.h"
-
 // ADC
 #include "usr_adc.h"
-
-
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -155,7 +172,6 @@ ts_rf_config_t rf_config =
 
 
 // Initialization
-BLE_NUS_DEF(m_nus, NRF_SDH_BLE_TOTAL_LINK_COUNT);                                   /**< BLE NUS service instance. */
 NRF_BLE_GATT_DEF(m_gatt);                                                           /**< GATT module instance. */
 NRF_BLE_QWR_DEF(m_qwr);                                                             /**< Context for the Queued Write module.*/
 BLE_ADVERTISING_DEF(m_advertising);                                                 /**< Advertising module instance. */
@@ -164,13 +180,9 @@ BLE_BAS_DEF(m_bas);                                                             
 ble_tms_t m_tms;                                                                    /**< Motion service */
 
 static uint16_t   m_conn_handle          = BLE_CONN_HANDLE_INVALID;                 /**< Handle of the current connection. */
-static uint16_t   m_ble_nus_max_data_len = BLE_GATT_ATT_MTU_DEFAULT - 3;            /**< Maximum length of data (in bytes) that can be transmitted to the peer by the Nordic UART service module. */
-//static uint16_t   m_ble_nus_max_data_len = 247 - 3;            /**< Maximum length of data (in bytes) that can be transmitted to the peer by the Nordic UART service module. */
-
 
 static ble_uuid_t m_adv_uuids[]          =                                          /**< Universally unique service identifier. */
 {
-    {BLE_UUID_NUS_SERVICE, NUS_SERVICE_UUID_TYPE},
     {BLE_UUID_TMS_SERVICE, TMS_SERVICE_UUID_TYPE}, // Added for TMS service
     {BLE_UUID_BATTERY_SERVICE, BLE_UUID_TYPE_BLE}
 };
@@ -386,7 +398,7 @@ void batt_level_update(uint8_t battery_level)
         (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
        )
     {
-        APP_ERROR_HANDLER(err_code);
+        APP_ERROR_CHECK(err_code);
     }
 }
 
@@ -402,7 +414,7 @@ void batt_level_update(uint8_t battery_level)
  */
 static void nrf_qwr_error_handler(uint32_t nrf_error)
 {
-    APP_ERROR_HANDLER(nrf_error);
+    APP_ERROR_CHECK(nrf_error);
 }
 
 
@@ -616,11 +628,8 @@ static void usr_bas_init(void)
  */
 static void services_init(void)
 {
-    // Initialize Queued write module: for write requests (used by NUS + TMS)
+    // Initialize Queued write module: for write requests (used by TMS)
     usr_qwr_init();
-
-    // Initialize BLE NUS module
-    usr_ble_nus_init();
 
     // Init TMS service
     usr_tms_init();
@@ -662,7 +671,7 @@ static void on_conn_params_evt(ble_conn_params_evt_t * p_evt)
  */
 static void conn_params_error_handler(uint32_t nrf_error)
 {
-    APP_ERROR_HANDLER(nrf_error);
+    APP_ERROR_CHECK(nrf_error);
 }
 
 
@@ -935,11 +944,6 @@ static void ble_stack_init(void)
 /**@brief Function for handling events from the GATT library. */
 void gatt_evt_handler(nrf_ble_gatt_t * p_gatt, nrf_ble_gatt_evt_t const * p_evt)
 {
-    if ((m_conn_handle == p_evt->conn_handle) && (p_evt->evt_id == NRF_BLE_GATT_EVT_ATT_MTU_UPDATED))
-    {
-        m_ble_nus_max_data_len = p_evt->params.att_mtu_effective - OPCODE_LENGTH - HANDLE_LENGTH;
-        NRF_LOG_INFO("Data len is set to 0x%X(%d)", m_ble_nus_max_data_len, m_ble_nus_max_data_len);
-    }
     NRF_LOG_DEBUG("ATT MTU exchange completed. central 0x%x peripheral 0x%x",
                   p_gatt->att_mtu_desired_central,
                   p_gatt->att_mtu_desired_periph);
@@ -968,43 +972,6 @@ void gatt_init(void)
     err_code = nrf_ble_gatt_att_mtu_periph_set(&m_gatt, NRF_SDH_BLE_GATT_MAX_MTU_SIZE); // 247 max size
     APP_ERROR_CHECK(err_code);
 }
-
-
-
-// static void ts_gpio_trigger_enable(void)
-// {
-//     uint64_t time_now_ticks;
-//     uint32_t time_now_msec;
-//     uint32_t time_target;
-//     uint32_t err_code;
-
-//     if (m_gpio_trigger_enabled)
-//     {
-//         return;
-//     }
-
-//     // Round up to nearest second to next 2000 ms to start toggling.
-//     // If the receiver has received a valid sync packet within this time, the GPIO toggling polarity will be the same.
-
-//     time_now_ticks = ts_timestamp_get_ticks_u64();
-//     time_now_msec = TIME_SYNC_TIMESTAMP_TO_USEC(time_now_ticks) / 1000;
-
-//     time_target = TIME_SYNC_MSEC_TO_TICK(time_now_msec) + (2000 * 2);
-//     time_target = (time_target / 2000) * 2000;
-
-//     err_code = ts_set_trigger(time_target, nrf_gpiote_task_addr_get(NRF_GPIOTE_TASKS_OUT_3));
-//     APP_ERROR_CHECK(err_code);
-
-//     nrf_gpiote_task_set(NRF_GPIOTE_TASKS_CLR_3);
-
-//     m_gpio_trigger_enabled = true;
-// }
-
-// static void ts_gpio_trigger_disable(void)
-// {
-//     m_gpio_trigger_enabled = false;
-// }
-
 
 void ts_imu_trigger_enable(void)
 {
@@ -1289,7 +1256,6 @@ void bsp_event_handler(bsp_event_t event)
     {
         case BSP_EVENT_KEY_0:
             NRF_LOG_INFO("Key pressed");
-            imu_set_config();
 
             break;
 
@@ -1329,228 +1295,6 @@ void bsp_event_handler(bsp_event_t event)
 }
 
 
-
-
-// Variable to keep track if the NUS buffer is full
-static bool nus_buffer_full = false;
-
-
-/**@brief Function for handling the data from the Nordic UART Service.
- *
- * @details This function will process the data received from the Nordic UART BLE Service and send
- *          it to the UART module.
- *
- * @param[in] p_evt       Nordic UART Service event.
- */
-/**@snippet [Handling the data received over BLE] */
-static void nus_data_handler(ble_nus_evt_t * p_evt)
-{
-    ret_code_t err_code;
-	
-    switch (p_evt->type)
-    {
-        case BLE_NUS_EVT_RX_DATA:				
-                // Pass change IMU settings to event handler - no RX functionality needed in slave
-                // err_code = app_sched_event_put(0, 0, imu_config_evt_sceduled);
-                // APP_ERROR_CHECK(err_code);
-            break;
-                
-            // Added //
-            // When BLE NUS
-        case BLE_NUS_EVT_TX_RDY:
-                nus_buffer_full = false;
-//				NRF_LOG_INFO("BLE_NUS_EVT_TX_RDY");
-            break;
-        case BLE_NUS_EVT_COMM_STARTED:
-                NRF_LOG_DEBUG("BLE_NUS_EVT_COMM_STARTED");
-            break;
-        case BLE_NUS_EVT_COMM_STOPPED:
-                NRF_LOG_DEBUG("BLE_NUS_EVT_COMM_STOPPED");
-            break;
-
-        default:
-            break;
-    }
-}
-
-void usr_ble_nus_init()
-{
-    uint32_t           err_code;
-    ble_nus_init_t     nus_init;
-
-    // Initialize NUS.
-    memset(&nus_init, 0, sizeof(nus_init));
-
-    nus_init.data_handler = nus_data_handler;
-
-    err_code = ble_nus_init(&m_nus, &nus_init);
-    APP_ERROR_CHECK(err_code);    
-}
-
-
-
-// CUSTOM
-uint32_t nus_printf_custom(char* p_char)
-{
-		static uint16_t index;
-		ret_code_t err_code;
-		static uint8_t data_array[BLE_NUS_MAX_DATA_LEN];
-		while(*p_char != '\0'){
-						data_array[index] = *p_char;
-						index++;
-						p_char++;
-						}
-
-		err_code = ble_nus_data_send(&m_nus, data_array, &index, m_conn_handle);
-		
-		// Check for errors
-		if ((err_code != NRF_ERROR_INVALID_STATE) &&
-				(err_code != NRF_ERROR_RESOURCES) &&
-				(err_code != NRF_ERROR_NOT_FOUND))
-		{
-				APP_ERROR_CHECK(err_code);
-		}
-				
-		index = 0;
-		return err_code;
-}
-
-// CUSTOM
-uint32_t nus_printf_custom_1(char* p_char)
-{
-	static uint16_t index;
-	ret_code_t err_code;
-	static uint8_t data_array[BLE_NUS_MAX_DATA_LEN];
-	while(*p_char != '\0'){
-          data_array[index] = *p_char;
-          index++;
-          p_char++;
-          }			
-			do
-			{
-					err_code = ble_nus_data_send(&m_nus, data_array, &index, m_conn_handle);
-					if ((err_code != NRF_ERROR_INVALID_STATE) &&
-							(err_code != NRF_ERROR_RESOURCES) &&
-							(err_code != NRF_ERROR_NOT_FOUND))
-					{
-							APP_ERROR_CHECK(err_code);
-					}
-			} while (err_code == NRF_SUCCESS);
-		index = 0;
-	return err_code;
-}
-
-// Send data over NUS service
-uint32_t nus_send(uint8_t * data, uint16_t len)
-{
-		ret_code_t err_code;
-	
-		err_code = ble_nus_data_send(&m_nus, data, &len, m_conn_handle);
-		
-		// Check for errors
-		if ((err_code != NRF_ERROR_INVALID_STATE) &&
-				(err_code != NRF_ERROR_RESOURCES) &&
-				(err_code != NRF_ERROR_NOT_FOUND))
-		{
-				APP_ERROR_CHECK(err_code);
-		}
-		return err_code;
-}
-
-
-
-/**@brief   Function for handling app_uart events.
- *
- * @details This function will receive a single character from the app_uart module and append it to
- *          a string. The string will be be sent over BLE when the last character received was a
- *          'new line' '\n' (hex 0x0A) or if the string has reached the maximum data length.
- */
-/**@snippet [Handling the data received over UART] */
-void uart_event_handle(app_uart_evt_t * p_event)
-{
-    static uint8_t data_array[BLE_NUS_MAX_DATA_LEN];
-    static uint8_t index = 0;
-    uint32_t       err_code;
-
-    switch (p_event->evt_type)
-    {
-        case APP_UART_DATA_READY:
-            UNUSED_VARIABLE(app_uart_get(&data_array[index]));
-            index++;
-
-            if ((data_array[index - 1] == '\n') ||
-                (data_array[index - 1] == '\r') ||
-                (index >= m_ble_nus_max_data_len))
-            {
-                if (index > 1)
-                {
-                    NRF_LOG_DEBUG("Ready to send data over BLE NUS");
-                    NRF_LOG_HEXDUMP_DEBUG(data_array, index);
-
-                    do
-                    {
-                        uint16_t length = (uint16_t)index;
-                        err_code = ble_nus_data_send(&m_nus, data_array, &length, m_conn_handle);
-                        if ((err_code != NRF_ERROR_INVALID_STATE) &&
-                            (err_code != NRF_ERROR_RESOURCES) &&
-                            (err_code != NRF_ERROR_NOT_FOUND))
-                        {
-                            APP_ERROR_CHECK(err_code);
-                        }
-                    } while (err_code == NRF_ERROR_RESOURCES);
-                }
-
-                index = 0;
-            }
-            break;
-
-        case APP_UART_COMMUNICATION_ERROR:
-            APP_ERROR_HANDLER(p_event->data.error_communication);
-            break;
-
-        case APP_UART_FIFO_ERROR:
-            APP_ERROR_HANDLER(p_event->data.error_code);
-            break;
-
-        default:
-            break;
-    }
-}
-/**@snippet [Handling the data received over UART] */
-
-
-/**@brief  Function for initializing the UART module.
- */
-/**@snippet [UART Initialization] */
-static void uart_init(void)
-{
-    uint32_t                     err_code;
-    app_uart_comm_params_t const comm_params =
-    {
-        .rx_pin_no    = USR_RX_PIN_NUMBER,			// 26
-        .tx_pin_no    = USR_TX_PIN_NUMBER,			// 27
-        .rts_pin_no   = RTS_PIN_NUMBER,
-        .cts_pin_no   = CTS_PIN_NUMBER,
-        .flow_control = APP_UART_FLOW_CONTROL_DISABLED,
-        .use_parity   = false,
-#if defined (UART_PRESENT)
-        .baud_rate    = NRF_UART_BAUDRATE_115200
-#else
-        .baud_rate    = NRF_UARTE_BAUDRATE_115200
-#endif
-    };
-
-    APP_UART_FIFO_INIT(&comm_params,
-                       UART_RX_BUF_SIZE,
-                       UART_TX_BUF_SIZE,
-                       uart_event_handle,
-                       APP_IRQ_PRIORITY_LOWEST,
-                       err_code);
-    APP_ERROR_CHECK(err_code);
-}
-/**@snippet [UART Initialization] */
-
-
 /**@brief Function for initializing the Advertising functionality.
  */
 void advertising_init(void)
@@ -1570,10 +1314,10 @@ void advertising_init(void)
     init.advdata.uuids_more_available.uuid_cnt = 1;
     init.advdata.uuids_more_available.p_uuids = &m_adv_uuids[0];
 
-    ble_advdata_t srdata;
+    // ble_advdata_t srdata;
 
-    init.srdata.uuids_more_available.uuid_cnt = 2;
-    init.srdata.uuids_more_available.p_uuids = &m_adv_uuids[1];
+    // init.srdata.uuids_more_available.uuid_cnt = 2;
+    // init.srdata.uuids_more_available.p_uuids = &m_adv_uuids[1];
     // End Costum
 
     advertising_config_get(&init.config);
@@ -1674,9 +1418,6 @@ void set_transmit_power_4dbm()
 
 void usr_ble_init(void)
 {
-    // UART Init - (not really necessary) -  used by BLE NUS
-    // uart_init();
-
     // Initialize application timers
     timers_init();
 
@@ -1699,7 +1440,7 @@ void usr_ble_init(void)
     // Init GATT
     gatt_init();
     
-    // Init Queued write - NUS - Motion - Battery services
+    // Init Queued write - Motion - Battery services
     services_init();
 
     // Init Advertising
@@ -1719,7 +1460,96 @@ void usr_ble_init(void)
     advertising_start();
 }
 
+void send_calibration(bool start, bool gyro_done, bool accel_done, bool mag_done)
+{
+    ret_code_t err_code;
 
+    ble_tms_info_t data;
+
+    // Initialize struct to all zeros
+    memset(&data, 0, sizeof(data));
+
+    data.calibration_start = start;
+
+    // Load calibration info data
+    data.gyro_calibration_done = gyro_done;
+    data.accel_calibration_drone = accel_done;
+    data.mag_calibration_done = mag_done;
+    
+    if(data.gyro_calibration_done && data.accel_calibration_drone && data.mag_calibration_done)
+    {
+        data.calibration_done = 1;
+    }
+
+    err_code = ble_tms_info_set(&m_tms, &data);
+    if(err_code != NRF_SUCCESS)
+    {
+        if(err_code == NRF_ERROR_RESOURCES)
+        {
+            NRF_LOG_INFO("Packet lost");
+        }else{
+            NRF_LOG_INFO("ble_tms_info_set err_code: %d", err_code);
+            APP_ERROR_CHECK(err_code);            
+        }
+    }
+    APP_ERROR_CHECK(err_code);
+
+    NRF_LOG_INFO("---");
+    NRF_LOG_INFO("Send Calibration Packet");
+    NRF_LOG_INFO("---");
+    NRF_LOG_INFO("Gyro: %d", data.gyro_calibration_done);
+    NRF_LOG_INFO("Accel: %d", data.accel_calibration_drone);
+    NRF_LOG_INFO("Mag: %d", data.mag_calibration_done);
+    NRF_LOG_INFO("---");
+}
+
+void sync_info_send(bool state)
+{
+    ret_code_t err_code;
+
+    ble_tms_info_t data;
+
+    // Initialize struct to all zeros
+    memset(&data, 0, sizeof(data));
+
+    if(state)
+    {
+        data.sync_complete = true;
+    }else{
+        data.sync_lost = true;
+    }
+
+    NRF_LOG_INFO("sync_info_send conn_handle: %d", m_conn_handle);
+    NRF_LOG_INFO("sync_info_send conn_handle enabled: %d", m_tms.is_info_notif_enabled);
+
+    // Send packet only when in a connection
+    if(m_conn_handle != BLE_CONN_HANDLE_INVALID)
+    {
+        err_code = ble_tms_info_set(&m_tms, &data);
+        if(err_code != NRF_SUCCESS)
+        {
+            if(err_code == NRF_ERROR_RESOURCES)
+            {
+                NRF_LOG_INFO("Packet lost");
+            }else{
+                NRF_LOG_INFO("ble_tms_info_set err_code: %d", err_code);
+                APP_ERROR_CHECK(err_code);            
+            }
+        }
+        APP_ERROR_CHECK(err_code);
+
+        NRF_LOG_INFO("---");
+        NRF_LOG_INFO("Send Sync Packet Info");
+        NRF_LOG_INFO("---");
+        NRF_LOG_INFO("Sync: %d", data.sync_complete);
+        NRF_LOG_INFO("---");
+    }
+}
+
+
+///////////////////
+// DFU
+///////////////////
 
 void advertising_config_get(ble_adv_modes_config_t * p_config)
 {
@@ -1740,9 +1570,6 @@ void dfu_async_init()
     APP_ERROR_CHECK(err_code);
 #endif
 }
-
-
-
 
 static void buttonless_dfu_sdh_state_observer(nrf_sdh_state_evt_t state, void * p_context)
 {
@@ -1911,91 +1738,4 @@ void ble_dfu_init()
     err_code = ble_dfu_buttonless_init(&dfus_init);
     APP_ERROR_CHECK(err_code);
 #endif
-}
-
-
-void send_calibration(bool start, bool gyro_done, bool accel_done, bool mag_done)
-{
-    ret_code_t err_code;
-
-    ble_tms_info_t data;
-
-    // Initialize struct to all zeros
-    memset(&data, 0, sizeof(data));
-
-    data.calibration_start = start;
-
-    // Load calibration info data
-    data.gyro_calibration_done = gyro_done;
-    data.accel_calibration_drone = accel_done;
-    data.mag_calibration_done = mag_done;
-    
-    if(data.gyro_calibration_done && data.accel_calibration_drone && data.mag_calibration_done)
-    {
-        data.calibration_done = 1;
-    }
-
-    err_code = ble_tms_info_set(&m_tms, &data);
-    if(err_code != NRF_SUCCESS)
-    {
-        if(err_code == NRF_ERROR_RESOURCES)
-        {
-            NRF_LOG_INFO("Packet lost");
-        }else{
-            NRF_LOG_INFO("ble_tms_info_set err_code: %d", err_code);
-            APP_ERROR_CHECK(err_code);            
-        }
-    }
-    APP_ERROR_CHECK(err_code);
-
-    NRF_LOG_INFO("---");
-    NRF_LOG_INFO("Send Calibration Packet");
-    NRF_LOG_INFO("---");
-    NRF_LOG_INFO("Gyro: %d", data.gyro_calibration_done);
-    NRF_LOG_INFO("Accel: %d", data.accel_calibration_drone);
-    NRF_LOG_INFO("Mag: %d", data.mag_calibration_done);
-    NRF_LOG_INFO("---");
-}
-
-void sync_info_send(bool state)
-{
-    ret_code_t err_code;
-
-    ble_tms_info_t data;
-
-    // Initialize struct to all zeros
-    memset(&data, 0, sizeof(data));
-
-    if(state)
-    {
-        data.sync_complete = true;
-    }else{
-        data.sync_lost = true;
-    }
-
-    NRF_LOG_INFO("sync_info_send conn_handle: %d", m_conn_handle);
-    NRF_LOG_INFO("sync_info_send conn_handle enabled: %d", m_tms.is_info_notif_enabled);
-
-    // Send packet only when in a connection
-    if(m_conn_handle != BLE_CONN_HANDLE_INVALID)
-    {
-        err_code = ble_tms_info_set(&m_tms, &data);
-        if(err_code != NRF_SUCCESS)
-        {
-            if(err_code == NRF_ERROR_RESOURCES)
-            {
-                NRF_LOG_INFO("Packet lost");
-            }else{
-                NRF_LOG_INFO("ble_tms_info_set err_code: %d", err_code);
-                APP_ERROR_CHECK(err_code);            
-            }
-        }
-        APP_ERROR_CHECK(err_code);
-
-        NRF_LOG_INFO("---");
-        NRF_LOG_INFO("Send Sync Packet Info");
-        NRF_LOG_INFO("---");
-        NRF_LOG_INFO("Sync: %d", data.sync_complete);
-        NRF_LOG_INFO("---");
-    }
 }

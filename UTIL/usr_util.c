@@ -1,3 +1,26 @@
+/*  ____  ____      _    __  __  ____ ___
+ * |  _ \|  _ \    / \  |  \/  |/ ___/ _ \
+ * | | | | |_) |  / _ \ | |\/| | |  | | | |
+ * | |_| |  _ <  / ___ \| |  | | |__| |_| |
+ * |____/|_| \_\/_/   \_\_|  |_|\____\___/
+ *                           research group
+ *                             dramco.be/
+ *
+ *  KU Leuven - Technology Campus Gent,
+ *  Gebroeders De Smetstraat 1,
+ *  B-9000 Gent, Belgium
+ *
+ *         File: usr_util.c
+ *      Created: 2022-03-01
+ *       Author: Jona Cappelle
+ *      Version: v1.0
+ *
+ *  Description: Other utilities
+ *
+ *  Commissiond by Interreg NOMADe
+ * 
+ */
+
 #include "usr_util.h"
 
 #include "nrf_drv_gpiote.h"
@@ -129,8 +152,6 @@ void usr_set_poweroff_mode()
 #define RESET_REASON_HW_RESET   (1 << 0)
 #define RESET_REASON_SW_RESET   (1 << 2)
 #define RESET_REASON_WDT_RESET  (1 << 1)
-
-
 
 void check_reset_reason()
 {
