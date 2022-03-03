@@ -107,7 +107,7 @@
 // Ringbuffer
 #include "nrf_ringbuf.h"
 
-// TMS Service
+// BLE Motion service
 #include "ble_motion_service.h"
 
 // BLE Battery service

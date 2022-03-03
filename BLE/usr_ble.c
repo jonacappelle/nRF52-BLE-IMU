@@ -89,7 +89,7 @@ extern imu_data_t imu_data;
 // Application scheduler
 #include "app_scheduler.h"
 
-// Add TMS service for transmitting IMU data
+// Add Motion service for transmitting IMU data
 #include "ble_motion_service.h"
 
 // BLE Battery service
@@ -183,7 +183,7 @@ static uint16_t   m_conn_handle          = BLE_CONN_HANDLE_INVALID;             
 
 static ble_uuid_t m_adv_uuids[]          =                                          /**< Universally unique service identifier. */
 {
-    {BLE_UUID_TMS_SERVICE, TMS_SERVICE_UUID_TYPE}, // Added for TMS service
+    {BLE_UUID_TMS_SERVICE, MOTION_SERVICE_UUID_TYPE}, // Added for TMS service
     {BLE_UUID_BATTERY_SERVICE, BLE_UUID_TYPE_BLE}
 };
 
@@ -305,10 +305,6 @@ static void ble_tms_evt_handler(ble_tms_t        * p_tms,
     
     switch (evt_type)
     {
-        case BLE_TMS_EVT_NOTIF_TAP:
-            NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_TAP - %d\r\n", p_tms->is_tap_notif_enabled);
-            break;
-
         case BLE_TMS_EVT_NOTIF_ADC:
             NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_ADC - %d\r\n", p_tms->is_adc_notif_enabled);
             break;
@@ -317,28 +313,12 @@ static void ble_tms_evt_handler(ble_tms_t        * p_tms,
             NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_QUAT - %d\r\n", p_tms->is_quat_notif_enabled);
             break;
 
-        case BLE_TMS_EVT_NOTIF_PEDOMETER:
-            NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_PEDOMETER - %d\r\n", p_tms->is_pedo_notif_enabled);
-            break;
-
         case BLE_TMS_EVT_NOTIF_RAW:
             NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_RAW - %d\r\n", p_tms->is_raw_notif_enabled);
             break;
 
         case BLE_TMS_EVT_NOTIF_EULER:
             NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_EULER - %d\r\n", p_tms->is_euler_notif_enabled);
-            break;
-
-        case BLE_TMS_EVT_NOTIF_ROT_MAT:
-            NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_ROT_MAT - %d\r\n", p_tms->is_rot_mat_notif_enabled);
-            break;
-
-        case BLE_TMS_EVT_NOTIF_HEADING:
-            NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_HEADING - %d\r\n", p_tms->is_heading_notif_enabled);
-            break;
-
-        case BLE_TMS_EVT_NOTIF_GRAVITY:
-            NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_GRAVITY - %d\r\n", p_tms->is_gravity_notif_enabled);
             break;
 
         case BLE_TMS_EVT_NOTIF_INFO:

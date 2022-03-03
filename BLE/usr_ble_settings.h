@@ -51,6 +51,6 @@
 #define UART_TX_BUF_SIZE                1024                                         /**< UART TX buffer size. */
 #define UART_RX_BUF_SIZE                1024                                         /**< UART RX buffer size. */
 
-#define TMS_SERVICE_UUID_TYPE       BLE_UUID_TYPE_VENDOR_BEGIN
+#define MOTION_SERVICE_UUID_TYPE       BLE_UUID_TYPE_VENDOR_BEGIN
 
 #endif
