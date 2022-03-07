@@ -31,10 +31,14 @@
 #include "app_fifo.h"
 #include "ble_motion_service.h"
 #include "usr_util.h"
+#include "SensorConfig.h"
 
 //////////////////
 // IMU SETTINGS
 //////////////////
+
+#define NOMADE_GRYO_FSR             500 // +- 500 dps
+#define NOMADE_ACCEL_FSR            4 // 4 G
 
 #define PRINT_MEAS_VALUES           1
 
@@ -216,6 +220,9 @@ uint32_t imu_enable_sensors(ble_tms_config_t* self);
 // Send the buffered IMU data
 void imu_send_data(ble_tms_config_t* p_evt, uint32_t sample_time_ms);
 
+// Set FSR for Gyro and Accel
+static void imu_config_fsr_gyro(int fsr_in);
+static void imu_config_fsr_accel(int fsr_in);
 
 //////////////////
 // BUFFERS

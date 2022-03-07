@@ -1070,6 +1070,12 @@ void imu_init(void)
 		NRF_LOG_INFO("DMP Image loaded");
 		NRF_LOG_FLUSH();
 
+		// Set Gryo FSR (set in imu.h settings)
+		imu_config_fsr_gyro(NOMADE_GRYO_FSR);
+
+		// Set Accel FSR (set in imu.h settings)
+		imu_config_fsr_accel(NOMADE_ACCEL_FSR);
+
 		// Apply stored IMU offsets from flash
 		apply_stored_offsets();
 
@@ -1147,6 +1153,12 @@ void imu_re_init(void)
 		NRF_LOG_INFO("DMP Image loaded");
 		NRF_LOG_FLUSH();
 
+		// Set Gryo FSR (set in imu.h settings)
+		imu_config_fsr_gyro(NOMADE_GRYO_FSR);
+
+		// Set Accel FSR (set in imu.h settings)
+		imu_config_fsr_accel(NOMADE_ACCEL_FSR);
+
 		// Apply stored IMU offsets from flash
 		apply_stored_offsets();
 
@@ -1154,6 +1166,71 @@ void imu_re_init(void)
 		// Keep track of WoM state
 		imu_set_in_wom(false);
 #endif
+}
+
+
+static void imu_config_fsr_gyro(int fsr_in)
+{
+	int rc = 0;
+
+	inv_sensor_config_fsr_t fsr;
+	fsr.fsr = (uint32_t) fsr_in;
+
+	// Read previously configured FSR
+	inv_sensor_config_fsr_t temp_fsr;
+	inv_device_get_sensor_config(device, INV_SENSOR_TYPE_GYROSCOPE, INV_SENSOR_CONFIG_FSR, &temp_fsr, sizeof(temp_fsr));
+	check_rc(rc);
+	NRF_LOG_INFO("Sensor GYRO FSR (current): %d", temp_fsr.fsr);
+	NRF_LOG_FLUSH();
+
+	if(fsr.fsr != temp_fsr.fsr)
+	{
+		inv_device_set_sensor_config(device, INV_SENSOR_TYPE_GYROSCOPE, INV_SENSOR_CONFIG_FSR, &fsr, sizeof(fsr));
+		check_rc(rc);
+		NRF_LOG_INFO("Sensor GYRO FSR (update) set to: %d", fsr.fsr);
+		NRF_LOG_FLUSH();
+	}else{
+		NRF_LOG_INFO("Sensor GYRO FSR (already) set to: %d", temp_fsr.fsr);
+		NRF_LOG_FLUSH();
+	}
+
+	// Read previously configured FSR
+	inv_device_get_sensor_config(device, INV_SENSOR_TYPE_GYROSCOPE, INV_SENSOR_CONFIG_FSR, &temp_fsr, sizeof(temp_fsr));
+	check_rc(rc);
+	NRF_LOG_INFO("Sensor GYRO FSR (current): %d", temp_fsr.fsr);
+	NRF_LOG_FLUSH();
+}
+
+static void imu_config_fsr_accel(int fsr_in)
+{
+	int rc = 0;
+
+	inv_sensor_config_fsr_t fsr;
+	fsr.fsr = (uint32_t) fsr_in;
+
+	// Read previously configured FSR
+	inv_sensor_config_fsr_t temp_fsr;
+	inv_device_get_sensor_config(device, INV_SENSOR_TYPE_ACCELEROMETER, INV_SENSOR_CONFIG_FSR, &temp_fsr, sizeof(temp_fsr));
+	check_rc(rc);
+	NRF_LOG_INFO("Sensor ACCEL FSR (current): %lu", temp_fsr.fsr);
+	NRF_LOG_FLUSH();
+
+	if(fsr.fsr != temp_fsr.fsr)
+	{
+		inv_device_set_sensor_config(device, INV_SENSOR_TYPE_ACCELEROMETER, INV_SENSOR_CONFIG_FSR, &fsr, sizeof(fsr));
+		check_rc(rc);
+		NRF_LOG_INFO("Sensor ACCEL FSR (update) set to: %lu", fsr.fsr);
+		NRF_LOG_FLUSH();
+	}else{
+		NRF_LOG_INFO("Sensor ACCEL FSR (already) set to: %lu", temp_fsr.fsr);
+		NRF_LOG_FLUSH();
+	}
+
+	// Read previously configured FSR
+	inv_device_get_sensor_config(device, INV_SENSOR_TYPE_ACCELEROMETER, INV_SENSOR_CONFIG_FSR, &temp_fsr, sizeof(temp_fsr));
+	check_rc(rc);
+	NRF_LOG_INFO("Sensor ACCEL FSR (current): %lu", temp_fsr.fsr);
+	NRF_LOG_FLUSH();
 }
 
 
@@ -1673,6 +1750,8 @@ void apply_stored_offsets(void)
 	idx += sizeof(acc_bias_q16);
 	rc = inv_device_set_sensor_config(device, INV_SENSOR_TYPE_ACCELEROMETER,
 		VSENSOR_CONFIG_TYPE_OFFSET, acc_bias_q16, sizeof(acc_bias_q16));
+	
+	check_rc(rc);
 
 	NRF_LOG_INFO("Sensor bias read from flash:");
 	NRF_LOG_HEXDUMP_INFO(sensor_bias, 84);	
