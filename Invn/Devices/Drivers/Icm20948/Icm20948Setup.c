@@ -225,7 +225,7 @@ int inv_icm20948_get_fsr(struct inv_icm20948 * s, enum inv_icm20948_sensor senso
 	
 	if((sensor == INV_ICM20948_SENSOR_RAW_ACCELEROMETER) ||
 	   (sensor == INV_ICM20948_SENSOR_ACCELEROMETER)){
-		unsigned char * castedvalue = (unsigned char*) fsr;
+		unsigned short * castedvalue = (unsigned short*) fsr;
 		int afsr = inv_icm20948_get_accel_fullscale(s);
 		if(afsr == MPU_FS_2G)
 			* castedvalue = 2;
