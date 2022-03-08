@@ -40,7 +40,7 @@
 #define NOMADE_GRYO_FSR             500 // +- 500 dps
 #define NOMADE_ACCEL_FSR            4 // 4 G
 
-#define PRINT_MEAS_VALUES           1
+#define PRINT_MEAS_VALUES           0//1
 
 #define IMU_ENABLED                 1
 #define BYPASS_IMU_VDD              1
