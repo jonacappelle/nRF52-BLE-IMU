@@ -603,7 +603,7 @@
 // <e> NRF_STACK_GUARD_ENABLED - nrf_stack_guard - Stack guard
 //==========================================================
 #ifndef NRF_STACK_GUARD_ENABLED
-#define NRF_STACK_GUARD_ENABLED 0
+#define NRF_STACK_GUARD_ENABLED 1
 #endif
 // <o> NRF_STACK_GUARD_CONFIG_SIZE  - Size of the stack guard.
  
@@ -7895,7 +7895,7 @@
 // <e> NRF_STACK_GUARD_CONFIG_LOG_ENABLED - Enables logging in the module.
 //==========================================================
 #ifndef NRF_STACK_GUARD_CONFIG_LOG_ENABLED
-#define NRF_STACK_GUARD_CONFIG_LOG_ENABLED 0
+#define NRF_STACK_GUARD_CONFIG_LOG_ENABLED 1//0
 #endif
 // <o> NRF_STACK_GUARD_CONFIG_LOG_LEVEL  - Default Severity level
  

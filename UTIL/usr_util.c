@@ -188,3 +188,15 @@ void check_reset_reason()
     NRF_LOG_FLUSH();
 #endif
 }
+
+
+void stack_guard_init()
+{
+    ret_code_t err_code;
+    err_code = nrf_mpu_lib_init();
+    APP_ERROR_CHECK(err_code);
+    err_code = nrf_stack_guard_init();
+    APP_ERROR_CHECK(err_code);
+}
+
+

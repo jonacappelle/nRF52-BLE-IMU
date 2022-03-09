@@ -58,6 +58,9 @@ int main(void)
 		// Logging to RTT functionality
     	log_init();
 
+		// Keep an eye on stack overflows!
+		stack_guard_init();
+
 		check_reset_reason();
 
 		// Initialize the async SVCI interface to bootloader before any interrupts are enabled.

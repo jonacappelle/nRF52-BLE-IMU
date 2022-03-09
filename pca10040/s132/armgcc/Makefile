@@ -26,6 +26,8 @@ SRC_FILES += $(wildcard $(PROJ_DIR)/Invn/VSensor/*.c)
 
 # Source files common to all targets
 SRC_FILES += \
+  $(SDK_ROOT)/components/libraries/mpu/nrf_mpu_lib.c \
+  $(SDK_ROOT)/components/libraries/stack_guard/nrf_stack_guard.c \
   $(SDK_ROOT)/components/libraries/low_power_pwm/low_power_pwm.c \
   $(SDK_ROOT)/components/libraries/led_softblink/led_softblink.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_wdt.c \

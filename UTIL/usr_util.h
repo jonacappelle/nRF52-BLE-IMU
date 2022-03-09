@@ -82,4 +82,7 @@ void check_cpu_activity();
 // Logging over Segger RTT
 void log_init(void);
 
+// Stack guard: eliminate weird problems
+void stack_guard_init();
+
 #endif

@@ -60,7 +60,8 @@
 			"functional": "c",
 			"tuple": "c",
 			"type_traits": "c",
-			"utility": "c"
+			"utility": "c",
+			"imu_registers.h": "c"
 		}
 	}
 }
