@@ -333,6 +333,10 @@ void calibration_callback()
 		err_code = imu_enable_sensors(&temp);
 		APP_ERROR_CHECK(err_code);
 
+		// Reset scale to user values
+		imu_config_fsr_gyro(NOMADE_GRYO_FSR);
+		imu_config_fsr_accel(NOMADE_ACCEL_FSR);
+
 		// Reset accuracy when fully calibrated
 		// imu_data.gyro_accuracy = 0;
 		// imu_data.accel_accuracy = 0;
@@ -904,6 +908,10 @@ ret_code_t imu_enable_sensors(ble_tms_config_t* p_evt)
 			imu_data.accel_accuracy = 0;
 			imu_data.mag_accuracy = 0;
 
+			// Set to full scale range
+			imu_config_fsr_gyro(IMU_GYRO_DEFAULT_FSR);
+			imu_config_fsr_accel(IMU_ACCEL_DEFAULT_FSR);
+
 			calibration_callback();
 
 			NRF_LOG_INFO("Start GYRO for calibration");
@@ -1070,10 +1078,10 @@ void imu_init(void)
 		NRF_LOG_INFO("DMP Image loaded");
 		NRF_LOG_FLUSH();
 
-		// Set Gryo FSR (set in imu.h settings)
-		imu_config_fsr_gyro(NOMADE_GRYO_FSR);
+		// Set Gryo and Accel FSR (set in imu.h settings)
+		// imu_config_fsr_gyro_accel(NOMADE_GRYO_FSR, NOMADE_ACCEL_FSR);
 
-		// Set Accel FSR (set in imu.h settings)
+		imu_config_fsr_gyro(NOMADE_GRYO_FSR);
 		imu_config_fsr_accel(NOMADE_ACCEL_FSR);
 
 		// Apply stored IMU offsets from flash
@@ -1153,10 +1161,10 @@ void imu_re_init(void)
 		NRF_LOG_INFO("DMP Image loaded");
 		NRF_LOG_FLUSH();
 
-		// Set Gryo FSR (set in imu.h settings)
-		imu_config_fsr_gyro(NOMADE_GRYO_FSR);
+		// Set Gryo and Accel FSR (set in imu.h settings)
+		// imu_config_fsr_gyro_accel(NOMADE_GRYO_FSR, NOMADE_ACCEL_FSR);
 
-		// Set Accel FSR (set in imu.h settings)
+		imu_config_fsr_gyro(NOMADE_GRYO_FSR);
 		imu_config_fsr_accel(NOMADE_ACCEL_FSR);
 
 		// Apply stored IMU offsets from flash
@@ -1167,6 +1175,14 @@ void imu_re_init(void)
 		imu_set_in_wom(false);
 #endif
 }
+
+
+void imu_config_fsr_gyro_accel(int fsr_gyro, int fsr_accel)
+{
+	imu_config_fsr_gyro(fsr_gyro);
+	imu_config_fsr_accel(fsr_accel);
+}
+
 
 
 static void imu_config_fsr_gyro(int fsr_in)
@@ -1754,7 +1770,11 @@ void apply_stored_offsets(void)
 	check_rc(rc);
 
 	NRF_LOG_INFO("Sensor bias read from flash:");
-	NRF_LOG_HEXDUMP_INFO(sensor_bias, 84);	
+	NRF_LOG_INFO("Gyro1 x: %d - y: %d - z: %d", gyro_bias_q16[0], gyro_bias_q16[1], gyro_bias_q16[2]);
+	NRF_LOG_INFO("Gyro2 x: %d - y: %d - z: %d", gyro_bias_q16[3], gyro_bias_q16[4], gyro_bias_q16[5]);
+	NRF_LOG_INFO("Accel1 x: %d - y: %d - z: %d", acc_bias_q16[0], acc_bias_q16[1], acc_bias_q16[2]);
+	NRF_LOG_INFO("Accel2 x: %d - y: %d - z: %d", acc_bias_q16[3], acc_bias_q16[4], acc_bias_q16[5]);
+	NRF_LOG_HEXDUMP_INFO(sensor_bias, 84);
 
 }
 
@@ -1786,5 +1806,9 @@ void store_offsets(void)
 	usr_flash_write(sensor_bias, 84);
 
 	NRF_LOG_INFO("Sensor bias written to flash:");
+	NRF_LOG_INFO("Gyro1 x: %d - y: %d - z: %d", gyro_bias_q16[0], gyro_bias_q16[1], gyro_bias_q16[2]);
+	NRF_LOG_INFO("Gyro2 x: %d - y: %d - z: %d", gyro_bias_q16[3], gyro_bias_q16[4], gyro_bias_q16[5]);
+	NRF_LOG_INFO("Accel1 x: %d - y: %d - z: %d", acc_bias_q16[0], acc_bias_q16[1], acc_bias_q16[2]);
+	NRF_LOG_INFO("Accel2 x: %d - y: %d - z: %d", acc_bias_q16[3], acc_bias_q16[4], acc_bias_q16[5]);
 	NRF_LOG_HEXDUMP_INFO(sensor_bias, 84);
 }

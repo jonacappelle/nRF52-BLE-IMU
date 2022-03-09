@@ -38,9 +38,11 @@
 //////////////////
 
 #define NOMADE_GRYO_FSR             500 // +- 500 dps
+#define IMU_GYRO_DEFAULT_FSR        2000
 #define NOMADE_ACCEL_FSR            4 // 4 G
+#define IMU_ACCEL_DEFAULT_FSR       4
 
-#define PRINT_MEAS_VALUES           0//1
+#define PRINT_MEAS_VALUES           1//0//1
 
 #define IMU_ENABLED                 1
 #define BYPASS_IMU_VDD              1
@@ -221,6 +223,7 @@ uint32_t imu_enable_sensors(ble_tms_config_t* self);
 void imu_send_data(ble_tms_config_t* p_evt, uint32_t sample_time_ms);
 
 // Set FSR for Gyro and Accel
+void imu_config_fsr_gyro_accel(int fsr_gyro, int fsr_accel);
 static void imu_config_fsr_gyro(int fsr_in);
 static void imu_config_fsr_accel(int fsr_in);
 
