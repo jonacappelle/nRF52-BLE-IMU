@@ -469,6 +469,8 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 				imu_data.gyro.y =       (int16_t)((event->data.gyr.vect[1]) * (1 << RAW_Q_FORMAT_GYR_COMMA_BITS));
 				imu_data.gyro.z =       (int16_t)((event->data.gyr.vect[2]) * (1 << RAW_Q_FORMAT_GYR_COMMA_BITS));
 
+				imu_send_raw_smartphone();
+
 				// Save accuracy flag
 				if(event->data.gyr.accuracy_flag != imu_data.gyro_accuracy)
 				{
@@ -571,6 +573,8 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 				imu_data.quat.x = p_quat[1];
 				imu_data.quat.y = p_quat[2];
 				imu_data.quat.z = p_quat[3];
+
+				imu_send_quat6_smartphone();
 
 				break;
 			}
@@ -946,6 +950,81 @@ ret_code_t imu_enable_sensors(ble_tms_config_t* p_evt)
 		
 		return NRF_SUCCESS;
 }
+
+
+void imu_start_sensor_quat6(void * p_event_data, uint16_t event_size)
+{
+	int rc = 0;
+
+	bool enable = 0;
+	memcpy(&enable, p_event_data, event_size);
+
+	if(enable)
+	{
+		NRF_LOG_INFO("Start QUAT6");
+		rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_GAME_ROTATION_VECTOR);
+		check_rc(rc);
+		rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_GAME_ROTATION_VECTOR, IMU_DEFAULT_SAMPL_FREQ);
+		check_rc(rc);
+		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_GAME_ROTATION_VECTOR);
+		check_rc(rc);
+	}else{
+
+		NRF_LOG_INFO("Stop QUAT6");
+		rc += inv_device_stop_sensor(device, INV_SENSOR_TYPE_GAME_ROTATION_VECTOR);
+		check_rc(rc);
+	}
+}
+
+void imu_start_sensor_raw(void * p_event_data, uint16_t event_size)
+{
+	int rc = 0;
+
+	bool enable = 0;
+	memcpy(&enable, p_event_data, event_size);
+
+	if(enable)
+	{
+		NRF_LOG_INFO("Start GYRO");
+		rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_GYROSCOPE);
+		check_rc(rc);
+		rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_GYROSCOPE, IMU_DEFAULT_SAMPL_FREQ);
+		check_rc(rc);
+		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_GYROSCOPE);
+		check_rc(rc);
+
+		NRF_LOG_INFO("Start ACCEL");
+		rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_ACCELEROMETER);
+		check_rc(rc);
+		rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_ACCELEROMETER, IMU_DEFAULT_SAMPL_FREQ);
+		check_rc(rc);
+		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_ACCELEROMETER);
+		check_rc(rc);
+
+		NRF_LOG_INFO("Start MAG");
+		rc += inv_device_ping_sensor(device, INV_SENSOR_TYPE_MAGNETOMETER);
+		check_rc(rc);
+		rc += inv_device_set_sensor_period(device, INV_SENSOR_TYPE_MAGNETOMETER, IMU_DEFAULT_SAMPL_FREQ);
+		check_rc(rc);
+		rc += inv_device_start_sensor(device, INV_SENSOR_TYPE_MAGNETOMETER);
+		check_rc(rc);
+
+	}else{
+
+		NRF_LOG_INFO("Stop GYRO");
+		rc += inv_device_stop_sensor(device, INV_SENSOR_TYPE_GYROSCOPE);
+		check_rc(rc);
+
+		NRF_LOG_INFO("Stop ACCEL");
+		rc += inv_device_stop_sensor(device, INV_SENSOR_TYPE_ACCELEROMETER);
+		check_rc(rc);
+
+		NRF_LOG_INFO("Stop MAG");
+		rc += inv_device_stop_sensor(device, INV_SENSOR_TYPE_MAGNETOMETER);
+		check_rc(rc);
+	}
+}
+
 
 static void imu_buff_init()
 {
@@ -1381,6 +1460,112 @@ void imu_send_data(ble_tms_config_t* p_evt, uint32_t sample_time_ms)
 		ble_send_adc(&data);
 	}
 }
+
+
+void imu_send_quat6_smartphone()
+{
+	ret_code_t err_code;
+
+	ble_tms_single_quat_t single_quat;
+	uint32_t single_quat_len = sizeof(single_quat);
+
+	// Put data in send buffer + increment packet counter
+	number_of_quat_packets++;
+
+	// Get latest available data
+	single_quat.w = imu_data.quat.w;
+	single_quat.x = imu_data.quat.x;
+	single_quat.y = imu_data.quat.y;
+	single_quat.z = imu_data.quat.z;
+
+	// Add timestamp
+	single_quat.timestamp_ms = 0;
+
+	// Put data in send buffer
+	err_code = app_fifo_write(&buff.quat_fifo, (uint8_t *) &single_quat, &single_quat_len);
+	if (err_code == NRF_ERROR_NO_MEM)
+	{
+		NRF_LOG_INFO("QUAT FIFO BUFFER FULL!");
+	}
+
+	// If 1 packets are queued, send them out
+	if( number_of_quat_packets >= BLE_PACKET_BUFFER_COUNT)
+	{		
+		ble_tms_quat_t data;
+		uint32_t data_len = sizeof(data);
+
+		err_code = app_fifo_read(&buff.quat_fifo, (uint8_t *) &data, &data_len);
+		if (err_code == NRF_ERROR_NO_MEM)
+		{
+			NRF_LOG_INFO("QUAT FIFO BUFFER FULL!");
+		}
+
+		// Send data over BLE
+		ble_send_quat(&data);
+
+		number_of_quat_packets = 0;
+		// NRF_LOG_INFO("quat set");
+		}
+
+	}
+
+void imu_send_raw_smartphone()
+{
+
+	ret_code_t err_code;
+
+	ble_tms_single_raw_t single_raw;
+	uint32_t single_raw_len = sizeof(single_raw);
+
+	// Put data in send buffer + increment packet counter
+	number_of_raw_packets++;
+
+	// Get latest available data
+	// Get last gyro data from buffer
+	single_raw.gyro.x = imu_data.gyro.x;
+	single_raw.gyro.y = imu_data.gyro.y;
+	single_raw.gyro.z = imu_data.gyro.z;
+
+	// Get last accel data from buffer
+	single_raw.accel.x = imu_data.accel.x;
+	single_raw.accel.y = imu_data.accel.y;
+	single_raw.accel.z = imu_data.accel.z;
+
+	// Get last mag data from buffer
+	single_raw.compass.x = imu_data.mag.x;
+	single_raw.compass.y = imu_data.mag.y;
+	single_raw.compass.z = imu_data.mag.z;
+
+	// Add timestamp
+	single_raw.timestamp_ms = 0;
+
+	// Put data in send buffer
+	err_code = app_fifo_write(&buff.raw_fifo, (uint8_t *) &single_raw, &single_raw_len);
+	if (err_code == NRF_ERROR_NO_MEM)
+	{
+		NRF_LOG_INFO("QUAT FIFO BUFFER FULL!");
+	}
+
+	// If 10 packets are queued, send them out
+	if( number_of_raw_packets >= BLE_PACKET_BUFFER_COUNT)
+	{		
+		ble_tms_raw_t data;
+		uint32_t data_len = sizeof(data);
+
+		err_code = app_fifo_read(&buff.raw_fifo, (uint8_t *) &data, &data_len);
+		if (err_code == NRF_ERROR_NO_MEM)
+		{
+			NRF_LOG_INFO("QUAT FIFO BUFFER FULL!");
+		}
+
+		// Send data over BLE
+		ble_send_raw(&data);
+
+		number_of_raw_packets = 0;
+		// NRF_LOG_INFO("quat set");
+	}
+}
+
 
 
 void imu_twi_cycle()

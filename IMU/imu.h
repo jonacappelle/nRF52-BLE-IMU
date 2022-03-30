@@ -83,7 +83,7 @@
 #define USR_TX_PIN_NUMBER  6
 #endif
 
-#define IMU_DEFAULT_SAMPL_FREQ  4 // 225 Hz
+#define IMU_DEFAULT_SAMPL_FREQ  10 // 100 Hz - 4 // 225 Hz
 
 #define RAW_Q_FORMAT_ACC_INTEGER_BITS 6     // Number of bits used for integer part of raw data.
 #define RAW_Q_FORMAT_GYR_INTEGER_BITS 11    // Number of bits used for integer part of raw data.
@@ -270,6 +270,12 @@ bool imu_in_shutdown(void);
 // Set state of IMU shutdown mode
 void imu_set_in_shutdown(bool enable);
 
+
+// Smartphone functions
+void imu_start_sensor_quat6(void * p_event_data, uint16_t event_size);
+void imu_start_sensor_raw(void * p_event_data, uint16_t event_size);
+void imu_send_quat6_smartphone();
+void imu_send_raw_smartphone();
 
 
 #endif

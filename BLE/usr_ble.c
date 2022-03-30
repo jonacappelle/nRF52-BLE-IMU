@@ -311,10 +311,18 @@ static void ble_tms_evt_handler(ble_tms_t        * p_tms,
 
         case BLE_TMS_EVT_NOTIF_QUAT:
             NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_QUAT - %d\r\n", p_tms->is_quat_notif_enabled);
+
+            err_code = app_sched_event_put(&p_tms->is_quat_notif_enabled, sizeof(p_tms->is_quat_notif_enabled), imu_start_sensor_quat6);
+            APP_ERROR_CHECK(err_code);
+            
             break;
 
         case BLE_TMS_EVT_NOTIF_RAW:
             NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_RAW - %d\r\n", p_tms->is_raw_notif_enabled);
+
+            err_code = app_sched_event_put(&p_tms->is_raw_notif_enabled, sizeof(p_tms->is_raw_notif_enabled), imu_start_sensor_raw);
+            APP_ERROR_CHECK(err_code);
+
             break;
 
         case BLE_TMS_EVT_NOTIF_EULER:
