@@ -1,0 +1,13 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: NOMADe IMU Software v2
+message: 'If you use this software, please cite it as below.'
+type: software
+authors:
+  - given-names: Jona
+    family-names: Cappelle
+    email: jona.cappelle@kuleuven.be
+    affiliation: KU Leuven
+    orcid: 'https://orcid.org/0000-0002-2084-9875'
