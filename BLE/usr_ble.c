@@ -168,6 +168,17 @@ ts_rf_config_t rf_config =
 {
     .rf_chn = 80,
     .rf_addr = { 0xDE, 0xAD, 0xBE, 0xEF, 0x19 }
+    // .rf_addr = {0xAA, 0xBB, 0xCC, 0xDD, 0xEE} // set debug
+    // .rf_addr = {0x73, 0x65, 0x74, 0x5F, 0x31} // set_1 in ascii
+    // .rf_addr = {0x73, 0x65, 0x74, 0x5F, 0x32} // set_2 in ascii
+    // .rf_addr = {0x73, 0x65, 0x74, 0x5F, 0x33} // set_3 in ascii
+    // .rf_addr = {0x73, 0x65, 0x74, 0x5F, 0x34} // set_4 in ascii
+    // .rf_addr = {0x73, 0x65, 0x74, 0x5F, 0x35} // set_5 in ascii
+    // .rf_addr = {0x73, 0x65, 0x74, 0x5F, 0x36} // set_6 in ascii
+    // .rf_addr = {0x73, 0x65, 0x74, 0x5F, 0x37} // set_7 in ascii
+    // .rf_addr = {0x73, 0x65, 0x74, 0x5F, 0x38} // set_8 in ascii
+    // .rf_addr = {0x73, 0x65, 0x74, 0x5F, 0x39} // set_9 in ascii
+    // .rf_addr = {0x73, 0x65, 0x74, 0x5F, 0x40} // set_10 in ascii
 };
 
 
@@ -762,8 +773,8 @@ void sleep(void * p_event_data, uint16_t event_size)
     err_code = ts_disable();
     APP_ERROR_CHECK(err_code);
 
-    err_code = ts_deinit();
-    APP_ERROR_CHECK(err_code);
+    // err_code = ts_deinit();
+    // APP_ERROR_CHECK(err_code);
 
     // Attempt to busy wait until timeslot is closed
     do{
@@ -1217,9 +1228,7 @@ void sync_timer_init(void)
     err_code = ts_enable(&rf_config);
     APP_ERROR_CHECK(err_code);
 
-    NRF_LOG_INFO("Started listening for beacons.\r\n");
-    NRF_LOG_INFO("Press Button 1 to start transmitting sync beacons\r\n");
-    NRF_LOG_INFO("GPIO toggling will begin when transmission has started.\r\n");
+    NRF_LOG_INFO("Started listening for beacons.");
 }
 
 

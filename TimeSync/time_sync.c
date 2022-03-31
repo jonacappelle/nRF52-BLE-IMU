@@ -1168,7 +1168,7 @@ uint32_t ts_enable(const ts_rf_config_t* p_rf_config)
         return err_code;
     }
 
-    err_code |= sd_power_mode_set(NRF_POWER_MODE_CONSTLAT);
+    err_code = sd_power_mode_set(NRF_POWER_MODE_CONSTLAT);
     if (err_code != NRF_SUCCESS)
     {
         return err_code;
@@ -1236,6 +1236,7 @@ uint32_t ts_disable(void)
     m_params.high_freq_timer[0]->TASKS_STOP = 1;
     m_params.high_freq_timer[1]->TASKS_STOP = 1;
 
+    ts_deinit();
 
     err_code = sd_clock_hfclk_release();
     if (err_code != NRF_SUCCESS)
@@ -1243,7 +1244,7 @@ uint32_t ts_disable(void)
         return err_code;
     }
 
-    err_code |= sd_power_mode_set(NRF_POWER_MODE_LOWPWR);
+    err_code = sd_power_mode_set(NRF_POWER_MODE_LOWPWR);
     if (err_code != NRF_SUCCESS)
     {
         return err_code;

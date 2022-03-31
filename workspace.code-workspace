@@ -61,7 +61,8 @@
 			"tuple": "c",
 			"type_traits": "c",
 			"utility": "c",
-			"imu_registers.h": "c"
+			"imu_registers.h": "c",
+			"nrf_log_ctrl_internal.h": "c"
 		}
 	}
 }
