@@ -167,8 +167,8 @@ time_sync_t ts = {
 ts_rf_config_t rf_config =
 {
     .rf_chn = 80,
-    .rf_addr = { 0xDE, 0xAD, 0xBE, 0xEF, 0x19 } // set_sarah
-    // .rf_addr = {0xAA, 0xBB, 0xCC, 0xDD, 0xEE} // set debug
+    // .rf_addr = { 0xDE, 0xAD, 0xBE, 0xEF, 0x19 } // set_sarah
+    .rf_addr = {0xAA, 0xBB, 0xCC, 0xDD, 0xEE} // set debug
     // .rf_addr = {0x73, 0x65, 0x74, 0x5F, 0x31} // set_1 in ascii
     // .rf_addr = {0x73, 0x65, 0x74, 0x5F, 0x32} // set_2 in ascii
     // .rf_addr = {0x73, 0x65, 0x74, 0x5F, 0x33} // set_3 in ascii
@@ -233,8 +233,13 @@ void ble_send_raw(ble_tms_raw_t * data)
         err_code = ble_tms_raw_set(&m_tms, data);	
         if(err_code != NRF_SUCCESS)
         {
-            NRF_LOG_INFO("ble_tms_raw_set err_code: %d", err_code);
-            APP_ERROR_CHECK(err_code);
+            if(err_code == NRF_ERROR_RESOURCES)
+            {
+                NRF_LOG_INFO("Packet lost");
+            }else{
+                NRF_LOG_INFO("ble_tms_raw_set err_code: %d", err_code);
+                APP_ERROR_CHECK(err_code);
+            }
         }    
     }
 }
@@ -248,7 +253,12 @@ void ble_send_adc(ble_tms_adc_t * data)
         err_code = ble_tms_adc_set(&m_tms, data);
         if(err_code != NRF_SUCCESS)
         {
-            NRF_LOG_INFO("ble_tms_adc_set err_code: %d", err_code);
+            if(err_code == NRF_ERROR_RESOURCES)
+            {
+                NRF_LOG_INFO("Packet lost");
+            }else{
+                NRF_LOG_INFO("ble_tms_adc_set err_code: %d", err_code);
+            }
         } 
     }
 }

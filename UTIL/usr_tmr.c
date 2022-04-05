@@ -135,6 +135,8 @@ void ts_start_idle_timer(uint32_t t_sec)
 	// Start single shot timer
 	err_code = app_timer_start(ts_timer, APP_TIMER_TICKS(t_msec), NULL);
 	APP_ERROR_CHECK(err_code);
+
+	NRF_LOG_INFO("TS timer started");
 }
 
 /**@brief Function for initializing the timer module.
@@ -147,6 +149,7 @@ void timers_init(void)
 
 void ts_timer_stop()
 {
+	NRF_LOG_INFO("TS timer stopped");
 	app_timer_stop(ts_timer);
 }
 
