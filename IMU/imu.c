@@ -728,11 +728,11 @@ void imu_evt_poll_sceduled(void * p_event_data, uint16_t event_size)
 			// Initialize IMU with DMP (Invensense Driver)
 			imu_re_init();
 
-			// Start advertising again
-			advertising_start();
-
 			// Enable time syncrhonization
 			sync_timer_init();
+
+			// Start advertising again
+			advertising_start();
 
 			// TimeSync_enable();
 

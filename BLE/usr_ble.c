@@ -1238,6 +1238,7 @@ void sync_timer_init(void)
     err_code = ts_enable(&rf_config);
     APP_ERROR_CHECK(err_code);
 
+    NRF_LOG_INFO("Synchronization started");
     NRF_LOG_INFO("Started listening for beacons.");
 }
 
