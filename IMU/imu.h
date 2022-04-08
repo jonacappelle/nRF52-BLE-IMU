@@ -42,7 +42,7 @@
 #define NOMADE_ACCEL_FSR            4 // 4 G
 #define IMU_ACCEL_DEFAULT_FSR       4
 
-#define PRINT_MEAS_VALUES           1//0//1
+#define PRINT_MEAS_VALUES           0//1
 
 #define IMU_ENABLED                 1
 #define BYPASS_IMU_VDD              1

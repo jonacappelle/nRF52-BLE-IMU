@@ -60,6 +60,8 @@ void sync_timer_init(void);
 void TimeSync_re_enable();
 void TimeSync_enable();
 void ts_set_receiver_started_packet();
+void ts_evt_synchronized_disable();
+
 
 // Disconnect from master - BLE
 void ble_disconnect(void);

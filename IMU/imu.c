@@ -622,14 +622,14 @@ static void sensor_event_cb(const inv_sensor_event_t * event, void * arg)
 		case INV_SENSOR_TYPE_PICK_UP_GESTURE:
 				NRF_LOG_INFO("PICKUP GESTURE");
 				// If we wake on motion, we need to start advertising again to be able to retrieve the BLE device
-				advertising_start();
+				// advertising_start();
 				break;
 		case INV_SENSOR_TYPE_STEP_DETECTOR:
 		case INV_SENSOR_TYPE_SMD:
 				NRF_LOG_INFO("Wake on motion!");
 
 				// If we wake on motion, we need to start advertising again to be able to retrieve the BLE device
-				advertising_start();
+				// advertising_start();
 			break;
 		case INV_SENSOR_TYPE_B2S:
 		case INV_SENSOR_TYPE_TILT_DETECTOR:
@@ -1101,6 +1101,10 @@ void imu_re_init(void)
 
 		NRF_LOG_INFO("IMU re-init");
 
+		// Init IMU + reset device
+		// Keep track of WoM state
+		imu_set_in_wom(false);
+
 		// Re-enable IMU timer
 		imu_timers_init();
 
@@ -1170,9 +1174,6 @@ void imu_re_init(void)
 		// Apply stored IMU offsets from flash
 		apply_stored_offsets();
 
-		// Init IMU + reset device
-		// Keep track of WoM state
-		imu_set_in_wom(false);
 #endif
 }
 
@@ -1810,5 +1811,5 @@ void store_offsets(void)
 	NRF_LOG_INFO("Gyro2 x: %d - y: %d - z: %d", gyro_bias_q16[3], gyro_bias_q16[4], gyro_bias_q16[5]);
 	NRF_LOG_INFO("Accel1 x: %d - y: %d - z: %d", acc_bias_q16[0], acc_bias_q16[1], acc_bias_q16[2]);
 	NRF_LOG_INFO("Accel2 x: %d - y: %d - z: %d", acc_bias_q16[3], acc_bias_q16[4], acc_bias_q16[5]);
-	NRF_LOG_HEXDUMP_INFO(sensor_bias, 84);
+	// NRF_LOG_HEXDUMP_INFO(sensor_bias, 84);
 }

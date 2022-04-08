@@ -102,8 +102,6 @@ void ts_timer_handler(void * p_context)
 {
 	// Start timesync again
 	TimeSync_re_enable();
-
-    NRF_LOG_INFO("ts_timer_handler");
 }
 
 /**@brief Create timers.
@@ -150,7 +148,9 @@ void timers_init(void)
 void ts_timer_stop()
 {
 	NRF_LOG_INFO("TS timer stopped");
-	app_timer_stop(ts_timer);
+	ret_code_t err_code;
+	err_code = app_timer_stop(ts_timer);
+	APP_ERROR_CHECK(err_code);
 }
 
 

@@ -327,23 +327,23 @@ static void ble_tms_evt_handler(ble_tms_t        * p_tms,
     switch (evt_type)
     {
         case BLE_TMS_EVT_NOTIF_ADC:
-            NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_ADC - %d\r\n", p_tms->is_adc_notif_enabled);
+            NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_ADC - %d", p_tms->is_adc_notif_enabled);
             break;
 
         case BLE_TMS_EVT_NOTIF_QUAT:
-            NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_QUAT - %d\r\n", p_tms->is_quat_notif_enabled);
+            NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_QUAT - %d", p_tms->is_quat_notif_enabled);
             break;
 
         case BLE_TMS_EVT_NOTIF_RAW:
-            NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_RAW - %d\r\n", p_tms->is_raw_notif_enabled);
+            NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_RAW - %d", p_tms->is_raw_notif_enabled);
             break;
 
         case BLE_TMS_EVT_NOTIF_EULER:
-            NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_EULER - %d\r\n", p_tms->is_euler_notif_enabled);
+            NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_EULER - %d", p_tms->is_euler_notif_enabled);
             break;
 
         case BLE_TMS_EVT_NOTIF_INFO:
-            NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_INFO - %d\r\n", p_tms->is_info_notif_enabled);
+            NRF_LOG_INFO("ble_tms_evt_handler: BLE_TMS_EVT_NOTIF_INFO - %d", p_tms->is_info_notif_enabled);
 
             // Pass change IMU settings to event handler
             err_code = app_sched_event_put(0, 0, sync_notif);
@@ -736,12 +736,12 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
     switch (ble_adv_evt)
     {
         case BLE_ADV_EVT_FAST:
-            NRF_LOG_DEBUG("Fast Advertising");
+            NRF_LOG_INFO("Fast Advertising");
             err_code = bsp_indication_set(BSP_INDICATE_ADVERTISING);
             APP_ERROR_CHECK(err_code);
             break;
         case BLE_ADV_EVT_IDLE:
-            NRF_LOG_DEBUG("Advertising idle");
+            NRF_LOG_INFO("Advertising idle");
 
             // TODO need to enter sleep mode
             // sleep_mode_enter();
@@ -767,6 +767,10 @@ void sleep(void * p_event_data, uint16_t event_size)
     // Stop trigger from starting packet transmission when syncronization is enabled
     ts.m_imu_trigger_enabled = 0;
 
+    // Stop advertising - otherwise, a new connection will be made
+    // When waking up from IMU WoM interrupt, we need to start advertising again
+    advertising_stop();
+
     // Clear IMU params
     imu_clear_struct(&tms_cfg);
 
@@ -782,6 +786,8 @@ void sleep(void * p_event_data, uint16_t event_size)
     // Disable time synchronization
     err_code = ts_disable();
     APP_ERROR_CHECK(err_code);
+    nrf_gpiote_task_disable(3); // Stop pin toggling
+    ts_evt_synchronized_disable();
 
     // err_code = ts_deinit();
     // APP_ERROR_CHECK(err_code);
@@ -794,29 +800,20 @@ void sleep(void * p_event_data, uint16_t event_size)
     }
     while( ts_timeslot_open() == 1 );
     NRF_LOG_INFO("ts timeslot closed");
-    NRF_LOG_FLUSH();
-
-    // Stop advertising - otherwise, a new connection will be made
-    // When waking up from IMU WoM interrupt, we need to start advertising again
-    advertising_stop();
-    NRF_LOG_INFO("advertising_stop");
-    NRF_LOG_FLUSH();
 
     // When in calibration mode - exit calibration mode when going to sleep
     stop_calibration_timer();
 
+    // Here, I can see some type of problem, when IMU interrupts are still firing after 
     // Shutdown IMU and enable WoM
     imu_sleep_wom();
     NRF_LOG_INFO("imu_sleep_wom");
-    NRF_LOG_FLUSH();
 
     // Shutdown ADC
     usr_adc_deinit();
     NRF_LOG_INFO("usr_adc_deinit");
-    NRF_LOG_FLUSH();
 
     NRF_LOG_INFO("Ready to go to sleep!");
-    NRF_LOG_FLUSH();
 }
 
 
@@ -847,6 +844,17 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             // Set transmit power to +4dBm
             err_code = sd_ble_gap_tx_power_set(BLE_GAP_TX_POWER_ROLE_CONN, m_conn_handle, RADIO_TXPOWER_TXPOWER_Pos4dBm);
             APP_ERROR_CHECK(err_code);
+
+            // Check for timesync bug
+            // TODO fix the actual bug when enabling timesync
+            if(!ts_evt_synchronized())
+            {
+                NRF_LOG_INFO("Bug detected! Reset system!");
+                err_code = NRF_ERROR_INTERNAL;
+                APP_ERROR_CHECK(err_code);
+            }else{
+                NRF_LOG_INFO("No ts bug detected, continue with normal operation");
+            }
             
             break;
 
@@ -1024,11 +1032,13 @@ void timesync_pin_toggle(uint32_t tick)
 
 static void ts_evt_synchronized_enable()
 {
+    NRF_LOG_INFO("ts_evt_synchronized_enable");
     ts.m_ts_synchronized = 1;
 }
 
-static void ts_evt_synchronized_disable()
+void ts_evt_synchronized_disable()
 {
+    NRF_LOG_INFO("ts_evt_synchronized_disable");
     ts.m_ts_synchronized = 0;
 }
 
@@ -1070,6 +1080,16 @@ static void ts_evt_callback(const ts_evt_t* evt)
     {
         case TS_EVT_SYNCHRONIZED:
             NRF_LOG_INFO("TS_EVT_SYNCHRONIZED");
+
+            // Possible causes why this event is not triggered:
+            // - EGU not correctly initialized / de-initialized
+            // - Clocks will normally be running, since they are error checked
+            // - Something PPI related is wrong
+
+            // Problem happens when connection is made as soon as the peripheral wakes-up
+            // The connection is made, but peripheral is not synced
+
+            NRF_LOG_INFO("ts_evt_synchronized? :%d", ts_evt_synchronized());
             NRF_LOG_FLUSH();
             // ts_imu_trigger_enable();
             ts_evt_synchronized_enable();
@@ -1385,7 +1405,6 @@ void advertising_start(void)
 {
     ret_code_t err_code = ble_advertising_start(&m_advertising, BLE_ADV_MODE_FAST);
     APP_ERROR_CHECK(err_code);
-    NRF_LOG_INFO("advertising_start");
 }
 
 
@@ -1400,7 +1419,7 @@ void advertising_stop(void)
     
     if( err_code == NRF_ERROR_INVALID_STATE )
     {
-        NRF_LOG_INFO("NRF_ERROR_INVALID_STATE");
+        NRF_LOG_INFO("Advertising already stopped");
     }
     if( err_code != NRF_ERROR_INVALID_STATE )
     {

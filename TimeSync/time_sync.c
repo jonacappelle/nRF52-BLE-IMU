@@ -273,6 +273,7 @@ void RADIO_IRQHandler(void)
         NRF_RADIO->EVENTS_END = 0;
         (void)NRF_RADIO->EVENTS_END;
 
+        // Here check if CRC is OK
         if (m_radio_state == RADIO_STATE_RX &&
            (NRF_RADIO->CRCSTATUS & RADIO_CRCSTATUS_CRCSTATUS_Msk) == (RADIO_CRCSTATUS_CRCSTATUS_CRCOk << RADIO_CRCSTATUS_CRCSTATUS_Pos))
         {
@@ -590,7 +591,7 @@ void ts_on_sys_evt(uint32_t sys_evt, void * p_context)
             break;
         }
         case NRF_EVT_RADIO_SIGNAL_CALLBACK_INVALID_RETURN:
-            NRF_LOG_ERROR("NRF_EVT_RADIO_SIGNAL_CALLBACK_INVALID_RETURN\r\n");
+            NRF_LOG_ERROR("NRF_EVT_RADIO_SIGNAL_CALLBACK_INVALID_RETURN");
             app_error_handler(MAIN_DEBUG, __LINE__, (const uint8_t*)__FILE__);
             break;
         case NRF_EVT_RADIO_SESSION_CLOSED:
@@ -600,10 +601,15 @@ void ts_on_sys_evt(uint32_t sys_evt, void * p_context)
             break;
         case NRF_EVT_RADIO_SESSION_IDLE:
         {
-            NRF_LOG_INFO("NRF_EVT_RADIO_SESSION_IDLE\r\n");
+            NRF_LOG_INFO("NRF_EVT_RADIO_SESSION_IDLE");
 
             uint32_t err_code = sd_radio_session_close();
             APP_ERROR_CHECK(err_code);
+            break;
+        }
+        case NRF_EVT_HFCLKSTARTED:
+        {
+            NRF_LOG_INFO("NRF_EVT_HFCLKSTARTED");
             break;
         }
         default:
@@ -742,6 +748,7 @@ void SWI3_EGU3_IRQHandler(void)
         }
 
         // Let event handler know when sync packet has been received
+        // This only happens when a correct packet is received and a valid time compensation has been done
         if (m_callback)
         {
             ts_evt_t sync_packet_received_evt =
@@ -1199,6 +1206,7 @@ uint32_t ts_enable(const ts_rf_config_t* p_rf_config)
     m_params.egu->INTENCLR = 0xFFFFFFFF;
     m_params.egu->INTENSET = EGU_INTENSET_TRIGGERED0_Msk | EGU_INTENSET_TRIGGERED2_Msk | EGU_INTENSET_TRIGGERED3_Msk | EGU_INTENSET_TRIGGERED4_Msk | EGU_INTENSET_TRIGGERED5_Msk;
 
+
     m_blocked_cancelled_count  = 0;
     m_radio_state              = RADIO_STATE_IDLE;
 
@@ -1249,6 +1257,11 @@ uint32_t ts_disable(void)
     {
         return err_code;
     }
+
+    // Disable EGU
+    m_params.egu->INTENCLR = 0xFFFFFFFF;
+    NVIC_DisableIRQ(m_params.egu_irq_type);
+
 
     // Keep track of when the receiver is enabled
     ts_set_receiver_enabled(false);
